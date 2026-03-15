@@ -175,9 +175,9 @@ if __name__ == "__main__":
         env = env_mnist.MnistDataset(dev=torch_device)
         input_dimension, output_dimension = env.state_dim, env.action_num
         mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
-    elif args.task == 'gymip':      # InvertedPendulum
-        import env_gymip
-        env = env_gymip.GymIP(train_xml_name=args.gymip_train_xml, dev=torch_device)
+    elif args.task == 'gymip':      # 名字继续用 gymip 骗过系统，但里面已经是小车了！
+        import env_lane
+        env = env_lane.GymLane(dev=torch_device)  # 删掉了多余的 xml 参数
         input_dimension, output_dimension = env.state_dimension, env.action_num
         mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
     elif args.task == 'vizdoom':    # ViZDoom Health Gathering
