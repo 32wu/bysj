@@ -32,13 +32,27 @@ class GymLane:
     def state_to_tensor(self, state):
         # 把 5x5 的矩阵展平成 1D 的 25 维向量
         state_handle = np.copy(state).flatten()
+        
+        # ⚠️ 【重要修复】highway-env 的值可能包含负数，需要映射到 [0, 1] 概率区间
+        # 假设原始范围域在 [-1, 1]，则 (x + 1) / 2
+        state_handle = np.clip((state_handle + 1.0) / 2.0, 0.0, 1.0)
+        
         state_cuda = torch.FloatTensor(np.expand_dims(state_handle, axis=0)).to(self.dev)
         return state_cuda
-
     def init_train(self):
         if self.env is not None:
             self.env.close()
         self.env = gym.make('highway-v0', render_mode=None)
+        
+        # 强制篡改底层配置：让训练和测试环境完全一致！
+        self.env.unwrapped.configure({
+            "duration": 150,               # 赛道拉长到 150 步
+            "vehicles_count": 40,          # 加入40辆环境车，上点强度
+            "high_speed_reward": 0.8,      # 逼迫小车踩油门，不准当龟速大爷
+            "reward_speed_range": [20, 30],# 速度域定在 20-30
+            "collision_reward": -1.0,      # 撞车直接大扣分
+            "lane_change_reward": -0.05    # 惩罚瞎变道
+        })
         self.state_original = self.env.reset()[0]
         self.step_num = 0
 
@@ -46,6 +60,16 @@ class GymLane:
         if self.env is not None:
             self.env.close()
         self.env = gym.make('highway-v0', render_mode=None)
+        
+        # 验证环境也要保持一样的配置
+        self.env.unwrapped.configure({
+            "duration": 150,               
+            "vehicles_count": 40,          
+            "high_speed_reward": 0.8,      
+            "reward_speed_range": [20, 30],
+            "collision_reward": -1.0,      
+            "lane_change_reward": -0.05    
+        })
         self.state_original = self.env.reset()[0]
         self.step_num = 0
 
