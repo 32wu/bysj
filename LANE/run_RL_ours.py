@@ -74,6 +74,7 @@ def reload_log_file(filename):
     train_epi_num = 0
     val_best_return = -10000.0
     val_best_collision = float('inf')
+    val_best_length = 0.0
     with open(filename) as file:
         for line in file:
             str_list = [item for item in re.sub(',', ' ', line).split()]
@@ -85,7 +86,9 @@ def reload_log_file(filename):
                 val_best_return = float(str_list[2])
                 if len(str_list) > 3:
                     val_best_collision = float(str_list[3])
-    return train_epi_num, val_best_return, val_best_collision
+                if len(str_list) > 4:
+                    val_best_length = float(str_list[4])
+    return train_epi_num, val_best_return, val_best_collision, val_best_length
 
 
 def log_text(file_handle, type_str, record_text, onscreen=True):
@@ -588,9 +591,9 @@ if __name__ == '__main__':
     if args.ignore_checkpoint:
         reload_data = False
 
-    last_train_epi_num, last_val_best, last_val_best_collision = 0, -10000.0, float('inf')
+    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length = 0, -10000.0, float('inf'), 0.0
     if reload_data:
-        last_train_epi_num, last_val_best, last_val_best_collision = reload_log_file(log_filename)
+        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
         model.load_model(EXP_NAME + '_current')
@@ -707,10 +710,15 @@ if __name__ == '__main__':
         if train_epi_i % val_freq == (val_freq - 1):
             val_metrics = evaluate_policy(env, model, val_num, mode='val')
             better_model = (
-                val_metrics['mean_return'] > last_val_best + 1e-6 or
+                val_metrics['mean_length'] > last_val_best_length + 1e-6 or
                 (
-                    abs(val_metrics['mean_return'] - last_val_best) <= 1e-6 and
+                    abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
                     val_metrics['collision_rate'] < last_val_best_collision
+                ) or
+                (
+                    abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
+                    abs(val_metrics['collision_rate'] - last_val_best_collision) <= 1e-6 and
+                    val_metrics['mean_return'] > last_val_best + 1e-6
                 )
             )
             if better_model:
@@ -718,6 +726,7 @@ if __name__ == '__main__':
                 model_c.save_model(EXP_NAME + 'critic_best')
                 last_val_best = val_metrics['mean_return']
                 last_val_best_collision = val_metrics['collision_rate']
+                last_val_best_length = val_metrics['mean_length']
                 log_text(
                     File,
                     'val_save',
@@ -740,7 +749,7 @@ if __name__ == '__main__':
                     val_metrics['mean_lane_change'],
                 ),
             )
-            curriculum_message = update_curriculum(args, curriculum_state, val_metrics['mean_return'])
+            curriculum_message = update_curriculum(args, curriculum_state, val_metrics['mean_length'])
             if curriculum_message is not None:
                 log_text(File, 'curriculum', curriculum_message)
 

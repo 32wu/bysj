@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import numpy as np
 np.bool8 = np.bool_
 import torch
@@ -16,10 +17,12 @@ def print_info(input_string):
 class GymLane:
     def __init__(self, dev=torch.device('cpu')):
         self.max_step_num = 150
+        self.target_step_num = 140
         self.state_dimension = 25
         self.action_num = 5
         self.dev = dev
         self.env = None
+        self.video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'video_logs_lane')
 
         self.mode = None
         self.step_num = 0
@@ -35,6 +38,7 @@ class GymLane:
         self.lane_change_action_ids = {0, 2}
         self.previous_action_index = None
         self.steps_since_lane_change = 1000
+        self.target_step_bonus_awarded = False
 
         self.obs_min_seen = None
         self.obs_max_seen = None
@@ -89,6 +93,7 @@ class GymLane:
         self.last_step_info = {}
         self.previous_action_index = None
         self.steps_since_lane_change = 1000
+        self.target_step_bonus_awarded = False
         self.state_original = self.env.reset()[0]
         self.state_processed = self.state_to_tensor(self.state_original)
 
@@ -119,7 +124,13 @@ class GymLane:
         self.env = gym.make('highway-v0', render_mode=render_mode)
         self._configure_env(vehicles_count=vehicles_count)
         if record_video:
-            self.env = RecordVideo(self.env, video_folder='./video_logs_lane', name_prefix='highway_show')
+            os.makedirs(self.video_folder, exist_ok=True)
+            self.env = RecordVideo(
+                self.env,
+                video_folder=self.video_folder,
+                name_prefix='highway_show',
+                episode_trigger=lambda episode_id: True,
+            )
         self._refresh_action_metadata()
         self._reset_episode_trackers()
 
@@ -157,6 +168,7 @@ class GymLane:
         on_road_reward = float(reward_items.get('on_road_reward', 1.0))
         crashed = float(bool(info.get('crashed', False)))
         progress = min(1.0, max(0.0, self.step_num / max(1, self.max_step_num)))
+        target_progress = min(1.0, max(0.0, self.step_num / max(1, self.target_step_num)))
         lane_change_action = action_index in self.lane_change_action_ids
         lane_change_penalty = 0.75 if lane_change_action else 0.0
         repeated_lane_change_penalty = 0.0
@@ -167,23 +179,31 @@ class GymLane:
             lane_change_action and
             self.previous_action_index != action_index
         ) else 0.0
-        steady_action_bonus = 0.18 if not lane_change_action else 0.0
-        survival_bonus = 0.45 if not crashed else 0.0
-        progress_bonus = 0.35 * progress if not crashed else 0.0
-        crash_penalty = crashed * (6.0 + 4.0 * (1.0 - progress))
-        completion_bonus = 8.0 if self.step_num >= self.max_step_num and not crashed else 0.0
+        steady_action_bonus = 0.20 if not lane_change_action else 0.0
+        survival_bonus = 0.50 if not crashed else 0.0
+        target_progress_bonus = 0.70 * target_progress if not crashed else 0.0
+        milestone_bonus = 12.0 if (
+            self.step_num >= self.target_step_num and
+            not crashed and
+            not self.target_step_bonus_awarded
+        ) else 0.0
+        target_shortfall_penalty = 0.08 * max(self.target_step_num - self.step_num, 0) if crashed else 0.0
+        crash_penalty = crashed * (5.0 + 2.0 * (1.0 - progress))
+        completion_bonus = 12.0 if self.step_num >= self.max_step_num and not crashed else 0.0
         shaped_reward = (
             survival_bonus
             + steady_action_bonus
-            + progress_bonus
+            + target_progress_bonus
             + 0.55 * speed_reward
             + 0.10 * lane_reward
-            + 0.15 * float(raw_reward)
+            + 0.10 * float(raw_reward)
             - 0.35 * (1.0 - on_road_reward)
             - lane_change_penalty
             - repeated_lane_change_penalty
             - zigzag_penalty
+            - target_shortfall_penalty
             - crash_penalty
+            + milestone_bonus
             + completion_bonus
         )
         info['raw_reward'] = float(raw_reward)
@@ -191,15 +211,17 @@ class GymLane:
         info['reward_breakdown'] = {
             'survival_bonus': float(survival_bonus),
             'steady_action_bonus': float(steady_action_bonus),
-            'progress_bonus': float(progress_bonus),
+            'target_progress_bonus': float(target_progress_bonus),
             'speed_bonus': float(0.55 * speed_reward),
             'lane_bonus': float(0.10 * lane_reward),
-            'base_reward_bonus': float(0.15 * float(raw_reward)),
+            'base_reward_bonus': float(0.10 * float(raw_reward)),
             'lane_change_penalty': float(lane_change_penalty),
             'repeated_lane_change_penalty': float(repeated_lane_change_penalty),
             'zigzag_penalty': float(zigzag_penalty),
             'offroad_penalty': float(0.35 * (1.0 - on_road_reward)),
+            'target_shortfall_penalty': float(target_shortfall_penalty),
             'crash_penalty': float(crash_penalty),
+            'milestone_bonus': float(milestone_bonus),
             'completion_bonus': float(completion_bonus),
         }
         return float(shaped_reward)
@@ -254,8 +276,15 @@ class GymLane:
             self.steps_since_lane_change = 0
         else:
             self.steps_since_lane_change += 1
+        if self.step_num >= self.target_step_num and not bool(info.get('crashed', False)):
+            self.target_step_bonus_awarded = True
         self.previous_action_index = info_action
         return self.state_processed, reward_tensor, done, info, step_record
+
+    def close(self):
+        if self.env is not None:
+            self.env.close()
+            self.env = None
 
 
 if __name__ == '__main__':
