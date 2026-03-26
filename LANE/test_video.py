@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import glob
+import os
+
 import torch
 import numpy as np
 import env_lane
@@ -21,13 +24,13 @@ model = model_rwta.RWTAspike(
 )
 
 # 3. 加载训练好的高分驾照权重
-checkpoint_prefix = "ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.001000_5.00_0.97000_5_0.2000_rep11_best"
-try:
-    model.load_model(checkpoint_prefix)
-    print("✅ 大脑组装成功！")
-except Exception:
-    model.load_model(f"./log_model/{checkpoint_prefix}")
-    print("✅ 大脑组装成功 (备选路径)！")
+checkpoint_candidates = sorted(glob.glob('./log_model/ppo_gymip_rwtaspk*_best_w_1.pt'))
+if not checkpoint_candidates:
+    raise FileNotFoundError('没有找到 rwtaspk 的 best 模型，请先完成训练。')
+checkpoint_prefix = checkpoint_candidates[-1].replace('_w_1.pt', '')
+checkpoint_prefix = os.path.basename(checkpoint_prefix)
+model.load_model(checkpoint_prefix)
+print(f"✅ 大脑组装成功！当前使用模型: {checkpoint_prefix}")
 
 # ==========================================
 # 🎛️ 实验参数控制台：方向盘失控率 (执行器故障)
@@ -80,10 +83,10 @@ while not done:
 
     # --- 步骤 C：将最终动作传给环境物理引擎执行 ---
     try:
-        reward, next_state, info = env.make_action(action_scores)
-        step = info[0]
+        next_state, reward, done_flag, info, step_record = env.make_action(action_scores)
+        step = step_record[0]
         # 当小车撞毁或跑满最大步数时，跳出循环
-        if env.done_signal == 1:
+        if env.done_signal == 1 or done_flag:
             done = True
     except Exception as e:
         print(f"❌ 环境交互报错: {e}")

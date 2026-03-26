@@ -58,6 +58,13 @@ class RWTAprob:
 
     def set_grad_clip(self, grad_clip):
         self.grad_clip = grad_clip
+
+    def _loss_gradient(self, loss, model_output):
+        gradient = torch.autograd.grad(loss, model_output, allow_unused=False)[0]
+        if self.grad_clip is not None and self.grad_clip > 0:
+            gradient = gradient.clamp(-self.grad_clip, self.grad_clip)
+        return gradient
+
     def __call__(self, x):
         return self.forward(x)
 
@@ -197,11 +204,8 @@ class RWTAprob:
         target_1 = ratio * advantage_squeeze
         target_2 = torch.clamp(ratio, 1-epsilon, 1+epsilon) * advantage_squeeze
         loss = + torch.min(target_1, target_2).mean() + self.entropy_ratio * a_entropy.mean()
-        loss.backward()
-        if self.grad_clip is not None and self.grad_clip > 0 and model_output.grad is not None:
-            model_output.grad.data.clamp_(-self.grad_clip, self.grad_clip)
-        gradient = torch.sum(model_output.grad * model_output * old_vha[:, self.dim_h:self.dim_ha], dim=1)
-        gradient.detach_()
+        model_output_grad = self._loss_gradient(loss, model_output)
+        gradient = torch.sum(model_output_grad * model_output * old_vha[:, self.dim_h:self.dim_ha], dim=1).detach()
         # print(model_output.grad)
         v_hid_act = old_vha
         q_has = current_other[2]
@@ -247,11 +251,8 @@ class RWTAprob:
 
     def learn_reinforce(self, a_logprob, advantage, a_entropy, v_ha, q_has, model_output, **kwargs):
         loss = +(a_logprob * advantage).mean() + self.entropy_ratio * a_entropy.mean()
-        loss.backward()
-        if self.grad_clip is not None and self.grad_clip > 0 and model_output.grad is not None:
-            model_output.grad.data.clamp_(-self.grad_clip, self.grad_clip)
-        gradient = torch.sum(model_output.grad * model_output * v_ha[:, self.dim_h:self.dim_ha], dim=1)
-        gradient.detach_()
+        model_output_grad = self._loss_gradient(loss, model_output)
+        gradient = torch.sum(model_output_grad * model_output * v_ha[:, self.dim_h:self.dim_ha], dim=1).detach()
         
         v_hid_act = v_ha
         q_has = q_has
@@ -495,7 +496,7 @@ class RWTAspike(RWTAprob):
             # Update q_ha
             if spike_i >= (self.spk_resp_time - 1):
                 q_est_has = spike_record[:, :, spike_i].clone()
-                q_est_has[: 0:self.dim_ha] = q_est_has[: 0:self.dim_ha] * 2
+                q_est_has[:, 0:self.dim_ha] = q_est_has[:, 0:self.dim_ha] * 2
                 temp_q_ha = torch.mm(q_est_has, self.weight) + self.bias.expand([input_batch_size, self.dim_ha])
                 target_q_ha = self.hid_act_softmax(temp_q_ha)
                 q_ha = target_q_ha

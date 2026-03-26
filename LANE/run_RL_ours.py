@@ -6,6 +6,21 @@ import random
 import re
 import time
 
+
+def _sanitize_omp_threads():
+    omp_threads = os.environ.get("OMP_NUM_THREADS")
+    if omp_threads is None:
+        return
+    try:
+        if int(omp_threads) > 0:
+            return
+    except (TypeError, ValueError):
+        pass
+    os.environ["OMP_NUM_THREADS"] = "1"
+
+
+_sanitize_omp_threads()
+
 import numpy as np
 import torch
 
@@ -51,6 +66,7 @@ def get_arguments():
     parser.add_argument('--curriculum_patience', type=int, default=2)
     parser.add_argument('--curriculum_noise_step', type=float, default=0.03)
     parser.add_argument('--curriculum_entropy_decay', type=float, default=0.9)
+    parser.add_argument('--lane_profile', type=str, default='auto', choices=['auto', 'legacy'])
     return parser.parse_args()
 
 
@@ -180,6 +196,49 @@ def build_experiment_name(args, model_str, seed):
     )
 
 
+def apply_lane_stability_profile(args):
+    if args.task != 'gymip' or args.model != 'rwtaspk' or args.lane_profile != 'auto':
+        return []
+    adjustments = []
+
+    def clamp_min(attr_name, target_value):
+        current_value = getattr(args, attr_name)
+        if current_value < target_value:
+            setattr(args, attr_name, target_value)
+            adjustments.append(f'{attr_name}->{target_value}')
+
+    def clamp_max(attr_name, target_value):
+        current_value = getattr(args, attr_name)
+        if current_value > target_value:
+            setattr(args, attr_name, target_value)
+            adjustments.append(f'{attr_name}->{target_value}')
+
+    clamp_max('lr', 0.0005)
+    clamp_min('gamma', 0.995)
+    clamp_max('entropy', 2.0)
+    clamp_max('PPO_epochs', 4)
+    clamp_max('eps_clip', 0.15)
+    clamp_min('rollout_steps', 512)
+    clamp_min('mini_batch_size', 128)
+    clamp_min('gae_lambda', 0.97)
+    clamp_max('grad_clip', 0.5)
+    clamp_min('curriculum_clean_ratio', 0.8)
+    clamp_max('max_noise', 0.08)
+    clamp_max('curriculum_noise_step', 0.02)
+    return adjustments
+
+
+def select_lane_vehicle_count(args, train_epi_i):
+    if args.task != 'gymip':
+        return 40
+    if args.model != 'rwtaspk' or args.lane_profile != 'auto':
+        return 40
+    progress = min(1.0, train_epi_i / max(1, args.train_num - 1))
+    start_vehicle_num = 18
+    end_vehicle_num = 40
+    return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
+
+
 def init_curriculum(args):
     return {
         'noise_cap': 0.0,
@@ -268,7 +327,7 @@ def evaluate_policy(env, model, episode_num, mode='val'):
                 model_output, _ = model(observation)
                 action_index = torch.argmax(model_output, dim=1)
                 action_onehot = torch.nn.functional.one_hot(action_index, num_classes=env.action_num).float()
-                _, _, _ = env.make_action(action_onehot)
+                next_state, reward, done, info, step_record = env.make_action(action_onehot)
                 if env.done_signal:
                     break
                 if mode == 'val':
@@ -289,6 +348,18 @@ def evaluate_policy(env, model, episode_num, mode='val'):
 def update_policy(model, model_c, rollout, args, calculation_time_monitor=None):
     if rollout.size() == 0:
         return None
+        # ========================================================
+    # 🌟 终极防线 1：无论前面谁关了梯度，更新前强行开启全局计算图！
+    # ========================================================
+    torch.set_grad_enabled(True)
+    
+    # ========================================================
+    # 🌟 终极防线 2：强制唤醒底层 SNN 权重的可导属性（防断链）
+    # ========================================================
+    if hasattr(model, 'weight') and not model.weight.requires_grad:
+        model.weight.requires_grad = True
+    if hasattr(model, 'bias') and not model.bias.requires_grad:
+        model.bias.requires_grad = True
     critic_device = next(model_c.parameters()).device
     rollout_data = rollout.stack(critic_device)
     s1 = rollout_data['s1']
@@ -398,7 +469,12 @@ if __name__ == '__main__':
             args.train_num = 2000 if args.train_num == 20000 else args.train_num
         else:
             args.train_num = 5000 if args.train_num == 20000 else args.train_num
-    val_freq, val_num = 100, 10
+
+    lane_profile_adjustments = apply_lane_stability_profile(args)
+    if args.task == 'gymip' and args.model == 'rwtaspk' and args.lane_profile == 'auto':
+        val_freq, val_num = 25, 5
+    else:
+        val_freq, val_num = 100, 10
 
     if args.cuda < 0:
         torch_device = torch.device('cpu')
@@ -524,6 +600,8 @@ if __name__ == '__main__':
         log_text(File, 'init', str(datetime.datetime.now()))
         log_text(File, 'arguments', str(args))
         log_text(File, 'seed', str(seed))
+        if lane_profile_adjustments:
+            log_text(File, 'profile', 'lane auto-stabilize: ' + ', '.join(lane_profile_adjustments))
 
     calculation_time_monitor = TimeMonitor()
     curriculum_state = init_curriculum(args)
@@ -531,10 +609,12 @@ if __name__ == '__main__':
     update_count = 0
 
     for train_epi_i in range(last_train_epi_num + 1, args.train_num):
+        torch.set_grad_enabled(True)
         entropy_value, episode_noise, noise_cap = select_curriculum_settings(args, curriculum_state, train_epi_i)
         maybe_update_entropy(model, entropy_value)
 
-        env.init_train()
+        episode_vehicle_count = select_lane_vehicle_count(args, train_epi_i)
+        env.init_train(vehicles_count=episode_vehicle_count)
         observation = env.get_train_observation(noise_level=episode_noise)
         for _train_step_i in range(env.max_step_num):
             if args.monitor_time:
@@ -551,7 +631,9 @@ if __name__ == '__main__':
                 action_chosen_onehot = action_distribution.sample()
                 action_logprob = action_distribution.log_prob(action_chosen_onehot)
 
-            reward, next_state_clean, _step_record = env.make_action(action_chosen_onehot)
+            # 🌟 把它向左退格！让它无论是不是 SNN 都会执行！
+            next_state_clean, reward, done, info, _step_record = env.make_action(action_chosen_onehot)
+            
             if env.done_signal:
                 observation_next = next_state_clean.detach().clone()
             else:
@@ -586,7 +668,7 @@ if __name__ == '__main__':
         log_text(
             File,
             'train',
-            '%d, %8.6f, %4d, %4.2f, %4d, %5.3f, %5.3f, %5.3f' % (
+            '%d, %8.6f, %4d, %4.2f, %4d, %5.3f, %5.3f, %5.3f, %2d' % (
                 train_epi_i,
                 env.episode_return,
                 env.step_num,
@@ -595,6 +677,7 @@ if __name__ == '__main__':
                 episode_noise,
                 noise_cap,
                 entropy_value,
+                episode_vehicle_count,
             ),
             onscreen=False,
         )
