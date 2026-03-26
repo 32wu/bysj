@@ -1,153 +1,183 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-np.bool8 = np.bool_  # 魔法补丁必须保留
+np.bool8 = np.bool_
 import torch
-import sys
-import os
 
-# 全面启用现代的 gymnasium 接口
 import gymnasium as gym
-import highway_env  
+import highway_env
 from gymnasium.wrappers import RecordVideo
 
+
 def print_info(input_string):
-    print('\033[96mLANE_ENV_INFO|\033[0m', input_string)
+    print('[96mLANE_ENV_INFO|[0m', input_string)
+
 
 class GymLane:
     def __init__(self, dev=torch.device('cpu')):
-        # Settings
-        # 🔓 第一把锁砸碎：外层最大步数放宽到 150 步！
-        self.max_step_num = 150  
-        self.state_dimension = 25  
-        self.action_num = 5  
+        self.max_step_num = 150
+        self.state_dimension = 25
+        self.action_num = 5
         self.dev = dev
         self.env = None
-        # Variables
-        self.mode, self.step_num, self.done_signal = None, None, None
-        self.state_original, self.state_processed = None, None
+
+        self.mode = None
+        self.step_num = 0
+        self.done_signal = 0
+        self.state_original = None
+        self.state_processed = None
+
+        self.episode_return = 0.0
+        self.collision_count = 0
+        self.lane_change_count = 0
+        self.last_step_info = {}
+        self.lane_change_action_ids = {0, 2}
+
+        self.obs_min_seen = None
+        self.obs_max_seen = None
+
         print_info('ACTION NUMBER: %6d' % self.action_num)
         print_info('STATE DIMENSION: %6d' % self.state_dimension)
 
+    def _configure_env(self):
+        self.env.unwrapped.configure({
+            'duration': self.max_step_num,
+            'vehicles_count': 40,
+            'high_speed_reward': 0.8,
+            'reward_speed_range': [20, 30],
+            'collision_reward': -1.0,
+            'lane_change_reward': -0.05,
+        })
+
+    def _refresh_action_metadata(self):
+        action_type = getattr(self.env.unwrapped, 'action_type', None)
+        if action_type is None or not hasattr(action_type, 'actions_indexes'):
+            self.lane_change_action_ids = {0, 2}
+            return
+        action_indexes = action_type.actions_indexes
+        lane_change_ids = []
+        for action_name in ['LANE_LEFT', 'LANE_RIGHT']:
+            if action_name in action_indexes:
+                lane_change_ids.append(action_indexes[action_name])
+        self.lane_change_action_ids = set(lane_change_ids) if lane_change_ids else {0, 2}
+
+    def _record_observation_range(self, state):
+        state_min = float(np.min(state))
+        state_max = float(np.max(state))
+        if self.obs_min_seen is None or state_min < self.obs_min_seen or state_max > self.obs_max_seen:
+            self.obs_min_seen = state_min if self.obs_min_seen is None else min(self.obs_min_seen, state_min)
+            self.obs_max_seen = state_max if self.obs_max_seen is None else max(self.obs_max_seen, state_max)
+            print_info('OBS RANGE min=%7.4f max=%7.4f' % (self.obs_min_seen, self.obs_max_seen))
+
     def state_to_tensor(self, state):
-        # 把 5x5 的矩阵展平成 1D 的 25 维向量
+        self._record_observation_range(state)
         state_handle = np.copy(state).flatten()
-        
-        # ⚠️ 【重要修复】highway-env 的值可能包含负数，需要映射到 [0, 1] 概率区间
-        # 假设原始范围域在 [-1, 1]，则 (x + 1) / 2
         state_handle = np.clip((state_handle + 1.0) / 2.0, 0.0, 1.0)
-        
-        state_cuda = torch.FloatTensor(np.expand_dims(state_handle, axis=0)).to(self.dev)
-        return state_cuda
+        state_tensor = torch.FloatTensor(np.expand_dims(state_handle, axis=0)).to(self.dev)
+        return state_tensor
+
+    def _reset_episode_trackers(self):
+        self.step_num = 0
+        self.done_signal = 0
+        self.episode_return = 0.0
+        self.collision_count = 0
+        self.lane_change_count = 0
+        self.last_step_info = {}
+        self.state_original = self.env.reset()[0]
+        self.state_processed = self.state_to_tensor(self.state_original)
+
     def init_train(self):
+        self.mode = 'train'
         if self.env is not None:
             self.env.close()
         self.env = gym.make('highway-v0', render_mode=None)
-        
-        # 强制篡改底层配置：让训练和测试环境完全一致！
-        self.env.unwrapped.configure({
-            "duration": 150,               # 赛道拉长到 150 步
-            "vehicles_count": 40,          # 加入40辆环境车，上点强度
-            "high_speed_reward": 0.8,      # 逼迫小车踩油门，不准当龟速大爷
-            "reward_speed_range": [20, 30],# 速度域定在 20-30
-            "collision_reward": -1.0,      # 撞车直接大扣分
-            "lane_change_reward": -0.05    # 惩罚瞎变道
-        })
-        self.state_original = self.env.reset()[0]
-        self.step_num = 0
+        self._configure_env()
+        self._refresh_action_metadata()
+        self._reset_episode_trackers()
 
     def init_val(self):
+        self.mode = 'val'
         if self.env is not None:
             self.env.close()
         self.env = gym.make('highway-v0', render_mode=None)
-        
-        # 验证环境也要保持一样的配置
-        self.env.unwrapped.configure({
-            "duration": 150,               
-            "vehicles_count": 40,          
-            "high_speed_reward": 0.8,      
-            "reward_speed_range": [20, 30],
-            "collision_reward": -1.0,      
-            "lane_change_reward": -0.05    
-        })
-        self.state_original = self.env.reset()[0]
-        self.step_num = 0
+        self._configure_env()
+        self._refresh_action_metadata()
+        self._reset_episode_trackers()
 
     def init_test(self, variation_type='none', variation_param=0, record_video=False):
+        del variation_type, variation_param
+        self.mode = 'test'
         if self.env is not None:
             self.env.close()
-        
         render_mode = 'rgb_array' if record_video else None
-        
-        # 裁判刚把新车造出来
         self.env = gym.make('highway-v0', render_mode=render_mode)
-        
-        # ==========================================
-        # 🔓 第二把锁砸碎：在没 reset 之前，强制篡改底层配置！
-        # ==========================================
-        try:
-            self.env.unwrapped.configure({
-                "duration": 150,          # 强制拉长跑道至 150 步
-                "vehicles_count": 40      # 强制增加车流密度至 40 辆
-            })
-            print_info("成功黑入底层：赛道已延长至 150 步，车流已增加！")
-        except Exception as e:
-            print_info(f"黑入底层失败: {e}")
-        # ==========================================
-
+        self._configure_env()
         if record_video:
             self.env = RecordVideo(self.env, video_folder='./video_logs_lane', name_prefix='highway_show')
-
-        # 带着篡改过的配置启动环境！
-        self.state_original = self.env.reset()[0]
-        self.step_num = 0
+        self._refresh_action_metadata()
+        self._reset_episode_trackers()
 
     def get_observation(self):
         self.state_processed = self.state_to_tensor(self.state_original)
         return self.state_processed
 
-    def get_train_observation(self, **kwargs):
-        return self.get_observation()
+    def get_train_observation(self, noise_level=0.0, **kwargs):
+        del kwargs
+        state_tensor = self.get_observation()
+        if noise_level > 0:
+            noise = torch.randn_like(state_tensor) * noise_level
+            state_tensor = torch.clamp(state_tensor + noise, 0.0, 1.0)
+        return state_tensor
 
     def get_val_observation(self, **kwargs):
+        del kwargs
         return self.get_observation()
 
     def get_test_observation(self, noise_type='none', noise_param=0, **kwargs):
-        s_tensor = self.get_observation()
+        del kwargs
+        state_tensor = self.get_observation()
         if noise_type == 'none':
-            return s_tensor
+            return state_tensor
         if noise_type == 'gaussian':
-            s_tensor.add_(torch.randn(s_tensor.size()).to(self.dev) * noise_param)
+            state_tensor = state_tensor + torch.randn_like(state_tensor) * noise_param
         else:
-            s_tensor.add_((torch.rand(s_tensor.size()).to(self.dev) - 0.5) * 2 * noise_param)
-        return s_tensor
+            state_tensor = state_tensor + (torch.rand_like(state_tensor) - 0.5) * 2 * noise_param
+        return torch.clamp(state_tensor, 0.0, 1.0)
 
     def make_action(self, action):
-        action_index = torch.argmax(action).item()
-        
-        # 【心跳监视器】：让小车每开 10 步就报个平安，并在同一行刷新！
-        if self.step_num % 10 == 0:
-            print(f"\r🚗 正在马路上飞驰... 当前回合已开 {self.step_num} 步", end="", flush=True)
-
-        s2, r, terminated, truncated, info = self.env.step(action_index)
+        action_index = int(torch.argmax(action).item())
+        next_state, reward_value, terminated, truncated, info = self.env.step(action_index)
         done = terminated or truncated
-        
-        reward = torch.FloatTensor(np.array([r])).to(self.dev)
-        
-        if done or self.step_num >= self.max_step_num - 1:
-            done_flag = 1
-            # 回合结束时换行
-            print(f" -> 💥 回合结束！得分: {r:.2f}") 
-        else:
-            done_flag = 0
-            
-        self.done_signal = done_flag
-        
-        self.state_original = np.copy(s2)
-        self.step_num += 1
-        
-        return reward, self.state_to_tensor(s2), [self.step_num, float(r)]
 
-if __name__ == "__main__":
+        self.state_original = np.copy(next_state)
+        self.state_processed = self.state_to_tensor(self.state_original)
+        self.step_num += 1
+        self.episode_return += float(reward_value)
+        self.last_step_info = info
+
+        info_action = info.get('action', action_index)
+        if info_action in self.lane_change_action_ids:
+            self.lane_change_count += 1
+        if bool(info.get('crashed', False)):
+            self.collision_count += 1
+
+        if done or self.step_num >= self.max_step_num:
+            self.done_signal = 1
+        else:
+            self.done_signal = 0
+
+        reward_tensor = torch.FloatTensor(np.array([reward_value])).to(self.dev)
+        step_record = [
+            self.step_num,
+            float(reward_value),
+            float(self.episode_return),
+            int(self.collision_count),
+            int(self.lane_change_count),
+            int(bool(info.get('crashed', False))),
+        ]
+        return reward_tensor, self.state_processed, step_record
+
+
+if __name__ == '__main__':
     env = GymLane(dev=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-    print('\033[91mFINISH: env_lane\033[0m')
+    print('[91mFINISH: env_lane[0m')

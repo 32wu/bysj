@@ -29,6 +29,7 @@ class RWTAprob:
         self.dim_action = output_size
         self.infer_noise = inference_noise
         self.entropy_ratio = entropy_ratio
+        self.grad_clip = None
         # Settings
         self.remove_connection_pattern = remove_connection_pattern
         self.dev = device
@@ -50,7 +51,13 @@ class RWTAprob:
         self.init_optimizer(optimizer_name, optimizer_learning_rate)
         print_info('RWTA Prob initialize')
         self.print_parameter_num()
-   
+   # === 毕设创新点：动态熵更新接口 ===
+    def update_entropy(self, new_entropy):
+        self.entropy_ratio = new_entropy
+        # print_info(f"动态调整当前探索熵为: {self.entropy_ratio:.4f}")
+
+    def set_grad_clip(self, grad_clip):
+        self.grad_clip = grad_clip
     def __call__(self, x):
         return self.forward(x)
 
@@ -191,6 +198,8 @@ class RWTAprob:
         target_2 = torch.clamp(ratio, 1-epsilon, 1+epsilon) * advantage_squeeze
         loss = + torch.min(target_1, target_2).mean() + self.entropy_ratio * a_entropy.mean()
         loss.backward()
+        if self.grad_clip is not None and self.grad_clip > 0 and model_output.grad is not None:
+            model_output.grad.data.clamp_(-self.grad_clip, self.grad_clip)
         gradient = torch.sum(model_output.grad * model_output * old_vha[:, self.dim_h:self.dim_ha], dim=1)
         gradient.detach_()
         # print(model_output.grad)
@@ -239,6 +248,8 @@ class RWTAprob:
     def learn_reinforce(self, a_logprob, advantage, a_entropy, v_ha, q_has, model_output, **kwargs):
         loss = +(a_logprob * advantage).mean() + self.entropy_ratio * a_entropy.mean()
         loss.backward()
+        if self.grad_clip is not None and self.grad_clip > 0 and model_output.grad is not None:
+            model_output.grad.data.clamp_(-self.grad_clip, self.grad_clip)
         gradient = torch.sum(model_output.grad * model_output * v_ha[:, self.dim_h:self.dim_ha], dim=1)
         gradient.detach_()
         
