@@ -14,15 +14,66 @@ def print_info(input_string):
     print('[96mLANE_ENV_INFO|[0m', input_string)
 
 
+SCENARIO_PRESETS = {
+    'highway': {
+        'env_id': 'highway-v0',
+        'max_step_num': 150,
+        'target_step_num': 140,
+        'config': {
+            'duration': 150,
+            'lanes_count': 4,
+            'vehicles_count': 40,
+            'high_speed_reward': 0.8,
+            'reward_speed_range': [20, 30],
+            'collision_reward': -1.0,
+            'lane_change_reward': -0.05,
+        },
+        'supports_vehicles_count': True,
+    },
+    'merge': {
+        'env_id': 'merge-v0',
+        'max_step_num': 90,
+        'target_step_num': 70,
+        'config': {
+            'collision_reward': -1.0,
+            'high_speed_reward': 0.3,
+            'lane_change_reward': -0.08,
+        },
+        'supports_vehicles_count': False,
+    },
+    'roundabout': {
+        'env_id': 'roundabout-v0',
+        'max_step_num': 80,
+        'target_step_num': 55,
+        'config': {
+            'duration': 15,
+            'collision_reward': -1.0,
+            'high_speed_reward': 0.3,
+            'lane_change_reward': -0.08,
+        },
+        'supports_vehicles_count': False,
+    },
+}
+
+TRAFFIC_VEHICLE_COUNT = {
+    'light': 24,
+    'standard': 40,
+    'dense': 60,
+}
+
+
 class GymLane:
-    def __init__(self, dev=torch.device('cpu')):
-        self.max_step_num = 150
-        self.target_step_num = 140
+    def __init__(self, dev=torch.device('cpu'), road_scenario='highway', traffic_level='standard'):
         self.state_dimension = 25
         self.action_num = 5
         self.dev = dev
         self.env = None
         self.video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'video_logs_lane')
+        self.road_scenario = None
+        self.env_id = None
+        self.scenario_supports_vehicles_count = False
+        self.base_env_config = {}
+        self.traffic_level = traffic_level if traffic_level in TRAFFIC_VEHICLE_COUNT else 'standard'
 
         self.mode = None
         self.step_num = 0
@@ -43,18 +94,33 @@ class GymLane:
         self.obs_min_seen = None
         self.obs_max_seen = None
 
+        self.set_scenario(road_scenario)
         print_info('ACTION NUMBER: %6d' % self.action_num)
         print_info('STATE DIMENSION: %6d' % self.state_dimension)
+        print_info('ROAD SCENARIO: %s (%s)' % (self.road_scenario, self.env_id))
 
-    def _configure_env(self, vehicles_count=40):
-        self.env.unwrapped.configure({
-            'duration': self.max_step_num,
-            'vehicles_count': int(vehicles_count),
-            'high_speed_reward': 0.8,
-            'reward_speed_range': [20, 30],
-            'collision_reward': -1.0,
-            'lane_change_reward': -0.05,
-        })
+    def set_scenario(self, road_scenario):
+        if road_scenario not in SCENARIO_PRESETS:
+            raise ValueError('Unsupported road_scenario: %s' % road_scenario)
+        preset = SCENARIO_PRESETS[road_scenario]
+        self.road_scenario = road_scenario
+        self.env_id = preset['env_id']
+        self.max_step_num = int(preset['max_step_num'])
+        self.target_step_num = int(preset['target_step_num'])
+        self.scenario_supports_vehicles_count = bool(preset.get('supports_vehicles_count', False))
+        self.base_env_config = dict(preset.get('config', {}))
+
+    def _resolve_vehicle_count(self, vehicles_count):
+        if vehicles_count is not None:
+            return int(vehicles_count)
+        return int(TRAFFIC_VEHICLE_COUNT.get(self.traffic_level, TRAFFIC_VEHICLE_COUNT['standard']))
+
+    def _configure_env(self, vehicles_count=None):
+        config = dict(self.base_env_config)
+        if self.scenario_supports_vehicles_count:
+            config['vehicles_count'] = self._resolve_vehicle_count(vehicles_count)
+            config['duration'] = self.max_step_num
+        self.env.unwrapped.configure(config)
 
     def _refresh_action_metadata(self):
         action_type = getattr(self.env.unwrapped, 'action_type', None)
@@ -74,7 +140,6 @@ class GymLane:
         if self.obs_min_seen is None or state_min < self.obs_min_seen or state_max > self.obs_max_seen:
             self.obs_min_seen = state_min if self.obs_min_seen is None else min(self.obs_min_seen, state_min)
             self.obs_max_seen = state_max if self.obs_max_seen is None else max(self.obs_max_seen, state_max)
-            #print_info('OBS RANGE min=%7.4f max=%7.4f' % (self.obs_min_seen, self.obs_max_seen))
 
     def state_to_tensor(self, state):
         self._record_observation_range(state)
@@ -83,7 +148,7 @@ class GymLane:
         state_tensor = torch.FloatTensor(np.expand_dims(state_handle, axis=0)).to(self.dev)
         return state_tensor
 
-    def _reset_episode_trackers(self):
+    def _reset_episode_trackers(self, episode_seed=None):
         self.step_num = 0
         self.done_signal = 0
         self.episode_return = 0.0
@@ -94,34 +159,37 @@ class GymLane:
         self.previous_action_index = None
         self.steps_since_lane_change = 1000
         self.target_step_bonus_awarded = False
-        self.state_original = self.env.reset()[0]
+        if episode_seed is None:
+            self.state_original = self.env.reset()[0]
+        else:
+            self.state_original = self.env.reset(seed=int(episode_seed))[0]
         self.state_processed = self.state_to_tensor(self.state_original)
 
-    def init_train(self, vehicles_count=40):
+    def init_train(self, vehicles_count=None, seed=None):
         self.mode = 'train'
         if self.env is not None:
             self.env.close()
-        self.env = gym.make('highway-v0', render_mode=None)
+        self.env = gym.make(self.env_id, render_mode=None)
         self._configure_env(vehicles_count=vehicles_count)
         self._refresh_action_metadata()
-        self._reset_episode_trackers()
+        self._reset_episode_trackers(episode_seed=seed)
 
-    def init_val(self, vehicles_count=40):
+    def init_val(self, vehicles_count=None, seed=None):
         self.mode = 'val'
         if self.env is not None:
             self.env.close()
-        self.env = gym.make('highway-v0', render_mode=None)
+        self.env = gym.make(self.env_id, render_mode=None)
         self._configure_env(vehicles_count=vehicles_count)
         self._refresh_action_metadata()
-        self._reset_episode_trackers()
+        self._reset_episode_trackers(episode_seed=seed)
 
-    def init_test(self, variation_type='none', variation_param=0, record_video=False, vehicles_count=40):
+    def init_test(self, variation_type='none', variation_param=0, record_video=False, vehicles_count=None, seed=None):
         del variation_type, variation_param
         self.mode = 'test'
         if self.env is not None:
             self.env.close()
         render_mode = 'rgb_array' if record_video else None
-        self.env = gym.make('highway-v0', render_mode=render_mode)
+        self.env = gym.make(self.env_id, render_mode=render_mode)
         self._configure_env(vehicles_count=vehicles_count)
         if record_video:
             os.makedirs(self.video_folder, exist_ok=True)
@@ -132,7 +200,7 @@ class GymLane:
                 episode_trigger=lambda episode_id: True,
             )
         self._refresh_action_metadata()
-        self._reset_episode_trackers()
+        self._reset_episode_trackers(episode_seed=seed)
 
     def get_observation(self):
         self.state_processed = self.state_to_tensor(self.state_original)
@@ -162,6 +230,7 @@ class GymLane:
         return torch.clamp(state_tensor, 0.0, 1.0)
 
     def _shape_reward(self, raw_reward, info, action_index, done):
+        del done
         reward_items = info.get('rewards', {})
         speed_reward = float(reward_items.get('high_speed_reward', 0.0))
         lane_reward = float(reward_items.get('right_lane_reward', 0.0))
@@ -226,14 +295,14 @@ class GymLane:
         }
         return float(shaped_reward)
 
+    def episode_success(self):
+        return int(self.step_num >= self.target_step_num and self.collision_count == 0)
+
     def make_action(self, action):
         action_index = int(torch.argmax(action).item())
-        
-        # ==========================================
-        # 🚗 恢复：小车心跳监视器（每 10 步刷新一次）
-        # ==========================================
+
         if self.step_num % 10 == 0:
-            print(f"\r🚗 正在马路上飞驰... 当前回合已开 {self.step_num} 步", end="", flush=True)
+            print(f"\r🚗 正在马路上飞驰... 当前回合已开 {self.step_num} 步", end='', flush=True)
 
         next_state, reward_value, terminated, truncated, info = self.env.step(action_index)
         done = terminated or truncated
@@ -255,9 +324,6 @@ class GymLane:
 
         if done or self.step_num >= self.max_step_num:
             self.done_signal = 1
-            # ==========================================
-            # 💥 恢复：回合结束播报（带上你优化的累计得分）
-            # ==========================================
             print(f" -> 💥 回合结束！步奖励: {shaped_reward:.2f} | 累计回报: {self.episode_return:.2f} | 原始回报: {self.episode_raw_return:.2f}")
         else:
             self.done_signal = 0

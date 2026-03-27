@@ -10,6 +10,8 @@ import spikingjelly.clock_driven.ann2snn.examples.utils as utils
 from spikingjelly.clock_driven.ann2snn import parser, classify_simulator
 from spikingjelly.clock_driven import functional
 
+import checkpoint_utils
+
 
 # Model ANN2SNN
 
@@ -69,11 +71,11 @@ class NetBP(nn.Module):
 
     def load_model(self, name=''):
         try:
-            file_name = './log_model/' + name + '_1' + '.pt'
+            file_name = checkpoint_utils.resolve_checkpoint_file(name + '_1')
             self.load_state_dict(torch.load(file_name))
         except:
             print_info('Error: current1 model currupted.')
-            file_name = './log_model/' + name + '_2' + '.pt'
+            file_name = checkpoint_utils.resolve_checkpoint_file(name + '_2')
             self.load_state_dict(torch.load(file_name))
         print_info('load: %s' % (file_name))
 

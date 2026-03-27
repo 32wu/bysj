@@ -34,3 +34,18 @@ git checkout -- <文件名> #撤销还没有push的更改
 conda env create -f bysj_env.yml #备份的环境
 
 python run_RL_ours.py --model rwtaspk --entropy 5.0 #训练小车大脑（默认 auto 档会自动收敛到更稳的参数）
+
+python compare_experiments.py --device cuda:0  # 自动对比优化前/优化后，输出论文可用表格到 comparison_reports/
+
+python run_RL_base.py --model rwtaspk --road_scenario highway --traffic_level standard  # 基线算法：直道标准车流
+python run_RL_ours.py --model rwtaspk --road_scenario highway --traffic_level dense  # 优化算法：高密度直道
+python run_RL_ours.py --model rwtaspk --road_scenario merge  # 优化算法：匝道汇入场景
+python run_RL_ours.py --model rwtaspk --road_scenario roundabout  # 优化算法：环岛/弯道场景
+bash train_lane_scenario_suite.sh  # 顺序训练 highway_standard / highway_dense / merge / roundabout
+
+现在 LANE 权重会按场景自动分到对应目录：
+- `LANE/log_model/highway_standard/`
+- `LANE/log_model/highway_dense/`
+- `LANE/log_model/merge/`
+- `LANE/log_model/roundabout/`
+

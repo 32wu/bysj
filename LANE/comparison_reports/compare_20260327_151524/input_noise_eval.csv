@@ -1,0 +1,3 @@
+model,scenario,traffic_level,input_noise,return_mean,return_std,length_mean,length_std,collision_mean,collision_std,success_mean,success_std,lane_change_mean,lane_change_std
+baseline,highway,standard,0.0,-33.76026153564453,0.0,24.0,0.0,1.0,0.0,0.0,0.0,24.0,0.0
+optimized,highway,standard,0.0,193.30575561523438,0.0,150.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0

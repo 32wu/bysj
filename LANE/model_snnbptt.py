@@ -7,6 +7,8 @@ import snntorch
 from snntorch import surrogate
 import numpy as np
 
+import checkpoint_utils
+
 
 # Model SNN LIF BPTT
 
@@ -71,18 +73,18 @@ class SNNBPTT3(nn.Module):
         return [action_probability, None]
 
     def save_model(self, name=''):
-        file_name = './log_model/' + name + '_1' + '.pt'
+        file_name = checkpoint_utils.resolve_checkpoint_file(name + '_1')
         torch.save(self.state_dict(), file_name)
-        file_name = './log_model/' + name + '_2' + '.pt'
+        file_name = checkpoint_utils.resolve_checkpoint_file(name + '_2')
         torch.save(self.state_dict(), file_name)
 
     def load_model(self, name=''):
         try:
-            file_name = './log_model/' + name + '_1' + '.pt'
+            file_name = checkpoint_utils.resolve_checkpoint_file(name + '_1')
             self.load_state_dict(torch.load(file_name))
         except Exception:
             print_info('Error: current1 model currupted.')
-            file_name = './log_model/' + name + '_2' + '.pt'
+            file_name = checkpoint_utils.resolve_checkpoint_file(name + '_2')
             self.load_state_dict(torch.load(file_name))
 
     def learn_ppo(self, a_logprob, old_logprob, advantage, epsilon_clip, a_entropy, **kwargs):

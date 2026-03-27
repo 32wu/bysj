@@ -10,6 +10,7 @@ import torch.nn as nn
 import random
 
 import memory_lib
+import checkpoint_utils
 
 
 def get_arguments():
@@ -50,6 +51,9 @@ def get_arguments():
     parser.add_argument('--response_window', type=int, default=40)
     # for snnbptt
     parser.add_argument('--snn_num_steps', type=int, default=15)
+    parser.add_argument('--road_scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
+    parser.add_argument('--traffic_level', type=str, default='standard', choices=['light', 'standard', 'dense'])
+    parser.add_argument('--skip_post_tests', default=False, action='store_true')
     # ---------------------------------------------------
     return parser.parse_args()
 
@@ -144,11 +148,13 @@ if __name__ == "__main__":
             args.train_num = 2000
         else:
             args.train_num = 5000
-    EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_rep%02d' % (
+    EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s_rep%02d' % (
             args.alg, args.task, args.model, model_str, args.optimizer,
             args.lr, args.entropy, args.gamma,
             args.PPO_epochs, args.eps_clip,
-            args.rep)
+            args.road_scenario, args.traffic_level, args.rep)
+    active_model_dir = checkpoint_utils.activate_scenario_model_dir(
+            args.road_scenario, args.traffic_level, create=True)
     # Task specified variables
     if args.task in ['gymip',]:
         val_freq, val_num, test_num = 100, 10, 10
@@ -177,7 +183,7 @@ if __name__ == "__main__":
         mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
     elif args.task == 'gymip':      # 名字继续用 gymip 骗过系统，但里面已经是小车了！
         import env_lane
-        env = env_lane.GymLane(dev=torch_device)  # 删掉了多余的 xml 参数
+        env = env_lane.GymLane(dev=torch_device, road_scenario=args.road_scenario, traffic_level=args.traffic_level)  # 删掉了多余的 xml 参数
         input_dimension, output_dimension = env.state_dimension, env.action_num
         mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
     elif args.task == 'vizdoom':    # ViZDoom Health Gathering
@@ -247,19 +253,17 @@ if __name__ == "__main__":
         model_c = model_critic.Critic(input_size=input_dimension, output_size=output_dimension,
                                       dev=torch_device)
     # Storage Folders
-    if not os.path.exists('./log_model'):
-        os.mkdir('./log_model')
-    if not os.path.exists('./log_text'):
-        os.mkdir('./log_text')
+    checkpoint_utils.get_model_root(create=True)
+    checkpoint_utils.get_log_root(create=True)
     model_current_save_time = time.time()
     log_text_flush_time = time.time()
     # Reload
     reload_data = True
-    log_filename = './log_text/log_' + EXP_NAME + '.txt'
+    log_filename = os.path.join(checkpoint_utils.get_log_root(create=True), 'log_' + EXP_NAME + '.txt')
     if not os.path.exists(log_filename):
         reload_data = False
-    if not os.path.exists('./log_model/' + EXP_NAME + '_current_1.pt'):
-        if not os.path.exists('./log_model/' + EXP_NAME + '_current_b_1.pt'):
+    if not os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_current_1')):
+        if not os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_current_b_1')):
             reload_data = False
     if args.ignore_checkpoint == True:
         reload_data = False
@@ -276,6 +280,7 @@ if __name__ == "__main__":
         File = open(log_filename, 'w')
         log_text(File, 'init', str(datetime.datetime.now()))
         log_text(File, 'arguments', str(args))
+        log_text(File, 'model_dir', active_model_dir)
         if args.model == 'ann2snn':
             model.load_model_ann(EXP_NAME + '_best')
     # Time Monitor
@@ -303,7 +308,7 @@ if __name__ == "__main__":
                 action_distribution = torch.distributions.OneHotCategorical(model_output)
                 action_chosen_onehot = action_distribution.sample()
                 action_logprob = action_distribution.log_prob(action_chosen_onehot)
-            reward, observation_next, performance_list = env.make_action(action_chosen_onehot)
+            observation_next, reward, _, _, step_record = env.make_action(action_chosen_onehot)
             if args.model in ['rwtaprob', 'rwtaspk']:
                 mem.add_transition(s1=observation, model_output=model_output,
                                    a=action_chosen_onehot, a_log=action_logprob,
@@ -390,7 +395,7 @@ if __name__ == "__main__":
             model.save_model(EXP_NAME + '_current')
             model_c.save_model(EXP_NAME + 'critic' + '_current')
             model_current_save_time = time.time()
-        log_text(File, 'train', '%d, %8.6f' % (train_epi_i, performance_list[0]), onscreen=False)
+        log_text(File, 'train', '%d, %8.6f' % (train_epi_i, step_record[2]), onscreen=False)
         # Validation
         if train_epi_i % val_freq == (val_freq - 1):
             val_preformance_list = []
@@ -401,17 +406,17 @@ if __name__ == "__main__":
                     model_output, model_other_output = model(observation)
                     action_chosen_index = torch.argmax(model_output, dim=1)
                     action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                    reward, observation_next, performance_list_val = env.make_action(action_chosen_onehot)
+                    observation_next, reward, _, _, step_record_val = env.make_action(action_chosen_onehot)
                     if env.done_signal == True:
                         break
-                val_preformance_list.append(performance_list_val[0])
+                val_preformance_list.append(step_record_val[2])
             val_performance_mean = sum(val_preformance_list) / len(val_preformance_list)
             if last_val_best <= val_performance_mean:
                 model.save_model(EXP_NAME + '_best')
                 model_c.save_model(EXP_NAME + 'critic' + '_best')
                 log_text(File, 'val_save', '%d,   %8.6f' % (train_epi_i, val_performance_mean))
                 last_val_best = val_performance_mean
-            log_text(File, 'val', '%d,   %8.6f,   %8.6f' % (train_epi_i, val_performance_mean, performance_list[0]))
+            log_text(File, 'val', '%d,   %8.6f,   %8.6f' % (train_epi_i, val_performance_mean, step_record[2]))
 
 
     # ANN2SNN Implementation
@@ -428,12 +433,19 @@ if __name__ == "__main__":
                 action_distribution = torch.distributions.OneHotCategorical(model_output)
                 action_chosen_onehot = action_distribution.sample()
                 action_logprob = action_distribution.log_prob(action_chosen_onehot)
-                reward, observation_next, performance_list = env.make_action(action_chosen_onehot)
+                observation_next, reward, _, _, step_record = env.make_action(action_chosen_onehot)
                 model.add_s_list(observation)
                 if env.done_signal is True:
                     break
         model.convert_model()
 
+
+    model.save_model(EXP_NAME + '_current')
+    model_c.save_model(EXP_NAME + 'critic' + '_current')
+    if args.skip_post_tests:
+        log_text(File, 'finish', str(datetime.datetime.now()))
+        File.close()
+        raise SystemExit(0)
 
 
     # ~~~~~~~~~~~~~~~~~~~~TEST~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -459,7 +471,7 @@ if __name__ == "__main__":
             model_output, model_other_output = model(observation)
             action_chosen_index = torch.argmax(model_output, dim=1)
             action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-            reward, _, _ = env.make_action(action_chosen_onehot)
+            env.make_action(action_chosen_onehot)
             for sample_i in range(observation.shape[0]):
                 ad_mem_s[pointer, :] = observation[sample_i, :]
                 ad_mem_a[pointer, :] = action_chosen_onehot[sample_i, :]
@@ -494,10 +506,10 @@ if __name__ == "__main__":
                 model_output, model_other_output = model(observation_perturb)
                 action_chosen_index = torch.argmax(model_output, dim=1)
                 action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                reward, _, test_other_step_record = env.make_action(action_chosen_onehot)
+                _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
                 if env.done_signal == True:
                     break
-            test_preformance_list.append(test_other_step_record[0])
+            test_preformance_list.append(test_other_step_record[2])
         test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
         log_text(File, 'FGSM', '%8.6f,   %8.6f' % (epsilon, test_performance_mean))
         File.flush()
@@ -522,10 +534,10 @@ if __name__ == "__main__":
                     model_output, model_other_output = model(observation)
                     action_chosen_index = torch.argmax(model_output, dim=1)
                     action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                    reward, _, test_other_step_record = env.make_action(action_chosen_onehot)
+                    _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
                     if env.done_signal == True:
                         break
-                test_preformance_list.append(test_other_step_record[0])
+                test_preformance_list.append(test_other_step_record[2])
             test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
             log_text(File, 'w_noise', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
             File.flush()
@@ -550,10 +562,10 @@ if __name__ == "__main__":
                     model_output, model_other_output = model(observation)
                     action_chosen_index = torch.argmax(model_output, dim=1)
                     action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                    reward, _, test_other_step_record = env.make_action(action_chosen_onehot)
+                    _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
                     if env.done_signal == True:
                         break
-                test_preformance_list.append(test_other_step_record[0])
+                test_preformance_list.append(test_other_step_record[2])
             test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
             log_text(File, 'w_rel_noise', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
             File.flush()
@@ -577,11 +589,11 @@ if __name__ == "__main__":
                     model_output, model_other_output = model(observation)
                     action_chosen_index = torch.argmax(model_output, dim=1)
                     action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                    reward, _, test_other_step_record = env.make_action(action_chosen_onehot)
+                    _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
 
                     if env.done_signal == True:
                         break
-                test_preformance_list.append(test_other_step_record[0])
+                test_preformance_list.append(test_other_step_record[2])
             test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
             log_text(File, 'i_noise', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
             File.flush()
@@ -608,11 +620,11 @@ if __name__ == "__main__":
                         model_output, model_other_output = model(observation)
                         action_chosen_index = torch.argmax(model_output, dim=1)
                         action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                        reward, _, test_other_step_record = env.make_action(action_chosen_onehot)
+                        _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
 
                         if env.done_signal == True:
                             break
-                    test_preformance_list.append(test_other_step_record[0])
+                    test_preformance_list.append(test_other_step_record[2])
                 test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
                 log_text(File, 'e_gymip', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
                 File.flush()
@@ -639,10 +651,10 @@ if __name__ == "__main__":
                         model_output, model_other_output = model(observation)
                         action_chosen_index = torch.argmax(model_output, dim=1)
                         action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                        reward, _, test_other_step_record = env.make_action(action_chosen_onehot)
+                        _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
                         if env.done_signal == True:
                             break
-                    test_preformance_list.append(test_other_step_record[0])
+                    test_preformance_list.append(test_other_step_record[2])
                 test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
                 log_text(File, 'RWTA_conn', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
                 File.flush()

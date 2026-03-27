@@ -24,6 +24,8 @@ _sanitize_omp_threads()
 import numpy as np
 import torch
 
+import checkpoint_utils
+
 
 def get_arguments():
     parser = argparse.ArgumentParser(description='Description: run_RL_ours')
@@ -67,6 +69,8 @@ def get_arguments():
     parser.add_argument('--curriculum_noise_step', type=float, default=0.03)
     parser.add_argument('--curriculum_entropy_decay', type=float, default=0.9)
     parser.add_argument('--lane_profile', type=str, default='auto', choices=['auto', 'legacy'])
+    parser.add_argument('--road_scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
+    parser.add_argument('--traffic_level', type=str, default='standard', choices=['light', 'standard', 'dense'])
     return parser.parse_args()
 
 
@@ -195,7 +199,8 @@ def build_experiment_name(args, model_str, seed):
         f'{args.alg}_{args.task}_{args.model}_{model_str}_{args.optimizer}_'
         f'{args.lr:.6f}_{args.entropy:.2f}_{args.gamma:.5f}_{args.PPO_epochs}_{args.eps_clip:.4f}_'
         f'ro{args.rollout_steps}_mb{args.mini_batch_size}_lam{args.gae_lambda:.2f}_'
-        f'rs{args.reward_scale:.2f}_gc{args.grad_clip:.2f}_{args.curriculum_mode}_seed{seed:02d}'
+        f'rs{args.reward_scale:.2f}_gc{args.grad_clip:.2f}_{args.curriculum_mode}_'
+        f'road{args.road_scenario}_tf{args.traffic_level}_seed{seed:02d}'
     )
 
 
@@ -490,10 +495,15 @@ if __name__ == '__main__':
     seed = args.seed if args.seed >= 0 else args.rep
     set_random_seed(seed, torch_device)
     EXP_NAME = build_experiment_name(args, model_str, seed)
+    active_model_dir = checkpoint_utils.activate_scenario_model_dir(
+        args.road_scenario,
+        args.traffic_level,
+        create=True,
+    )
 
     if args.task == 'gymip':
         import env_lane
-        env = env_lane.GymLane(dev=torch_device)
+        env = env_lane.GymLane(dev=torch_device, road_scenario=args.road_scenario, traffic_level=args.traffic_level)
         input_dimension, output_dimension = env.state_dimension, env.action_num
     else:
         raise ValueError('Only gymip/LANE is supported in this runner.')
@@ -573,21 +583,19 @@ if __name__ == '__main__':
     if hasattr(model_c, 'set_grad_clip'):
         model_c.set_grad_clip(args.grad_clip)
 
-    if not os.path.exists('./log_model'):
-        os.mkdir('./log_model')
-    if not os.path.exists('./log_text'):
-        os.mkdir('./log_text')
+    checkpoint_utils.get_model_root(create=True)
+    checkpoint_utils.get_log_root(create=True)
 
     model_current_save_time = time.time()
     log_text_flush_time = time.time()
     globals()['log_text_flush_time'] = log_text_flush_time
 
-    log_filename = './log_text/log_' + EXP_NAME + '.txt'
+    log_filename = os.path.join(checkpoint_utils.get_log_root(create=True), 'log_' + EXP_NAME + '.txt')
     reload_data = os.path.exists(log_filename)
     if args.model in ['rwtaprob', 'rwtaspk']:
-        reload_data = reload_data and os.path.exists('./log_model/' + EXP_NAME + '_current_b_1.pt')
+        reload_data = reload_data and os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_current_b_1'))
     else:
-        reload_data = reload_data and os.path.exists('./log_model/' + EXP_NAME + '_current_1.pt')
+        reload_data = reload_data and os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_current_1'))
     if args.ignore_checkpoint:
         reload_data = False
 
@@ -603,6 +611,7 @@ if __name__ == '__main__':
         log_text(File, 'init', str(datetime.datetime.now()))
         log_text(File, 'arguments', str(args))
         log_text(File, 'seed', str(seed))
+        log_text(File, 'model_dir', active_model_dir)
         if lane_profile_adjustments:
             log_text(File, 'profile', 'lane auto-stabilize: ' + ', '.join(lane_profile_adjustments))
 

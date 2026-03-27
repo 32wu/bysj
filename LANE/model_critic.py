@@ -2,6 +2,8 @@
 import torch
 import torch.nn as nn
 
+import checkpoint_utils
+
 
 # Model critic
 
@@ -44,17 +46,17 @@ class Critic(nn.Module):
         self.optimizer.step()
 
     def save_model(self, name=''):
-        file_name = './log_model/' + name + '_1' + '.pt'
+        file_name = checkpoint_utils.resolve_checkpoint_file(name + '_1')
         torch.save(self.state_dict(), file_name)
-        file_name = './log_model/' + name + '_2' + '.pt'
+        file_name = checkpoint_utils.resolve_checkpoint_file(name + '_2')
         torch.save(self.state_dict(), file_name)
 
     def load_model(self, name=''):
         try:
-            file_name = './log_model/' + name + '_1' + '.pt'
+            file_name = checkpoint_utils.resolve_checkpoint_file(name + '_1')
             self.load_state_dict(torch.load(file_name))
         except Exception:
             print_info('Error: current1 model currupted.')
-            file_name = './log_model/' + name + '_2' + '.pt'
+            file_name = checkpoint_utils.resolve_checkpoint_file(name + '_2')
             self.load_state_dict(torch.load(file_name))
         print_info('load: %s' % file_name)

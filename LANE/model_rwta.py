@@ -7,6 +7,8 @@ import torch.nn.functional as F
 import numpy as np
 import time
 
+import checkpoint_utils
+
 # Model RWTA
 
 
@@ -172,7 +174,7 @@ class RWTAprob:
         return [q_act, [act_sample, act_logprob, q_has, v_hid_act, action_dist_entropy]]
 
     def get_filename(self, name):
-        file_name = './log_model/' + name + '.pt'
+        file_name = checkpoint_utils.resolve_checkpoint_file(name)
         return file_name
 
     def save_model(self, name=''):
