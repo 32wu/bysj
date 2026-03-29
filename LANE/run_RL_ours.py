@@ -79,6 +79,7 @@ def reload_log_file(filename):
     val_best_return = -10000.0
     val_best_collision = float('inf')
     val_best_length = 0.0
+    val_best_success = 0.0
     with open(filename) as file:
         for line in file:
             str_list = [item for item in re.sub(',', ' ', line).split()]
@@ -92,7 +93,9 @@ def reload_log_file(filename):
                     val_best_collision = float(str_list[3])
                 if len(str_list) > 4:
                     val_best_length = float(str_list[4])
-    return train_epi_num, val_best_return, val_best_collision, val_best_length
+                if len(str_list) > 6:
+                    val_best_success = float(str_list[6])
+    return train_epi_num, val_best_return, val_best_collision, val_best_length, val_best_success
 
 
 def log_text(file_handle, type_str, record_text, onscreen=True):
@@ -233,6 +236,21 @@ def apply_lane_stability_profile(args):
     clamp_min('curriculum_clean_ratio', 0.8)
     clamp_max('max_noise', 0.08)
     clamp_max('curriculum_noise_step', 0.02)
+    if args.road_scenario == 'merge':
+        clamp_max('entropy', 0.8)
+        clamp_max('entropy_min', 0.05)
+        clamp_min('curriculum_clean_ratio', 1.0)
+        clamp_max('max_noise', 0.0)
+        clamp_max('curriculum_noise_step', 0.0)
+        if args.curriculum_patience > 1:
+            args.curriculum_patience = 1
+            adjustments.append('curriculum_patience->1')
+        if args.curriculum_entropy_decay > 0.85:
+            args.curriculum_entropy_decay = 0.85
+            adjustments.append('curriculum_entropy_decay->0.85')
+        if args.train_num < 3000:
+            args.train_num = 3000
+            adjustments.append('train_num->3000')
     return adjustments
 
 
@@ -241,9 +259,19 @@ def select_lane_vehicle_count(args, train_epi_i):
         return 40
     if args.model != 'rwtaspk' or args.lane_profile != 'auto':
         return 40
-    progress = min(1.0, train_epi_i / max(1, args.train_num - 1))
     start_vehicle_num = 18
-    end_vehicle_num = 40
+    if getattr(args, 'road_scenario', None) == 'highway':
+        traffic_target = {
+            'light': 24,
+            'standard': 40,
+            'dense': 60,
+        }
+        end_vehicle_num = traffic_target.get(getattr(args, 'traffic_level', 'standard'), 40)
+        curriculum_span = 120 if getattr(args, 'traffic_level', 'standard') == 'dense' else 300
+        progress = min(1.0, train_epi_i / max(1, curriculum_span))
+    else:
+        end_vehicle_num = 40
+        progress = min(1.0, train_epi_i / max(1, args.train_num - 1))
     return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
 
 
@@ -318,11 +346,13 @@ def evaluate_policy(env, model, episode_num, mode='val'):
         'mean_length': 0.0,
         'collision_rate': 0.0,
         'mean_lane_change': 0.0,
+        'success_rate': 0.0,
     }
     returns = []
     lengths = []
     collisions = []
     lane_changes = []
+    successes = []
     with torch.no_grad():
         for _ in range(episode_num):
             if mode == 'val':
@@ -346,10 +376,12 @@ def evaluate_policy(env, model, episode_num, mode='val'):
             lengths.append(env.step_num)
             collisions.append(1.0 if env.collision_count > 0 else 0.0)
             lane_changes.append(env.lane_change_count)
+            successes.append(env.episode_success())
     metrics['mean_return'] = float(np.mean(returns))
     metrics['mean_length'] = float(np.mean(lengths))
     metrics['collision_rate'] = float(np.mean(collisions))
     metrics['mean_lane_change'] = float(np.mean(lane_changes))
+    metrics['success_rate'] = float(np.mean(successes))
     return metrics
 
 
@@ -480,7 +512,10 @@ if __name__ == '__main__':
 
     lane_profile_adjustments = apply_lane_stability_profile(args)
     if args.task == 'gymip' and args.model == 'rwtaspk' and args.lane_profile == 'auto':
-        val_freq, val_num = 25, 5
+        if args.road_scenario == 'merge':
+            val_freq, val_num = 10, 10
+        else:
+            val_freq, val_num = 25, 5
     else:
         val_freq, val_num = 100, 10
 
@@ -599,9 +634,9 @@ if __name__ == '__main__':
     if args.ignore_checkpoint:
         reload_data = False
 
-    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length = 0, -10000.0, float('inf'), 0.0
+    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success = 0, -10000.0, float('inf'), 0.0, 0.0
     if reload_data:
-        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length = reload_log_file(log_filename)
+        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
         model.load_model(EXP_NAME + '_current')
@@ -718,47 +753,73 @@ if __name__ == '__main__':
 
         if train_epi_i % val_freq == (val_freq - 1):
             val_metrics = evaluate_policy(env, model, val_num, mode='val')
-            better_model = (
-                val_metrics['mean_length'] > last_val_best_length + 1e-6 or
-                (
-                    abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
-                    val_metrics['collision_rate'] < last_val_best_collision
-                ) or
-                (
-                    abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
-                    abs(val_metrics['collision_rate'] - last_val_best_collision) <= 1e-6 and
-                    val_metrics['mean_return'] > last_val_best + 1e-6
+            if args.road_scenario == 'merge':
+                better_model = (
+                    val_metrics['success_rate'] > last_val_best_success + 1e-6 or
+                    (
+                        abs(val_metrics['success_rate'] - last_val_best_success) <= 1e-6 and
+                        val_metrics['mean_length'] > last_val_best_length + 1e-6
+                    ) or
+                    (
+                        abs(val_metrics['success_rate'] - last_val_best_success) <= 1e-6 and
+                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
+                        val_metrics['collision_rate'] < last_val_best_collision
+                    ) or
+                    (
+                        abs(val_metrics['success_rate'] - last_val_best_success) <= 1e-6 and
+                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
+                        abs(val_metrics['collision_rate'] - last_val_best_collision) <= 1e-6 and
+                        val_metrics['mean_return'] > last_val_best + 1e-6
+                    )
                 )
-            )
+            else:
+                better_model = (
+                    val_metrics['mean_length'] > last_val_best_length + 1e-6 or
+                    (
+                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
+                        val_metrics['collision_rate'] < last_val_best_collision
+                    ) or
+                    (
+                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
+                        abs(val_metrics['collision_rate'] - last_val_best_collision) <= 1e-6 and
+                        val_metrics['mean_return'] > last_val_best + 1e-6
+                    )
+                )
             if better_model:
                 model.save_model(EXP_NAME + '_best')
                 model_c.save_model(EXP_NAME + 'critic_best')
                 last_val_best = val_metrics['mean_return']
                 last_val_best_collision = val_metrics['collision_rate']
                 last_val_best_length = val_metrics['mean_length']
+                last_val_best_success = val_metrics['success_rate']
                 log_text(
                     File,
                     'val_save',
-                    '%d, %8.6f, %6.4f, %8.4f, %8.4f' % (
+                    '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f' % (
                         train_epi_i,
                         val_metrics['mean_return'],
                         val_metrics['collision_rate'],
                         val_metrics['mean_length'],
                         val_metrics['mean_lane_change'],
+                        val_metrics['success_rate'],
                     ),
                 )
             log_text(
                 File,
                 'val',
-                '%d, %8.6f, %6.4f, %8.4f, %8.4f' % (
+                '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f' % (
                     train_epi_i,
                     val_metrics['mean_return'],
                     val_metrics['collision_rate'],
                     val_metrics['mean_length'],
                     val_metrics['mean_lane_change'],
+                    val_metrics['success_rate'],
                 ),
             )
-            curriculum_message = update_curriculum(args, curriculum_state, val_metrics['mean_length'])
+            curriculum_signal = val_metrics['mean_length']
+            if args.road_scenario == 'merge':
+                curriculum_signal = val_metrics['mean_length'] + env.target_step_num * val_metrics['success_rate']
+            curriculum_message = update_curriculum(args, curriculum_state, curriculum_signal)
             if curriculum_message is not None:
                 log_text(File, 'curriculum', curriculum_message)
 

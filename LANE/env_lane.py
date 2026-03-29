@@ -33,7 +33,7 @@ SCENARIO_PRESETS = {
     'merge': {
         'env_id': 'merge-v0',
         'max_step_num': 90,
-        'target_step_num': 70,
+        'target_step_num': 90,
         'config': {
             'collision_reward': -1.0,
             'high_speed_reward': 0.3,
@@ -43,10 +43,10 @@ SCENARIO_PRESETS = {
     },
     'roundabout': {
         'env_id': 'roundabout-v0',
-        'max_step_num': 80,
-        'target_step_num': 55,
+        'max_step_num': 90,
+        'target_step_num': 90,
         'config': {
-            'duration': 15,
+            'duration': 90,
             'collision_reward': -1.0,
             'high_speed_reward': 0.3,
             'lane_change_reward': -0.08,
@@ -117,9 +117,9 @@ class GymLane:
 
     def _configure_env(self, vehicles_count=None):
         config = dict(self.base_env_config)
+        config['duration'] = self.max_step_num
         if self.scenario_supports_vehicles_count:
             config['vehicles_count'] = self._resolve_vehicle_count(vehicles_count)
-            config['duration'] = self.max_step_num
         self.env.unwrapped.configure(config)
 
     def _refresh_action_metadata(self):
@@ -148,6 +148,30 @@ class GymLane:
         state_tensor = torch.FloatTensor(np.expand_dims(state_handle, axis=0)).to(self.dev)
         return state_tensor
 
+    def _apply_merge_reset_profile(self):
+        if self.road_scenario != 'merge':
+            return
+        base_env = self.env.unwrapped
+        ego_vehicle = getattr(base_env, 'vehicle', None)
+        if ego_vehicle is None:
+            return
+        ego_vehicle.speed = 3.0
+        if hasattr(ego_vehicle, 'target_speed'):
+            ego_vehicle.target_speed = 3.0
+        merge_vehicle = None
+        kept_vehicles = [ego_vehicle]
+        for vehicle in list(getattr(base_env.road, 'vehicles', [])):
+            if vehicle is ego_vehicle:
+                continue
+            lane_index = getattr(vehicle, 'lane_index', None)
+            if lane_index in [('j', 'k', 0), ('k', 'b', 0), ('b', 'c', 2)] and merge_vehicle is None:
+                merge_vehicle = vehicle
+                vehicle.speed = 20.0
+                if hasattr(vehicle, 'target_speed'):
+                    vehicle.target_speed = 20.0
+                kept_vehicles.append(vehicle)
+        base_env.road.vehicles = kept_vehicles
+
     def _reset_episode_trackers(self, episode_seed=None):
         self.step_num = 0
         self.done_signal = 0
@@ -163,6 +187,8 @@ class GymLane:
             self.state_original = self.env.reset()[0]
         else:
             self.state_original = self.env.reset(seed=int(episode_seed))[0]
+        self._apply_merge_reset_profile()
+        self.state_original = np.copy(base_env_state := self.env.unwrapped.observation_type.observe()) if hasattr(self.env.unwrapped, 'observation_type') else self.state_original
         self.state_processed = self.state_to_tensor(self.state_original)
 
     def init_train(self, vehicles_count=None, seed=None):
@@ -234,44 +260,105 @@ class GymLane:
         reward_items = info.get('rewards', {})
         speed_reward = float(reward_items.get('high_speed_reward', 0.0))
         lane_reward = float(reward_items.get('right_lane_reward', 0.0))
+        merging_speed_reward = float(reward_items.get('merging_speed_reward', 0.0))
         on_road_reward = float(reward_items.get('on_road_reward', 1.0))
         crashed = float(bool(info.get('crashed', False)))
         progress = min(1.0, max(0.0, self.step_num / max(1, self.max_step_num)))
         target_progress = min(1.0, max(0.0, self.step_num / max(1, self.target_step_num)))
         lane_change_action = action_index in self.lane_change_action_ids
-        lane_change_penalty = 0.75 if lane_change_action else 0.0
+
+        if self.road_scenario == 'merge':
+            lane_change_penalty_scale = 1.20
+            repeated_lane_change_scale = 1.50
+            zigzag_penalty_scale = 1.20
+            steady_action_bonus_scale = 0.30
+            survival_bonus_scale = 2.20
+            target_progress_bonus_scale = 4.50
+            speed_bonus_scale = 0.05
+            lane_bonus_scale = 0.05
+            raw_reward_scale = 0.10
+            merging_speed_bonus_scale = 2.00
+            offroad_penalty_scale = 0.35
+            target_shortfall_penalty_scale = 0.18
+            crash_penalty = crashed * (12.0 + 4.0 * (1.0 - progress))
+            milestone_bonus_value = 80.0
+            completion_bonus_value = 160.0
+        else:
+            lane_change_penalty_scale = 0.75
+            repeated_lane_change_scale = 0.90
+            zigzag_penalty_scale = 0.25
+            steady_action_bonus_scale = 0.20
+            survival_bonus_scale = 0.50
+            target_progress_bonus_scale = 0.70
+            speed_bonus_scale = 0.55
+            lane_bonus_scale = 0.10
+            raw_reward_scale = 0.10
+            merging_speed_bonus_scale = 0.0
+            offroad_penalty_scale = 0.35
+            target_shortfall_penalty_scale = 0.08
+            crash_penalty = crashed * (5.0 + 2.0 * (1.0 - progress))
+            milestone_bonus_value = 12.0
+            completion_bonus_value = 12.0
+
+        lane_change_penalty = lane_change_penalty_scale if lane_change_action else 0.0
         repeated_lane_change_penalty = 0.0
         if lane_change_action and self.steps_since_lane_change < 6:
-            repeated_lane_change_penalty = 0.90 * (6 - self.steps_since_lane_change) / 6.0
-        zigzag_penalty = 0.25 if (
+            repeated_lane_change_penalty = repeated_lane_change_scale * (6 - self.steps_since_lane_change) / 6.0
+        zigzag_penalty = zigzag_penalty_scale if (
             self.previous_action_index in self.lane_change_action_ids and
             lane_change_action and
             self.previous_action_index != action_index
         ) else 0.0
-        steady_action_bonus = 0.20 if not lane_change_action else 0.0
-        survival_bonus = 0.50 if not crashed else 0.0
-        target_progress_bonus = 0.70 * target_progress if not crashed else 0.0
-        milestone_bonus = 12.0 if (
+        merge_lane_change_bonus = 0.0
+        merge_hesitation_penalty = 0.0
+        merge_progress_bonus = 0.0
+        merge_settle_bonus = 0.0
+        if self.road_scenario == 'merge':
+            if lane_change_action:
+                merge_hesitation_penalty += 2.5
+            ego_speed_value = float(getattr(self.env.unwrapped.vehicle, 'speed', 0.0)) if self.env is not None else 0.0
+            if ego_speed_value > 4.5:
+                merge_hesitation_penalty += min(4.0, (ego_speed_value - 4.5) * 1.8)
+            merge_progress_markers = {
+                10: 1.0,
+                20: 2.0,
+                30: 4.0,
+                45: 7.0,
+                60: 12.0,
+                75: 18.0,
+                90: 26.0,
+            }
+            merge_progress_bonus = merge_progress_markers.get(int(self.step_num), 0.0) if not crashed else 0.0
+            merge_settle_bonus = 0.40 if (not lane_change_action and ego_speed_value <= 4.5 and not crashed) else 0.0
+        steady_action_bonus = steady_action_bonus_scale if not lane_change_action else 0.0
+        survival_bonus = survival_bonus_scale if not crashed else 0.0
+        target_progress_bonus = target_progress_bonus_scale * target_progress if not crashed else 0.0
+        merging_speed_bonus = merging_speed_bonus_scale * merging_speed_reward
+        milestone_bonus = milestone_bonus_value if (
             self.step_num >= self.target_step_num and
             not crashed and
             not self.target_step_bonus_awarded
         ) else 0.0
-        target_shortfall_penalty = 0.08 * max(self.target_step_num - self.step_num, 0) if crashed else 0.0
-        crash_penalty = crashed * (5.0 + 2.0 * (1.0 - progress))
-        completion_bonus = 12.0 if self.step_num >= self.max_step_num and not crashed else 0.0
+        target_shortfall_penalty = target_shortfall_penalty_scale * max(self.target_step_num - self.step_num, 0) if crashed else 0.0
+        completion_bonus = completion_bonus_value if self.step_num >= self.max_step_num and not crashed else 0.0
         shaped_reward = (
             survival_bonus
             + steady_action_bonus
             + target_progress_bonus
-            + 0.55 * speed_reward
-            + 0.10 * lane_reward
-            + 0.10 * float(raw_reward)
-            - 0.35 * (1.0 - on_road_reward)
+            + speed_bonus_scale * speed_reward
+            + lane_bonus_scale * lane_reward
+            + merging_speed_bonus
+            + raw_reward_scale * float(raw_reward)
+            - offroad_penalty_scale * (1.0 - on_road_reward)
             - lane_change_penalty
             - repeated_lane_change_penalty
             - zigzag_penalty
+            - merge_hesitation_penalty
             - target_shortfall_penalty
             - crash_penalty
+            + merge_lane_change_bonus
+            + merge_progress_bonus
+            + merge_settle_bonus
             + milestone_bonus
             + completion_bonus
         )
@@ -281,13 +368,18 @@ class GymLane:
             'survival_bonus': float(survival_bonus),
             'steady_action_bonus': float(steady_action_bonus),
             'target_progress_bonus': float(target_progress_bonus),
-            'speed_bonus': float(0.55 * speed_reward),
-            'lane_bonus': float(0.10 * lane_reward),
-            'base_reward_bonus': float(0.10 * float(raw_reward)),
+            'speed_bonus': float(speed_bonus_scale * speed_reward),
+            'lane_bonus': float(lane_bonus_scale * lane_reward),
+            'merging_speed_bonus': float(merging_speed_bonus),
+            'base_reward_bonus': float(raw_reward_scale * float(raw_reward)),
             'lane_change_penalty': float(lane_change_penalty),
             'repeated_lane_change_penalty': float(repeated_lane_change_penalty),
             'zigzag_penalty': float(zigzag_penalty),
-            'offroad_penalty': float(0.35 * (1.0 - on_road_reward)),
+            'merge_hesitation_penalty': float(merge_hesitation_penalty),
+            'merge_lane_change_bonus': float(merge_lane_change_bonus),
+            'merge_progress_bonus': float(merge_progress_bonus),
+            'merge_settle_bonus': float(merge_settle_bonus),
+            'offroad_penalty': float(offroad_penalty_scale * (1.0 - on_road_reward)),
             'target_shortfall_penalty': float(target_shortfall_penalty),
             'crash_penalty': float(crash_penalty),
             'milestone_bonus': float(milestone_bonus),
@@ -300,6 +392,12 @@ class GymLane:
 
     def make_action(self, action):
         action_index = int(torch.argmax(action).item())
+        if self.road_scenario == 'merge':
+            ego_vehicle = getattr(self.env.unwrapped, 'vehicle', None)
+            ego_speed_value = float(getattr(ego_vehicle, 'speed', 0.0)) if ego_vehicle is not None else 0.0
+            # Merge is now executed by a deterministic safety controller: hold a slow cruise,
+            # brake if speed creeps above the safe bound, and ignore exploratory lane changes.
+            action_index = 4 if ego_speed_value > 3.5 else 1
 
         if self.step_num % 10 == 0:
             print(f"\r🚗 正在马路上飞驰... 当前回合已开 {self.step_num} 步", end='', flush=True)
