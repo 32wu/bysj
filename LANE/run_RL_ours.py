@@ -71,6 +71,8 @@ def get_arguments():
     parser.add_argument('--lane_profile', type=str, default='auto', choices=['auto', 'legacy'])
     parser.add_argument('--road_scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
     parser.add_argument('--traffic_level', type=str, default='standard', choices=['light', 'standard', 'dense'])
+    parser.add_argument('--warm_start_kind', type=str, default='none', choices=['none', 'baseline', 'ours', 'any'])
+    parser.add_argument('--warm_start_prefix', type=str, default='')
     return parser.parse_args()
 
 
@@ -80,6 +82,7 @@ def reload_log_file(filename):
     val_best_collision = float('inf')
     val_best_length = 0.0
     val_best_success = 0.0
+    val_best_speed = 0.0
     with open(filename) as file:
         for line in file:
             str_list = [item for item in re.sub(',', ' ', line).split()]
@@ -95,7 +98,9 @@ def reload_log_file(filename):
                     val_best_length = float(str_list[4])
                 if len(str_list) > 6:
                     val_best_success = float(str_list[6])
-    return train_epi_num, val_best_return, val_best_collision, val_best_length, val_best_success
+                if len(str_list) > 7:
+                    val_best_speed = float(str_list[7])
+    return train_epi_num, val_best_return, val_best_collision, val_best_length, val_best_success, val_best_speed
 
 
 def log_text(file_handle, type_str, record_text, onscreen=True):
@@ -207,6 +212,39 @@ def build_experiment_name(args, model_str, seed):
     )
 
 
+def actor_prefix_to_critic_prefix(actor_prefix):
+    actor_prefix = checkpoint_utils.normalize_prefix(actor_prefix)
+    if actor_prefix.endswith('_best'):
+        return actor_prefix[:-len('_best')] + 'critic_best'
+    if actor_prefix.endswith('_current'):
+        return actor_prefix[:-len('_current')] + 'critic_current'
+    raise ValueError(f'Unsupported warm-start actor prefix: {actor_prefix}')
+
+
+def resolve_warm_start_prefix(args):
+    if args.warm_start_prefix:
+        return checkpoint_utils.normalize_prefix(args.warm_start_prefix)
+    if args.warm_start_kind == 'none':
+        return None
+    checkpoint_kind = None if args.warm_start_kind == 'any' else args.warm_start_kind
+    return checkpoint_utils.find_latest_checkpoint_prefix(
+        kind=checkpoint_kind,
+        road_scenario=args.road_scenario,
+        traffic_level=args.traffic_level,
+        best_only=True,
+    )
+
+
+def maybe_load_warm_start(args, model, model_c):
+    actor_prefix = resolve_warm_start_prefix(args)
+    if actor_prefix is None:
+        return None, None
+    critic_prefix = actor_prefix_to_critic_prefix(actor_prefix)
+    model.load_model(actor_prefix)
+    model_c.load_model(critic_prefix)
+    return actor_prefix, critic_prefix
+
+
 def apply_lane_stability_profile(args):
     if args.task != 'gymip' or args.model != 'rwtaspk' or args.lane_profile != 'auto':
         return []
@@ -259,20 +297,39 @@ def select_lane_vehicle_count(args, train_epi_i):
         return 40
     if args.model != 'rwtaspk' or args.lane_profile != 'auto':
         return 40
-    start_vehicle_num = 18
     if getattr(args, 'road_scenario', None) == 'highway':
         traffic_target = {
             'light': 24,
             'standard': 40,
             'dense': 60,
         }
-        end_vehicle_num = traffic_target.get(getattr(args, 'traffic_level', 'standard'), 40)
-        curriculum_span = 120 if getattr(args, 'traffic_level', 'standard') == 'dense' else 300
+        traffic_start = {
+            'light': 20,
+            'standard': 32,
+            'dense': 52,
+        }
+        traffic_level = getattr(args, 'traffic_level', 'standard')
+        start_vehicle_num = traffic_start.get(traffic_level, 32)
+        end_vehicle_num = traffic_target.get(traffic_level, 40)
+        curriculum_span = 80 if traffic_level == 'dense' else 160
         progress = min(1.0, train_epi_i / max(1, curriculum_span))
-    else:
-        end_vehicle_num = 40
-        progress = min(1.0, train_epi_i / max(1, args.train_num - 1))
-    return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
+        return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
+
+    scenario_target = {
+        'merge': {
+            'light': 6,
+            'standard': 8,
+            'dense': 10,
+        },
+        'roundabout': {
+            'light': 8,
+            'standard': 10,
+            'dense': 12,
+        },
+    }
+    scenario_name = getattr(args, 'road_scenario', 'merge')
+    traffic_level = getattr(args, 'traffic_level', 'standard')
+    return int(scenario_target.get(scenario_name, scenario_target['merge']).get(traffic_level, 8))
 
 
 def init_curriculum(args):
@@ -344,12 +401,14 @@ def evaluate_policy(env, model, episode_num, mode='val'):
     metrics = {
         'mean_return': 0.0,
         'mean_length': 0.0,
+        'mean_speed': 0.0,
         'collision_rate': 0.0,
         'mean_lane_change': 0.0,
         'success_rate': 0.0,
     }
     returns = []
     lengths = []
+    speeds = []
     collisions = []
     lane_changes = []
     successes = []
@@ -374,15 +433,38 @@ def evaluate_policy(env, model, episode_num, mode='val'):
                     observation = env.get_test_observation()
             returns.append(env.episode_return)
             lengths.append(env.step_num)
+            speeds.append(env.episode_mean_speed())
             collisions.append(1.0 if env.collision_count > 0 else 0.0)
             lane_changes.append(env.lane_change_count)
             successes.append(env.episode_success())
     metrics['mean_return'] = float(np.mean(returns))
     metrics['mean_length'] = float(np.mean(lengths))
+    metrics['mean_speed'] = float(np.mean(speeds))
     metrics['collision_rate'] = float(np.mean(collisions))
     metrics['mean_lane_change'] = float(np.mean(lane_changes))
     metrics['success_rate'] = float(np.mean(successes))
     return metrics
+
+
+def is_better_lane_checkpoint(val_metrics, best_return, best_collision, best_success, best_speed):
+    if val_metrics['success_rate'] > best_success + 1e-6:
+        return True
+    if abs(val_metrics['success_rate'] - best_success) <= 1e-6 and val_metrics['collision_rate'] < best_collision - 1e-6:
+        return True
+    if (
+        abs(val_metrics['success_rate'] - best_success) <= 1e-6 and
+        abs(val_metrics['collision_rate'] - best_collision) <= 1e-6 and
+        val_metrics['mean_speed'] > best_speed + 1e-6
+    ):
+        return True
+    if (
+        abs(val_metrics['success_rate'] - best_success) <= 1e-6 and
+        abs(val_metrics['collision_rate'] - best_collision) <= 1e-6 and
+        abs(val_metrics['mean_speed'] - best_speed) <= 1e-6 and
+        val_metrics['mean_return'] > best_return + 1e-6
+    ):
+        return True
+    return False
 
 
 def update_policy(model, model_c, rollout, args, calculation_time_monitor=None):
@@ -634,9 +716,10 @@ if __name__ == '__main__':
     if args.ignore_checkpoint:
         reload_data = False
 
-    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success = 0, -10000.0, float('inf'), 0.0, 0.0
+    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed = 0, -10000.0, float('inf'), 0.0, 0.0, 0.0
+    warm_start_actor_prefix, warm_start_critic_prefix = None, None
     if reload_data:
-        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success = reload_log_file(log_filename)
+        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
         model.load_model(EXP_NAME + '_current')
@@ -649,6 +732,16 @@ if __name__ == '__main__':
         log_text(File, 'model_dir', active_model_dir)
         if lane_profile_adjustments:
             log_text(File, 'profile', 'lane auto-stabilize: ' + ', '.join(lane_profile_adjustments))
+        if args.warm_start_kind != 'none' or args.warm_start_prefix:
+            try:
+                warm_start_actor_prefix, warm_start_critic_prefix = maybe_load_warm_start(args, model, model_c)
+            except (FileNotFoundError, ValueError) as exc:
+                File.flush()
+                File.close()
+                raise SystemExit(f'Warm-start failed: {exc}')
+            if warm_start_actor_prefix is not None:
+                log_text(File, 'warm_start', warm_start_actor_prefix)
+                log_text(File, 'warm_critic', warm_start_critic_prefix, onscreen=False)
 
     calculation_time_monitor = TimeMonitor()
     curriculum_state = init_curriculum(args)
@@ -753,38 +846,13 @@ if __name__ == '__main__':
 
         if train_epi_i % val_freq == (val_freq - 1):
             val_metrics = evaluate_policy(env, model, val_num, mode='val')
-            if args.road_scenario == 'merge':
-                better_model = (
-                    val_metrics['success_rate'] > last_val_best_success + 1e-6 or
-                    (
-                        abs(val_metrics['success_rate'] - last_val_best_success) <= 1e-6 and
-                        val_metrics['mean_length'] > last_val_best_length + 1e-6
-                    ) or
-                    (
-                        abs(val_metrics['success_rate'] - last_val_best_success) <= 1e-6 and
-                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
-                        val_metrics['collision_rate'] < last_val_best_collision
-                    ) or
-                    (
-                        abs(val_metrics['success_rate'] - last_val_best_success) <= 1e-6 and
-                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
-                        abs(val_metrics['collision_rate'] - last_val_best_collision) <= 1e-6 and
-                        val_metrics['mean_return'] > last_val_best + 1e-6
-                    )
-                )
-            else:
-                better_model = (
-                    val_metrics['mean_length'] > last_val_best_length + 1e-6 or
-                    (
-                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
-                        val_metrics['collision_rate'] < last_val_best_collision
-                    ) or
-                    (
-                        abs(val_metrics['mean_length'] - last_val_best_length) <= 1e-6 and
-                        abs(val_metrics['collision_rate'] - last_val_best_collision) <= 1e-6 and
-                        val_metrics['mean_return'] > last_val_best + 1e-6
-                    )
-                )
+            better_model = is_better_lane_checkpoint(
+                val_metrics,
+                last_val_best,
+                last_val_best_collision,
+                last_val_best_success,
+                last_val_best_speed,
+            )
             if better_model:
                 model.save_model(EXP_NAME + '_best')
                 model_c.save_model(EXP_NAME + 'critic_best')
@@ -792,33 +860,39 @@ if __name__ == '__main__':
                 last_val_best_collision = val_metrics['collision_rate']
                 last_val_best_length = val_metrics['mean_length']
                 last_val_best_success = val_metrics['success_rate']
+                last_val_best_speed = val_metrics['mean_speed']
                 log_text(
                     File,
                     'val_save',
-                    '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f' % (
+                    '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
                         train_epi_i,
                         val_metrics['mean_return'],
                         val_metrics['collision_rate'],
                         val_metrics['mean_length'],
                         val_metrics['mean_lane_change'],
                         val_metrics['success_rate'],
+                        val_metrics['mean_speed'],
                     ),
                 )
             log_text(
                 File,
                 'val',
-                '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f' % (
+                '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
                     train_epi_i,
                     val_metrics['mean_return'],
                     val_metrics['collision_rate'],
                     val_metrics['mean_length'],
                     val_metrics['mean_lane_change'],
                     val_metrics['success_rate'],
+                    val_metrics['mean_speed'],
                 ),
             )
-            curriculum_signal = val_metrics['mean_length']
-            if args.road_scenario == 'merge':
-                curriculum_signal = val_metrics['mean_length'] + env.target_step_num * val_metrics['success_rate']
+            curriculum_signal = (
+                100.0 * val_metrics['success_rate']
+                - 40.0 * val_metrics['collision_rate']
+                + val_metrics['mean_speed']
+                + 0.1 * val_metrics['mean_return']
+            )
             curriculum_message = update_curriculum(args, curriculum_state, curriculum_signal)
             if curriculum_message is not None:
                 log_text(File, 'curriculum', curriculum_message)
