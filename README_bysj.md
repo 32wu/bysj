@@ -37,8 +37,21 @@ python run_RL_ours.py --model rwtaspk --entropy 5.0 #训练小车大脑（默认
 
 python compare_experiments.py --device cuda:0  # 自动对比优化前/优化后，输出论文可用表格到 comparison_reports/
 
+
+训练小车运行算法
+
 python run_RL_base.py --model rwtaspk --road_scenario highway --traffic_level standard  # 基线算法：直道标准车流
 python run_RL_ours.py --model rwtaspk --road_scenario highway --traffic_level dense  # 优化算法：高密度直道
 python run_RL_ours.py --model rwtaspk --road_scenario merge  # 优化算法：匝道汇入场景
 python run_RL_ours.py --model rwtaspk --road_scenario roundabout  # 优化算法：环岛/弯道场景
 
+
+运行小车
+
+python3 test_video.py --road_scenario highway --traffic_level standard
+
+python3 test_video.py --road_scenario highway --traffic_level dense
+
+python test_video.py --road_scenario merge
+
+python test_video.py --road_scenario roundabout
