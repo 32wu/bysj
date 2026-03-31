@@ -611,10 +611,12 @@ if __name__ == '__main__':
 
     seed = args.seed if args.seed >= 0 else args.rep
     set_random_seed(seed, torch_device)
+    run_kind = 'ours'
     EXP_NAME = build_experiment_name(args, model_str, seed)
-    active_model_dir = checkpoint_utils.activate_scenario_model_dir(
-        args.road_scenario,
-        args.traffic_level,
+    active_model_dir, active_log_dir = checkpoint_utils.activate_scenario_output_dirs(
+        run_kind=run_kind,
+        road_scenario=args.road_scenario,
+        traffic_level=args.traffic_level,
         create=True,
     )
 
@@ -700,14 +702,14 @@ if __name__ == '__main__':
     if hasattr(model_c, 'set_grad_clip'):
         model_c.set_grad_clip(args.grad_clip)
 
-    checkpoint_utils.get_model_root(create=True)
-    checkpoint_utils.get_log_root(create=True)
+    checkpoint_utils.get_model_root(create=True, run_kind=run_kind)
+    checkpoint_utils.get_log_root(create=True, run_kind=run_kind)
 
     model_current_save_time = time.time()
     log_text_flush_time = time.time()
     globals()['log_text_flush_time'] = log_text_flush_time
 
-    log_filename = os.path.join(checkpoint_utils.get_log_root(create=True), 'log_' + EXP_NAME + '.txt')
+    log_filename = os.path.join(active_log_dir, 'log_' + EXP_NAME + '.txt')
     reload_data = os.path.exists(log_filename)
     if args.model in ['rwtaprob', 'rwtaspk']:
         reload_data = reload_data and os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_current_b_1'))
@@ -730,6 +732,7 @@ if __name__ == '__main__':
         log_text(File, 'arguments', str(args))
         log_text(File, 'seed', str(seed))
         log_text(File, 'model_dir', active_model_dir)
+        log_text(File, 'log_dir', active_log_dir, onscreen=False)
         if lane_profile_adjustments:
             log_text(File, 'profile', 'lane auto-stabilize: ' + ', '.join(lane_profile_adjustments))
         if args.warm_start_kind != 'none' or args.warm_start_prefix:
@@ -915,6 +918,13 @@ if __name__ == '__main__':
 
     model.save_model(EXP_NAME + '_current')
     model_c.save_model(EXP_NAME + 'critic_current')
+    cleanup_summary = checkpoint_utils.cleanup_final_best_checkpoints(
+        actor_best_prefix=EXP_NAME + '_best',
+        actor_current_prefix=EXP_NAME + '_current',
+        critic_best_prefix=EXP_NAME + 'critic_best',
+        critic_current_prefix=EXP_NAME + 'critic_current',
+    )
+    log_text(File, 'checkpoint_cleanup', checkpoint_utils.summarize_checkpoint_cleanup(cleanup_summary), onscreen=False)
     log_text(File, 'finish', str(datetime.datetime.now()))
     File.flush()
     File.close()

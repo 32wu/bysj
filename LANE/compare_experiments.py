@@ -50,18 +50,7 @@ def auto_detect_prefix(kind, road_scenario=None, traffic_level='standard'):
 
 
 def infer_log_path(prefix):
-    prefix_basename = os.path.basename(prefix)
-    candidates = [
-        os.path.join(checkpoint_utils.get_log_root(create=False), f'log_{prefix_basename}.txt'),
-    ]
-    if prefix_basename.endswith('_best'):
-        candidates.append(os.path.join(checkpoint_utils.get_log_root(create=False), f'log_{prefix_basename[:-5]}.txt'))
-    if prefix_basename.endswith('_current'):
-        candidates.append(os.path.join(checkpoint_utils.get_log_root(create=False), f'log_{prefix_basename[:-8]}.txt'))
-    for path in candidates:
-        if os.path.exists(path):
-            return path
-    return None
+    return checkpoint_utils.infer_log_path(prefix)
 
 
 def parse_log_summary(log_path):

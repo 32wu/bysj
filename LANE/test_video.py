@@ -46,6 +46,13 @@ def parse_args():
         help="Optional explicit checkpoint prefix. If omitted, auto-load the latest best checkpoint for the selected scenario.",
     )
     parser.add_argument(
+        "--checkpoint_kind",
+        type=str,
+        default="ours",
+        choices=["ours", "base", "baseline"],
+        help="Which checkpoint family to auto-load when --checkpoint_prefix is not provided.",
+    )
+    parser.add_argument(
         "--seed",
         type=int,
         default=None,
@@ -55,6 +62,12 @@ def parse_args():
         "--no_video",
         action="store_true",
         help="Disable video recording.",
+    )
+    parser.add_argument(
+        "--video_tag",
+        type=str,
+        default="",
+        help="Optional extra label to append to recorded video filenames.",
     )
     args = parser.parse_args()
     if not 0.0 <= args.failure_rate <= 1.0:
@@ -84,12 +97,29 @@ def build_model(device):
 def resolve_checkpoint_prefix(args):
     if args.checkpoint_prefix:
         return checkpoint_utils.normalize_prefix(args.checkpoint_prefix)
+    checkpoint_kind = "baseline" if args.checkpoint_kind in ["base", "baseline"] else "ours"
     return checkpoint_utils.find_latest_checkpoint_prefix(
-        kind="ours",
+        kind=checkpoint_kind,
         road_scenario=args.road_scenario,
         traffic_level=args.traffic_level,
         best_only=True,
     )
+
+
+def resolve_video_run_kind(args, checkpoint_prefix):
+    inferred_kind = checkpoint_utils.infer_run_kind_from_prefix(checkpoint_prefix)
+    if inferred_kind is not None:
+        return inferred_kind
+    return "baseline" if args.checkpoint_kind in ["base", "baseline"] else "ours"
+
+
+def build_video_tag(args):
+    tag_parts = [f"failure{int(round(args.failure_rate * 100)):03d}"]
+    if args.seed is not None:
+        tag_parts.append(f"seed{args.seed}")
+    if args.video_tag:
+        tag_parts.append(args.video_tag)
+    return '_'.join(tag_parts)
 
 
 def main():
@@ -100,20 +130,29 @@ def main():
     device = torch.device("cuda:0" if args.device == "cuda" else "cpu")
     record_video = not args.no_video
 
+    checkpoint_prefix = resolve_checkpoint_prefix(args)
+    video_run_kind = resolve_video_run_kind(args, checkpoint_prefix)
+
     env = env_lane.GymLane(
         dev=device,
         road_scenario=args.road_scenario,
         traffic_level=args.traffic_level,
     )
-    env.init_test(record_video=record_video, seed=args.seed)
+    env.init_test(
+        record_video=record_video,
+        seed=args.seed,
+        video_tag=build_video_tag(args) if record_video else None,
+        video_run_kind=video_run_kind,
+    )
     if record_video:
-        print(f"📹 本次录像将保存到: {env.video_folder}")
+        print(f"📹 本次录像目录: {env.video_folder}")
+        print(f"🗂️ 录像分类: {env.video_run_kind}/{checkpoint_utils.scenario_dirname(args.road_scenario, args.traffic_level)}")
+        print(f"📝 文件名前缀: {env.video_name_prefix}")
     else:
         print("📹 当前关闭录像，仅做环境测试。")
 
     model = build_model(device)
 
-    checkpoint_prefix = resolve_checkpoint_prefix(args)
     checkpoint_path = checkpoint_utils.resolve_checkpoint_file(checkpoint_prefix + "_w_1")
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"没有找到固定权重: {checkpoint_path}")
@@ -171,6 +210,8 @@ def main():
     print(f"✅ 杀青！在 {args.failure_rate * 100:.1f}% 的方向盘失控率下，小车存活了 {step} 步。")
     if record_video:
         print(f"📁 录像已安全保存至: {env.video_folder}")
+        if env.video_path_hint is not None:
+            print(f"🎞️ 录像文件模式: {env.video_path_hint}")
 
 
 if __name__ == "__main__":

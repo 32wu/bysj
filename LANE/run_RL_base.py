@@ -148,13 +148,14 @@ if __name__ == "__main__":
             args.train_num = 2000
         else:
             args.train_num = 5000
+    run_kind = 'baseline'
     EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s_rep%02d' % (
             args.alg, args.task, args.model, model_str, args.optimizer,
             args.lr, args.entropy, args.gamma,
             args.PPO_epochs, args.eps_clip,
             args.road_scenario, args.traffic_level, args.rep)
-    active_model_dir = checkpoint_utils.activate_scenario_model_dir(
-            args.road_scenario, args.traffic_level, create=True)
+    active_model_dir, active_log_dir = checkpoint_utils.activate_scenario_output_dirs(
+            run_kind=run_kind, road_scenario=args.road_scenario, traffic_level=args.traffic_level, create=True)
     # Task specified variables
     if args.task in ['gymip',]:
         val_freq, val_num, test_num = 100, 10, 10
@@ -253,13 +254,13 @@ if __name__ == "__main__":
         model_c = model_critic.Critic(input_size=input_dimension, output_size=output_dimension,
                                       dev=torch_device)
     # Storage Folders
-    checkpoint_utils.get_model_root(create=True)
-    checkpoint_utils.get_log_root(create=True)
+    checkpoint_utils.get_model_root(create=True, run_kind=run_kind)
+    checkpoint_utils.get_log_root(create=True, run_kind=run_kind)
     model_current_save_time = time.time()
     log_text_flush_time = time.time()
     # Reload
     reload_data = True
-    log_filename = os.path.join(checkpoint_utils.get_log_root(create=True), 'log_' + EXP_NAME + '.txt')
+    log_filename = os.path.join(active_log_dir, 'log_' + EXP_NAME + '.txt')
     if not os.path.exists(log_filename):
         reload_data = False
     if not os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_current_1')):
@@ -281,6 +282,7 @@ if __name__ == "__main__":
         log_text(File, 'init', str(datetime.datetime.now()))
         log_text(File, 'arguments', str(args))
         log_text(File, 'model_dir', active_model_dir)
+        log_text(File, 'log_dir', active_log_dir, onscreen=False)
         if args.model == 'ann2snn':
             model.load_model_ann(EXP_NAME + '_best')
     # Time Monitor
@@ -443,7 +445,15 @@ if __name__ == "__main__":
     model.save_model(EXP_NAME + '_current')
     model_c.save_model(EXP_NAME + 'critic' + '_current')
     if args.skip_post_tests:
+        cleanup_summary = checkpoint_utils.cleanup_final_best_checkpoints(
+            actor_best_prefix=EXP_NAME + '_best',
+            actor_current_prefix=EXP_NAME + '_current',
+            critic_best_prefix=EXP_NAME + 'critic_best',
+            critic_current_prefix=EXP_NAME + 'critic_current',
+        )
+        log_text(File, 'checkpoint_cleanup', checkpoint_utils.summarize_checkpoint_cleanup(cleanup_summary), onscreen=False)
         log_text(File, 'finish', str(datetime.datetime.now()))
+        File.flush()
         File.close()
         raise SystemExit(0)
 
@@ -659,6 +669,14 @@ if __name__ == "__main__":
                 log_text(File, 'RWTA_conn', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
                 File.flush()
 
+    cleanup_summary = checkpoint_utils.cleanup_final_best_checkpoints(
+        actor_best_prefix=EXP_NAME + '_best',
+        actor_current_prefix=EXP_NAME + '_current',
+        critic_best_prefix=EXP_NAME + 'critic_best',
+        critic_current_prefix=EXP_NAME + 'critic_current',
+    )
+    log_text(File, 'checkpoint_cleanup', checkpoint_utils.summarize_checkpoint_cleanup(cleanup_summary), onscreen=False)
+    File.flush()
     File.close()
 
 

@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import os
+from datetime import datetime
+
 import numpy as np
 np.bool8 = np.bool_
 import torch
 
+import checkpoint_utils
 import gymnasium as gym
 import highway_env
 from highway_env import utils as highway_utils
@@ -61,6 +64,14 @@ TRAFFIC_VEHICLE_COUNT = {
     'standard': 40,
     'dense': 60,
 }
+
+VIDEO_LAYOUT_SCENARIOS = [
+    ('highway', 'standard'),
+    ('highway', 'dense'),
+    ('merge', 'standard'),
+    ('roundabout', 'standard'),
+]
+VIDEO_LAYOUT_RUN_KINDS = ('base', 'ours')
 
 SCENARIO_TRAFFIC_TARGETS = {
     'merge': {
@@ -150,12 +161,18 @@ class GymLane:
         self.action_num = 5
         self.dev = dev
         self.env = None
-        self.video_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'video_logs_lane')
+        self.video_root_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'video_logs_lane')
+        self.video_folder = self.video_root_folder
+        self.video_session_folder = None
+        self.video_name_prefix = None
+        self.video_path_hint = None
+        self.video_run_kind = None
         self.road_scenario = None
         self.env_id = None
         self.scenario_supports_vehicles_count = False
         self.base_env_config = {}
         self.traffic_level = traffic_level if traffic_level in TRAFFIC_VEHICLE_COUNT else 'standard'
+        self._ensure_video_root_scaffold()
 
         self.mode = None
         self.step_num = 0
@@ -200,6 +217,69 @@ class GymLane:
         self.scenario_supports_vehicles_count = bool(preset.get('supports_vehicles_count', False))
         self.base_env_config = dict(preset.get('config', {}))
         self.current_vehicle_target = self._resolve_scenario_vehicle_target(None)
+
+    def _video_scenario_dirname(self):
+        return checkpoint_utils.scenario_dirname(self.road_scenario, self.traffic_level)
+
+    def _video_run_kind_dirname(self, video_run_kind=None):
+        normalized_kind = checkpoint_utils.normalize_run_kind(video_run_kind)
+        if normalized_kind == 'baseline':
+            return 'base'
+        if normalized_kind == 'ours':
+            return 'ours'
+        return 'misc'
+
+    def _ensure_video_root_scaffold(self):
+        os.makedirs(self.video_root_folder, exist_ok=True)
+        for run_kind_dirname in VIDEO_LAYOUT_RUN_KINDS:
+            run_kind_folder = os.path.join(self.video_root_folder, run_kind_dirname)
+            os.makedirs(run_kind_folder, exist_ok=True)
+            for road_scenario, traffic_level in VIDEO_LAYOUT_SCENARIOS:
+                scenario_dirname = checkpoint_utils.scenario_dirname(road_scenario, traffic_level)
+                os.makedirs(os.path.join(run_kind_folder, scenario_dirname), exist_ok=True)
+
+    def _sanitize_video_token(self, value):
+        if value is None:
+            return ''
+        token = str(value).strip().lower()
+        if not token:
+            return ''
+        clean_chars = []
+        last_sep = False
+        for char in token:
+            if char.isalnum():
+                clean_chars.append(char)
+                last_sep = False
+            else:
+                if not last_sep:
+                    clean_chars.append('-')
+                    last_sep = True
+        return ''.join(clean_chars).strip('-')
+
+    def _build_video_recording_target(self, video_tag=None, video_run_kind=None):
+        self._ensure_video_root_scaffold()
+        scenario_dirname = self._video_scenario_dirname()
+        run_kind_dirname = self._video_run_kind_dirname(video_run_kind)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        scenario_folder = os.path.join(self.video_root_folder, run_kind_dirname, scenario_dirname)
+        session_folder = os.path.join(scenario_folder, timestamp)
+        os.makedirs(session_folder, exist_ok=True)
+        prefix_tokens = [
+            self._sanitize_video_token(run_kind_dirname),
+            self._sanitize_video_token(scenario_dirname),
+            self._sanitize_video_token(self.mode or 'test'),
+        ]
+        extra_token = self._sanitize_video_token(video_tag)
+        if extra_token:
+            prefix_tokens.append(extra_token)
+        prefix_tokens.append(timestamp)
+        name_prefix = '_'.join(token for token in prefix_tokens if token)
+        self.video_run_kind = run_kind_dirname
+        self.video_folder = session_folder
+        self.video_session_folder = session_folder
+        self.video_name_prefix = name_prefix
+        self.video_path_hint = os.path.join(session_folder, f'{name_prefix}-episode-*')
+        return session_folder, name_prefix
 
     def _resolve_vehicle_count(self, vehicles_count):
         if vehicles_count is not None:
@@ -600,20 +680,28 @@ class GymLane:
         self._refresh_action_metadata()
         self._reset_episode_trackers(episode_seed=seed)
 
-    def init_test(self, variation_type='none', variation_param=0, record_video=False, vehicles_count=None, seed=None):
+    def init_test(self, variation_type='none', variation_param=0, record_video=False, vehicles_count=None, seed=None, video_tag=None, video_run_kind=None):
         del variation_type, variation_param
         self.mode = 'test'
         if self.env is not None:
             self.env.close()
+        self.video_run_kind = self._video_run_kind_dirname(video_run_kind)
+        self.video_folder = os.path.join(self.video_root_folder, self.video_run_kind, self._video_scenario_dirname())
+        self.video_session_folder = None
+        self.video_name_prefix = None
+        self.video_path_hint = None
         render_mode = 'rgb_array' if record_video else None
         self.env = gym.make(self.env_id, render_mode=render_mode)
         self._configure_env(vehicles_count=vehicles_count)
         if record_video:
-            os.makedirs(self.video_folder, exist_ok=True)
+            video_folder, video_name_prefix = self._build_video_recording_target(
+                video_tag=video_tag,
+                video_run_kind=video_run_kind,
+            )
             self.env = RecordVideo(
                 self.env,
-                video_folder=self.video_folder,
-                name_prefix='highway_show',
+                video_folder=video_folder,
+                name_prefix=video_name_prefix,
                 episode_trigger=lambda episode_id: True,
             )
         self._refresh_action_metadata()

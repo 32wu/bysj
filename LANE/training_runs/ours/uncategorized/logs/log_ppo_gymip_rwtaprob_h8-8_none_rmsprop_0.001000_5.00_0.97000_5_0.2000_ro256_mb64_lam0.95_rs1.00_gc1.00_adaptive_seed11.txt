@@ -1,0 +1,22 @@
+init,     2026-03-26 19:58:47.101624
+arguments,Namespace(PPO_epochs=5, adv_norm=1, alg='ppo', cuda=-1, curriculum_clean_ratio=0.7, curriculum_entropy_decay=0.9, curriculum_mode='adaptive', curriculum_noise_step=0.03, curriculum_patience=2, entropy=5.0, entropy_min=0.1, eps_clip=0.2, gae_lambda=0.95, gamma=0.97, grad_clip=1.0, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lr=0.001, max_noise=0.15, mini_batch_size=64, model='rwtaprob', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=1.0, rollout_steps=256, rwta_del_connection='none', seed=-1, snn_num_steps=15, task='gymip', thread=-1, train_num=20)
+seed,     11
+train,    1, 8.174537,   12, 1.00,    7, 0.000, 0.000, 5.000
+train,    2, 14.954594,   22, 1.00,    5, 0.000, 0.000, 5.000
+train,    3, 21.494576,   31, 1.00,   10, 0.000, 0.000, 5.000
+train,    4, 5.013533,    8, 1.00,    1, 0.000, 0.000, 5.000
+train,    5, 7.886829,   14, 1.00,    4, 0.000, 0.000, 5.000
+train,    6, 6.700131,   11, 1.00,    3, 0.000, 0.000, 5.000
+train,    7, 6.915912,    8, 1.00,    3, 0.000, 0.000, 5.000
+train,    8, 5.888120,    7, 1.00,    2, 0.000, 0.000, 5.000
+train,    9, 6.938154,   10, 1.00,    5, 0.000, 0.000, 5.000
+train,    10, 3.010903,    5, 1.00,    5, 0.000, 0.000, 5.000
+train,    11, 4.502277,    7, 1.00,    4, 0.000, 0.000, 5.000
+train,    12, 7.283508,    9, 1.00,    2, 0.000, 0.000, 5.000
+train,    13, 5.244283,    7, 1.00,    3, 0.000, 0.000, 5.000
+train,    14, 5.658364,    7, 1.00,    4, 0.000, 0.000, 5.000
+train,    15, 2.797620,    4, 1.00,    2, 0.000, 0.000, 5.000
+train,    16, 4.744130,    6, 1.00,    2, 0.000, 0.000, 5.000
+train,    17, 8.122132,   13, 1.00,    4, 0.000, 0.000, 5.000
+train,    18, 22.934415,   29, 1.00,   13, 0.000, 0.000, 5.000
+train,    19, 24.948676,   40, 1.00,   20, 0.000, 0.000, 5.000

@@ -25,12 +25,12 @@ def parse_args():
 
 def auto_detect_checkpoints(max_models):
     prefixes = {}
-    for path in checkpoint_utils.iter_weight_files('*_w_1.pt'):
+    for path in checkpoint_utils.iter_weight_files('*_best_w_1.pt'):
         prefix = checkpoint_utils.checkpoint_prefix_from_weight_file(path)
         prefixes[prefix] = os.path.getmtime(path)
     ordered = [item[0] for item in sorted(prefixes.items(), key=lambda item: item[1], reverse=True)]
     if not ordered:
-        raise FileNotFoundError('No RWTA checkpoints were found under the LANE log_model directories.')
+        raise FileNotFoundError('No RWTA best checkpoints were found under the LANE training_runs or legacy log_model directories.')
     return ordered[:max_models]
 
 
