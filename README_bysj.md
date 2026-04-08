@@ -63,4 +63,7 @@ python3 test_video.py --road_scenario highway --traffic_level dense
 
 python test_video.py --road_scenario merge
 
-python test_video.py --road_scenario roundabout
+python test_video.py --road_scenario roundabout 
+
+python3 test_video.py --road_scenario merge --checkpoint_kind base --device cuda
+

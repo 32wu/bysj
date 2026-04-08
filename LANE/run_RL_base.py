@@ -397,10 +397,20 @@ if __name__ == "__main__":
             model.save_model(EXP_NAME + '_current')
             model_c.save_model(EXP_NAME + 'critic' + '_current')
             model_current_save_time = time.time()
-        log_text(File, 'train', '%d, %8.6f' % (train_epi_i, step_record[2]), onscreen=False)
+        log_text(
+            File,
+            'train',
+            '%d, %8.6f, %4d' % (
+                train_epi_i,
+                env.episode_return,
+                env.step_num,
+            ),
+            onscreen=False,
+        )
         # Validation
         if train_epi_i % val_freq == (val_freq - 1):
             val_preformance_list = []
+            val_step_num_list = []
             for val_epi_i in range(val_num):
                 env.init_val()
                 for val_step_i in range(env.max_step_num):
@@ -412,13 +422,31 @@ if __name__ == "__main__":
                     if env.done_signal == True:
                         break
                 val_preformance_list.append(step_record_val[2])
+                val_step_num_list.append(env.step_num)
             val_performance_mean = sum(val_preformance_list) / len(val_preformance_list)
+            val_step_num_mean = sum(val_step_num_list) / len(val_step_num_list)
             if last_val_best <= val_performance_mean:
                 model.save_model(EXP_NAME + '_best')
                 model_c.save_model(EXP_NAME + 'critic' + '_best')
-                log_text(File, 'val_save', '%d,   %8.6f' % (train_epi_i, val_performance_mean))
+                log_text(
+                    File,
+                    'val_save',
+                    '%d,   %8.6f,   %8.4f' % (
+                        train_epi_i,
+                        val_performance_mean,
+                        val_step_num_mean,
+                    ),
+                )
                 last_val_best = val_performance_mean
-            log_text(File, 'val', '%d,   %8.6f,   %8.6f' % (train_epi_i, val_performance_mean, step_record[2]))
+            log_text(
+                File,
+                'val',
+                '%d,   %8.6f,   %8.4f' % (
+                    train_epi_i,
+                    val_performance_mean,
+                    val_step_num_mean,
+                ),
+            )
 
 
     # ANN2SNN Implementation

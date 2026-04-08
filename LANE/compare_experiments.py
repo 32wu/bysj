@@ -85,6 +85,9 @@ def parse_log_summary(log_path):
                     summary['final_train_length'] = float(parts[3])
                     summary['final_train_collision'] = float(parts[4])
                     summary['final_train_lane_change'] = float(parts[5])
+                elif len(parts) >= 4:
+                    summary['log_type'] = 'baseline'
+                    summary['final_train_length'] = float(parts[3])
                 elif summary['log_type'] == 'unknown':
                     summary['log_type'] = 'baseline'
             elif tag == 'val_save' and len(parts) >= 3:
@@ -95,6 +98,9 @@ def parse_log_summary(log_path):
                     summary['best_val_collision'] = float(parts[3])
                     summary['best_val_length'] = float(parts[4])
                     summary['best_val_lane_change'] = float(parts[5])
+                elif len(parts) >= 4:
+                    summary['log_type'] = 'baseline'
+                    summary['best_val_length'] = float(parts[3])
                 elif summary['log_type'] == 'unknown':
                     summary['log_type'] = 'baseline'
     return summary

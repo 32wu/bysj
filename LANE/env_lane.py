@@ -36,7 +36,7 @@ SCENARIO_PRESETS = {
     },
     'merge': {
         'env_id': 'merge-v0',
-        'max_step_num':100,
+        'max_step_num':45,
         'target_step_num': 36,
         'config': {
             'collision_reward': -1.0,
@@ -141,7 +141,7 @@ MERGE_TARGET_LANE_BY_SEGMENT = {
     ('k', 'b', 0): ('a', 'b', 1),
     ('b', 'c', 2): ('b', 'c', 1),
 }
-MERGE_SUCCESS_X_THRESHOLD = 1500.0
+MERGE_SUCCESS_X_THRESHOLD = 360.0
 MERGE_MAINLINE_MIN_SPEED = 16.0
 MERGE_STABLE_MAINLINE_STEPS = 4
 MERGE_SAFE_FRONT_GAP = 24.0
@@ -471,7 +471,21 @@ class GymLane:
             'unsafe_rear': unsafe_rear,
             'safe_window': bool(safe_window),
         }
-
+    def _clear_ego_surroundings(self):
+        """无论什么场景，保证小车出生时，方圆 20 米内干干净净，没有其他车"""
+        if self.env is None:
+            return
+        base_env = self.env.unwrapped
+        road = getattr(base_env, 'road', None)
+        ego_vehicle = self._get_ego_vehicle()
+        if road is None or ego_vehicle is None:
+            return
+            
+        for v in list(getattr(road, 'vehicles', [])):
+            if v is not ego_vehicle:
+                # 凡是距离小车 20 米以内的车，全部删掉
+                if np.linalg.norm(np.array(v.position) - np.array(ego_vehicle.position)) < 20.0:
+                    road.vehicles.remove(v)
     def _reposition_merge_ego_vehicle(self):
         if self.env is None or self.road_scenario != 'merge':
             return
@@ -595,7 +609,8 @@ class GymLane:
         if self._other_vehicle_count() >= self.current_vehicle_target:
             return
         blueprint = MERGE_TRAFFIC_BLUEPRINT if self.road_scenario == 'merge' else ROUNDABOUT_TRAFFIC_BLUEPRINT
-        min_gap = 18.0 if self.road_scenario == 'merge' else 16.0
+        # 【核心修改 4】将环岛的 NPC 生成安全距离从 16.0 拉大到 25.0 米，防止 NPC 连环车祸
+        min_gap = 18.0 if self.road_scenario == 'merge' else 25.0
         for spec in blueprint:
             if self._other_vehicle_count() >= self.current_vehicle_target:
                 break
@@ -661,8 +676,12 @@ class GymLane:
             self.state_original = self.env.reset()[0]
         else:
             self.state_original = self.env.reset(seed=int(episode_seed))[0]
+            
         self._reposition_merge_ego_vehicle()
+        # 【核心修改 5】在生成交通车之前，先清空小车周围的障碍物！
+        self._clear_ego_surroundings() 
         self._top_up_scenario_traffic()
+        
         self.state_original = self._refresh_observation_from_env(self.state_original)
         self.state_processed = self.state_to_tensor(self.state_original)
 
@@ -784,10 +803,14 @@ class GymLane:
             merging_speed_penalty_scale = 0.0
             offroad_penalty_scale = 0.50
             low_speed_threshold = 8.0
-            low_speed_penalty_scale = 2.20
-            stop_penalty = 2.00 if (self.step_num > 2 and ego_speed_value < 1.5) else 0.0
-            crash_penalty = crashed * 12.0
-            completion_bonus_value = 10.0
+            
+            # 【核心修改 1】取消低速和停车惩罚！在环岛入口必须允许停车让行 (Yield)
+            low_speed_penalty_scale = 0.0
+            stop_penalty = 0.0 
+            # 【核心修改 2】极大提高撞车惩罚，逼迫它学会看准空隙再进环岛
+            crash_penalty = crashed * 50.0 
+            # 【核心修改 3】提高通关大奖，鼓励它活着开出正确的出口
+            completion_bonus_value = 50.0
         else:
             lane_change_penalty_scale = 0.75
             repeated_lane_change_scale = 0.90
