@@ -15,7 +15,7 @@ from gymnasium.wrappers import RecordVideo
 
 
 def print_info(input_string):
-    print('[96mLANE_ENV_INFO|[0m', input_string)
+    print('\033[96mLANE_ENV_INFO|\033[0m', input_string)
 
 
 SCENARIO_PRESETS = {
@@ -36,7 +36,7 @@ SCENARIO_PRESETS = {
     },
     'merge': {
         'env_id': 'merge-v0',
-        'max_step_num': 45,
+        'max_step_num':100,
         'target_step_num': 36,
         'config': {
             'collision_reward': -1.0,
@@ -86,16 +86,13 @@ SCENARIO_TRAFFIC_TARGETS = {
     },
 }
 
+# 【核心修改1】：清空匝道上的幽灵车队，只保留主路车辆作为参照物
 MERGE_TRAFFIC_BLUEPRINT = [
     {'lane': ('a', 'b', 0), 'longitudinal': 18.0, 'speed': 28.0, 'target_speed': 29.0},
     {'lane': ('a', 'b', 0), 'longitudinal': 108.0, 'speed': 29.0, 'target_speed': 30.0},
     {'lane': ('a', 'b', 1), 'longitudinal': 142.0, 'speed': 29.0, 'target_speed': 30.0},
     {'lane': ('b', 'c', 0), 'longitudinal': 18.0, 'speed': 27.5, 'target_speed': 29.0},
     {'lane': ('b', 'c', 1), 'longitudinal': 46.0, 'speed': 28.5, 'target_speed': 29.5},
-    {'lane': ('j', 'k', 0), 'longitudinal': 34.0, 'speed': 23.0, 'target_speed': 28.0},
-    {'lane': ('j', 'k', 0), 'longitudinal': 96.0, 'speed': 21.5, 'target_speed': 27.5},
-    {'lane': ('k', 'b', 0), 'longitudinal': 20.0, 'speed': 22.0, 'target_speed': 27.0},
-    {'lane': ('k', 'b', 0), 'longitudinal': 56.0, 'speed': 21.0, 'target_speed': 26.5},
 ]
 
 ROUNDABOUT_DESTINATIONS = ['exr', 'sxr', 'nxr']
@@ -144,7 +141,7 @@ MERGE_TARGET_LANE_BY_SEGMENT = {
     ('k', 'b', 0): ('a', 'b', 1),
     ('b', 'c', 2): ('b', 'c', 1),
 }
-MERGE_SUCCESS_X_THRESHOLD = 360.0
+MERGE_SUCCESS_X_THRESHOLD = 1500.0
 MERGE_MAINLINE_MIN_SPEED = 16.0
 MERGE_STABLE_MAINLINE_STEPS = 4
 MERGE_SAFE_FRONT_GAP = 24.0
@@ -366,7 +363,6 @@ class GymLane:
         except Exception:
             return None
 
-
     def _lane_pair_from_index(self, lane_index):
         if lane_index is None or len(lane_index) < 2:
             return None
@@ -484,6 +480,15 @@ class GymLane:
         ego_vehicle = self._get_ego_vehicle()
         if road is None or ego_vehicle is None:
             return
+        
+        # 【核心修改2】：清空出生点周围 25 米的车辆，防止0步撞车
+        ramp_lane = road.network.get_lane(MERGE_EGO_START_LANE)
+        target_pos = ramp_lane.position(MERGE_EGO_START_LONGITUDINAL, 0.0)
+        for v in list(getattr(road, 'vehicles', [])):
+            if v is not ego_vehicle:
+                if np.linalg.norm(np.array(v.position) - np.array(target_pos)) < 25.0:
+                    road.vehicles.remove(v)
+                    
         if ego_vehicle in getattr(road, 'vehicles', []):
             road.vehicles.remove(ego_vehicle)
         if hasattr(base_env, 'controlled_vehicles'):
@@ -493,7 +498,6 @@ class GymLane:
         vehicle_ctor = getattr(getattr(base_env, 'action_type', None), 'vehicle_class', None)
         if vehicle_ctor is None:
             vehicle_ctor = type(ego_vehicle)
-        ramp_lane = road.network.get_lane(MERGE_EGO_START_LANE)
         new_ego = vehicle_ctor(
             road,
             ramp_lane.position(MERGE_EGO_START_LONGITUDINAL, 0.0),
@@ -746,22 +750,28 @@ class GymLane:
         lane_change_action = action_index in self.lane_change_action_ids
         scenario_completed = self._scenario_completed_now(info)
 
+        # 【核心修改3】：重置并线场景的奖励权重，治好懒癌并加重碰撞威慑
         if self.road_scenario == 'merge':
             lane_change_penalty_scale = 0.08
             repeated_lane_change_scale = 0.20
             zigzag_penalty_scale = 0.15
             steady_action_bonus_scale = 0.00
-            survival_bonus_scale = 0.06
-            speed_bonus_scale = 0.25
+            
+            survival_bonus_scale = 0.10 
+            speed_bonus_scale = 0.50 
+            
             lane_bonus_scale = 0.00
             raw_reward_scale = 0.05
-            merging_speed_penalty_scale = 0.15
+            merging_speed_penalty_scale = 0.0
             offroad_penalty_scale = 0.50
-            low_speed_threshold = 12.0
-            low_speed_penalty_scale = 1.40
-            stop_penalty = 1.50 if (self.step_num > 4 and ego_speed_value < 1.5) else 0.0
-            crash_penalty = crashed * 14.0
-            completion_bonus_value = 12.0
+            
+            low_speed_threshold = 15.0
+            low_speed_penalty_scale = 1.50 
+            stop_penalty = 3.00 if (self.step_num > 4 and ego_speed_value < 2.0) else 0.0 
+            
+            crash_penalty = crashed * 50.0 
+            completion_bonus_value = 30.0
+            
         elif self.road_scenario == 'roundabout':
             lane_change_penalty_scale = 0.20
             repeated_lane_change_scale = 0.40
@@ -813,8 +823,11 @@ class GymLane:
         merge_wait_penalty = 0.0
         merge_deadline_penalty = 0.0
         merge_gap_penalty = 0.0
+        
         if self.road_scenario == 'merge' and self.merge_mainline_step_count > 0 and not crashed:
-            merge_mainline_bonus = 1.20 * min(self.merge_mainline_step_count, MERGE_STABLE_MAINLINE_STEPS) / MERGE_STABLE_MAINLINE_STEPS
+            speed_factor = min(1.0, max(0.0, (ego_speed_value - MERGE_MAINLINE_MIN_SPEED) / 10.0))
+            merge_mainline_bonus = 1.50 * (min(self.merge_mainline_step_count, MERGE_STABLE_MAINLINE_STEPS) / MERGE_STABLE_MAINLINE_STEPS) * speed_factor
+            
         if self.road_scenario == 'merge':
             ego_vehicle = self._get_ego_vehicle()
             lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
@@ -822,31 +835,38 @@ class GymLane:
             on_merge_lane = tuple(lane_index[:3]) == ('b', 'c', 2) if lane_index is not None and len(lane_index) >= 3 else False
             on_mainline = self._merge_on_mainline(lane_index)
             route_progress = self._merge_route_progress(ego_vehicle, lane_index)
+            
+            # 【核心修改4】：重构匝道博弈逻辑，建立“烫脚底板”的激励系统
             if on_mainline:
-                merge_progress_bonus = 0.35 * route_progress
-            elif on_merge_lane:
-                merge_progress_bonus = 0.18 * route_progress
-            elif lane_pair in MERGE_RAMP_LANE_PAIRS:
-                merge_progress_bonus = 0.08 * route_progress
+                merge_progress_bonus = 0.80 * route_progress
+            elif on_merge_lane or lane_pair in MERGE_RAMP_LANE_PAIRS:
+                merge_progress_bonus = 0.0
+                survival_bonus = 0.0
+                
             gap_profile = self._merge_gap_profile(ego_vehicle, lane_index)
-            if on_merge_lane:
-                merge_window_bonus = 0.55 * gap_profile['gap_score']
-                merge_wait_penalty = 0.35
-                if gap_profile['safe_window'] and action_index != self.left_lane_action_id:
-                    merge_wait_penalty += 1.20
-                merge_commit_bonus = 2.50 if (gap_profile['safe_window'] and action_index == self.left_lane_action_id) else 0.0
+            
+            if on_merge_lane or lane_pair in MERGE_RAMP_LANE_PAIRS:
+                merge_wait_penalty = 1.00  
+                
+                if on_merge_lane:
+                    merge_window_bonus = 0.55 * gap_profile['gap_score']
+                    if gap_profile['safe_window'] and action_index != self.left_lane_action_id:
+                        merge_wait_penalty += 4.00
+                    merge_commit_bonus = 15.0 if (gap_profile['safe_window'] and action_index == self.left_lane_action_id) else 0.0
+                    
             elif on_mainline:
                 merge_window_bonus = 0.10 * gap_profile['gap_score']
+                
             obstacle_distance = self._merge_obstacle_distance(ego_vehicle, lane_index)
             if on_merge_lane and obstacle_distance is not None:
-                merge_deadline_penalty = 4.00 * max(0.0, (MERGE_OBSTACLE_BUFFER - obstacle_distance) / MERGE_OBSTACLE_BUFFER)
-            if on_mainline:
-                merge_gap_penalty = 2.20 * max(gap_profile['unsafe_front'], gap_profile['unsafe_rear'])
+                merge_deadline_penalty = 4.00 * max(0.0, (120.0 - obstacle_distance) / 120.0)
+                
         low_speed_penalty = 0.0
         if self.step_num > 2 and ego_speed_value < low_speed_threshold:
             low_speed_penalty = low_speed_penalty_scale * (low_speed_threshold - ego_speed_value) / max(1.0, low_speed_threshold)
         merging_speed_penalty = merging_speed_penalty_scale * max(0.0, merging_speed_reward)
         completion_bonus = completion_bonus_value if (scenario_completed and not crashed and not self.scenario_completion_awarded) else 0.0
+        
         shaped_reward = (
             survival_bonus
             + steady_action_bonus
@@ -870,6 +890,7 @@ class GymLane:
             - merge_gap_penalty
             - crash_penalty
         )
+        
         info['raw_reward'] = float(raw_reward)
         info['shaped_reward'] = float(shaped_reward)
         info['scenario_completed'] = bool(scenario_completed)
@@ -959,7 +980,8 @@ class GymLane:
         done = done or scenario_completed
         if done or self.step_num >= self.max_step_num:
             self.done_signal = 1
-            print(f" -> 💥 回合结束！步奖励: {shaped_reward:.2f} | 累计回报: {self.episode_return:.2f} | 原始回报: {self.episode_raw_return:.2f}")
+            # 【修改这里】：强制换行，并打印真实的 self.step_num
+            print(f"\r🚗 💥 回合结束！最终活了: {self.step_num:2d} 步 | 步奖励: {shaped_reward:.2f} | 累计回报: {self.episode_return:.2f} | 原始回报: {self.episode_raw_return:.2f}    ")
         else:
             self.done_signal = 0
 
@@ -988,4 +1010,4 @@ class GymLane:
 
 if __name__ == '__main__':
     env = GymLane(dev=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-    print('[91mFINISH: env_lane[0m')
+    print('\033[91mFINISH: env_lane\033[0m')
