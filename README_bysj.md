@@ -67,3 +67,9 @@ python test_video.py --road_scenario roundabout
 
 python3 test_video.py --road_scenario merge --checkpoint_kind base --device cuda
 
+4.09finish
+python3 test_video.py --road_scenario merge --device cuda --checkpoint_kind ours
+python3 test_video.py --road_scenario roundabout --device cuda --checkpoint_kind ours
+python3 test_video.py --road_scenario merge --device cuda --checkpoint_kind baseline
+
+
