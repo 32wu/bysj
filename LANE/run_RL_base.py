@@ -136,18 +136,18 @@ if __name__ == "__main__":
     if args.task in ['gymip']:
         args.hidden_num, args.hid_group_num, args.hid_group_size = 64, 8, 8
         if args.alg == 'ppo':
-            args.train_num = 2000
+            args.train_num = 2000 if args.train_num == 20000 else args.train_num
         else:
-            args.train_num = 5000
+            args.train_num = 5000 if args.train_num == 20000 else args.train_num
     if args.task in ['mnist']:
         args.hidden_num, args.hid_group_num, args.hid_group_size = 200, 20, 10
         args.train_num = 10000
     if args.task in ['vizdoom']:
         args.hidden_num, args.hid_group_num, args.hid_group_size = 500, 50, 10
         if args.alg == 'ppo':
-            args.train_num = 2000
+            args.train_num = 2000 if args.train_num == 20000 else args.train_num
         else:
-            args.train_num = 5000
+            args.train_num = 5000 if args.train_num == 20000 else args.train_num
     run_kind = 'baseline'
     EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s_rep%02d' % (
             args.alg, args.task, args.model, model_str, args.optimizer,
@@ -294,8 +294,8 @@ if __name__ == "__main__":
         if args.model == 'ann2snn':
             break
         env.init_train()
+        observation = env.get_train_observation()
         for train_step_i in range(env.max_step_num):
-            observation = env.get_train_observation()
             # Inference
             if args.monitor_time:
                 start_time = time.time()
@@ -392,6 +392,7 @@ if __name__ == "__main__":
             # Episode End
             if env.done_signal == True:
                 break
+            observation = observation_next
         # Checkpoint
         if time.time() - model_current_save_time > 10:
             model.save_model(EXP_NAME + '_current')
@@ -413,14 +414,15 @@ if __name__ == "__main__":
             val_step_num_list = []
             for val_epi_i in range(val_num):
                 env.init_val()
+                observation = env.get_val_observation()
                 for val_step_i in range(env.max_step_num):
-                    observation = env.get_val_observation()
                     model_output, model_other_output = model(observation)
                     action_chosen_index = torch.argmax(model_output, dim=1)
                     action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
                     observation_next, reward, _, _, step_record_val = env.make_action(action_chosen_onehot)
                     if env.done_signal == True:
                         break
+                    observation = observation_next
                 val_preformance_list.append(step_record_val[2])
                 val_step_num_list.append(env.step_num)
             val_performance_mean = sum(val_preformance_list) / len(val_preformance_list)

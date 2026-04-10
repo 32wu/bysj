@@ -1,0 +1,38 @@
+init,     2026-04-10 13:34:51.153722
+arguments,Namespace(PPO_epochs=4, adv_norm=1, alg='ppo', cuda=0, curriculum_clean_ratio=0.8, curriculum_entropy_decay=0.9, curriculum_mode='adaptive', curriculum_noise_step=0.02, curriculum_patience=2, entropy=2.0, entropy_min=0.1, eps_clip=0.15, gae_lambda=0.97, gamma=0.995, grad_clip=0.5, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lane_profile='auto', lr=0.0005, max_noise=0.08, mini_batch_size=128, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=1.0, road_scenario='highway', rollout_steps=512, rwta_del_connection='none', seed=9501, snn_num_steps=15, task='gymip', thread=3, traffic_level='standard', train_num=26, warm_start_kind='none', warm_start_prefix='/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000500_2.00_0.99500_4_0.1500_ro512_mb128_lam0.97_rs1.00_gc0.50_adaptive_roadhighway_tfstandard_seed31_best')
+seed,     9501
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/logs
+profile,  lane auto-stabilize: curriculum_clean_ratio->0.8, max_noise->0.08, curriculum_noise_step->0.02
+warm_start,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000500_2.00_0.99500_4_0.1500_ro512_mb128_lam0.97_rs1.00_gc0.50_adaptive_roadhighway_tfstandard_seed31_best
+warm_critic,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000500_2.00_0.99500_4_0.1500_ro512_mb128_lam0.97_rs1.00_gc0.50_adaptive_roadhighway_tfstandard_seed31critic_best
+train,    1, -7.442035,    6, 1.00,    2, 0.000, 0.000, 2.000, 32
+train,    2, -1.714611,   12, 1.00,    2, 0.000, 0.000, 2.000, 32
+train,    3, -5.898283,    7, 1.00,    2, 0.000, 0.000, 2.000, 32
+train,    4, -5.738294,   28, 1.00,    7, 0.000, 0.000, 2.000, 32
+train,    5, 2.563652,   21, 1.00,    5, 0.000, 0.000, 2.000, 32
+train,    6, -5.790199,    6, 1.00,    3, 0.000, 0.000, 2.000, 32
+train,    7, -9.557480,   23, 1.00,    6, 0.000, 0.000, 2.000, 32
+train,    8, -9.282408,   34, 1.00,    6, 0.000, 0.000, 2.000, 32
+train,    9, -4.675951,   11, 1.00,    5, 0.000, 0.000, 2.000, 32
+train,    10, -10.424444,    4, 1.00,    1, 0.000, 0.000, 2.000, 32
+train,    11, 12.612090,   24, 1.00,   10, 0.000, 0.000, 2.000, 33
+train,    12, -14.193551,   19, 1.00,   10, 0.000, 0.000, 2.000, 33
+train,    13, -8.837542,    5, 1.00,    1, 0.000, 0.000, 2.000, 33
+train,    14, -6.113485,   20, 1.00,    6, 0.000, 0.000, 2.000, 33
+train,    15, -12.775389,    9, 1.00,    4, 0.000, 0.000, 2.000, 33
+train,    16, 0.946212,   13, 1.00,    5, 0.000, 0.000, 2.000, 33
+train,    17, 8.939640,   30, 1.00,    5, 0.000, 0.000, 2.000, 33
+train,    18, -7.407822,   14, 1.00,    6, 0.000, 0.000, 2.000, 33
+train,    19, -6.372877,    6, 1.00,    2, 0.000, 0.000, 2.000, 33
+train,    20, 8.409050,   21, 1.00,    5, 0.000, 0.000, 2.000, 33
+train,    21, -9.372927,   15, 1.00,    5, 0.000, 0.000, 2.000, 33
+train,    22, -7.660826,   12, 1.00,    4, 0.000, 0.000, 2.000, 33
+train,    23, -10.596935,   17, 1.00,    5, 0.000, 0.000, 2.000, 33
+train,    24, -4.154394,    6, 1.00,    2, 0.000, 0.000, 2.000, 33
+val_save, 24, -19.627812, 0.0000, 150.0000,   0.0000, 0.0000,  20.0133
+val,      24, -19.627812, 0.0000, 150.0000,   0.0000, 0.0000,  20.0133
+train,    25, -15.114598,   16, 1.00,    7, 0.000, 0.000, 2.000, 33
+update,   26,    1,  379, -6.870965, -0.000000
+checkpoint_cleanup,promoted=0, kept=4, removed=12
+finish,   2026-04-10 13:40:57.899149

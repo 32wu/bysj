@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument(
         "--failure_rate",
         type=float,
-        default=0.2,
+        default=0.0,
         help="Probability of injecting a random steering/action failure at each step.",
     )
     parser.add_argument(
@@ -144,6 +144,14 @@ def main():
         video_tag=build_video_tag(args) if record_video else None,
         video_run_kind=video_run_kind,
     )
+    effective_config = dict(getattr(env.env.unwrapped, "config", {}))
+    traffic_config_tokens = []
+    if "vehicles_count" in effective_config:
+        traffic_config_tokens.append(f"vehicles_count={effective_config['vehicles_count']}")
+    if "vehicles_density" in effective_config:
+        traffic_config_tokens.append(f"vehicles_density={effective_config['vehicles_density']:.2f}")
+    if "ego_spacing" in effective_config:
+        traffic_config_tokens.append(f"ego_spacing={effective_config['ego_spacing']:.2f}")
     if record_video:
         print(f"📹 本次录像目录: {env.video_folder}")
         print(f"🗂️ 录像分类: {env.video_run_kind}/{checkpoint_utils.scenario_dirname(args.road_scenario, args.traffic_level)}")
@@ -161,6 +169,8 @@ def main():
     print(
         f"🛣️ 当前场景: {args.road_scenario} | 交通密度: {args.traffic_level} | 故障率: {args.failure_rate * 100:.1f}%"
     )
+    if traffic_config_tokens:
+        print(f"🚦 实际交通配置: {' | '.join(traffic_config_tokens)}")
 
     done = False
     step = 0

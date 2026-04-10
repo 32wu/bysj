@@ -286,6 +286,7 @@ def cleanup_final_best_checkpoints(
     actor_current_prefix=None,
     critic_best_prefix=None,
     critic_current_prefix=None,
+    keep_current=False,
 ):
     keep_endings = ('_1.pt', '_w_1.pt', '_b_1.pt', '_m_1.pt')
     summary = {
@@ -312,15 +313,23 @@ def cleanup_final_best_checkpoints(
         summary['removed'].extend(removed_files)
 
     if actor_best_ready and actor_current_prefix:
-        _, removed_files = prune_checkpoint_family(actor_current_prefix, keep_endings=())
-        summary['removed'].extend(removed_files)
+        if keep_current:
+            kept_files, removed_files = prune_checkpoint_family(actor_current_prefix, keep_endings=keep_endings)
+            summary['kept'].extend(kept_files)
+            summary['removed'].extend(removed_files)
+        else:
+            _, removed_files = prune_checkpoint_family(actor_current_prefix, keep_endings=())
+            summary['removed'].extend(removed_files)
     if critic_best_ready and critic_current_prefix:
-        _, removed_files = prune_checkpoint_family(critic_current_prefix, keep_endings=())
-        summary['removed'].extend(removed_files)
+        if keep_current:
+            kept_files, removed_files = prune_checkpoint_family(critic_current_prefix, keep_endings=keep_endings)
+            summary['kept'].extend(kept_files)
+            summary['removed'].extend(removed_files)
+        else:
+            _, removed_files = prune_checkpoint_family(critic_current_prefix, keep_endings=())
+            summary['removed'].extend(removed_files)
 
     return summary
-
-
 def summarize_checkpoint_cleanup(summary):
     return 'promoted=%d, kept=%d, removed=%d' % (
         len(summary.get('promoted', [])),

@@ -83,6 +83,7 @@ def reload_log_file(filename):
     val_best_length = 0.0
     val_best_success = 0.0
     val_best_speed = 0.0
+    val_best_lane_change = 0.0
     with open(filename) as file:
         for line in file:
             str_list = [item for item in re.sub(',', ' ', line).split()]
@@ -98,9 +99,11 @@ def reload_log_file(filename):
                     val_best_length = float(str_list[4])
                 if len(str_list) > 6:
                     val_best_success = float(str_list[6])
+                if len(str_list) > 5:
+                    val_best_lane_change = float(str_list[5])
                 if len(str_list) > 7:
                     val_best_speed = float(str_list[7])
-    return train_epi_num, val_best_return, val_best_collision, val_best_length, val_best_success, val_best_speed
+    return train_epi_num, val_best_return, val_best_collision, val_best_length, val_best_success, val_best_speed, val_best_lane_change
 
 
 def log_text(file_handle, type_str, record_text, onscreen=True):
@@ -427,10 +430,7 @@ def evaluate_policy(env, model, episode_num, mode='val'):
                 next_state, reward, done, info, step_record = env.make_action(action_onehot)
                 if env.done_signal:
                     break
-                if mode == 'val':
-                    observation = env.get_val_observation()
-                else:
-                    observation = env.get_test_observation()
+                observation = next_state
             returns.append(env.episode_return)
             lengths.append(env.step_num)
             speeds.append(env.episode_mean_speed())
@@ -446,9 +446,28 @@ def evaluate_policy(env, model, episode_num, mode='val'):
     return metrics
 
 
-def is_better_lane_checkpoint(val_metrics, best_return, best_collision, best_success, best_speed):
+def lane_validation_quality(metrics):
+    excessive_lane_changes = max(0.0, float(metrics['mean_lane_change']) - 4.0)
+    return (
+        float(metrics['mean_return'])
+        + 1.5 * float(metrics['mean_speed'])
+        - 30.0 * float(metrics['collision_rate'])
+        - 2.5 * excessive_lane_changes
+    )
+
+
+def is_better_lane_checkpoint(val_metrics, best_return, best_collision, best_success, best_speed, best_lane_change):
     if val_metrics['success_rate'] > best_success + 1e-6:
         return True
+    if best_success <= 1e-6 and val_metrics['success_rate'] <= 1e-6:
+        candidate_quality = lane_validation_quality(val_metrics)
+        best_quality = lane_validation_quality({
+            'mean_return': best_return,
+            'mean_speed': best_speed,
+            'collision_rate': best_collision,
+            'mean_lane_change': best_lane_change,
+        })
+        return candidate_quality > best_quality + 1e-6
     if abs(val_metrics['success_rate'] - best_success) <= 1e-6 and val_metrics['collision_rate'] < best_collision - 1e-6:
         return True
     if (
@@ -718,10 +737,10 @@ if __name__ == '__main__':
     if args.ignore_checkpoint:
         reload_data = False
 
-    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed = 0, -10000.0, float('inf'), 0.0, 0.0, 0.0
+    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed, last_val_best_lane_change = 0, -10000.0, float('inf'), 0.0, 0.0, 0.0, 0.0
     warm_start_actor_prefix, warm_start_critic_prefix = None, None
     if reload_data:
-        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed = reload_log_file(log_filename)
+        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed, last_val_best_lane_change = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
         model.load_model(EXP_NAME + '_current')
@@ -776,11 +795,11 @@ if __name__ == '__main__':
 
             # 🌟 把它向左退格！让它无论是不是 SNN 都会执行！
             next_state_clean, reward, done, info, _step_record = env.make_action(action_chosen_onehot)
-            
-            if env.done_signal:
-                observation_next = next_state_clean.detach().clone()
+
+            if env.done_signal or episode_noise <= 0:
+                observation_next = next_state_clean
             else:
-                observation_next = env.get_train_observation(noise_level=episode_noise)
+                observation_next = env._apply_observation_noise(next_state_clean, noise_level=episode_noise)
 
             if args.model in ['rwtaprob', 'rwtaspk']:
                 rollout.add_transition(
@@ -855,6 +874,7 @@ if __name__ == '__main__':
                 last_val_best_collision,
                 last_val_best_success,
                 last_val_best_speed,
+                last_val_best_lane_change,
             )
             if better_model:
                 model.save_model(EXP_NAME + '_best')
@@ -864,6 +884,7 @@ if __name__ == '__main__':
                 last_val_best_length = val_metrics['mean_length']
                 last_val_best_success = val_metrics['success_rate']
                 last_val_best_speed = val_metrics['mean_speed']
+                last_val_best_lane_change = val_metrics['mean_lane_change']
                 log_text(
                     File,
                     'val_save',
@@ -923,6 +944,7 @@ if __name__ == '__main__':
         actor_current_prefix=EXP_NAME + '_current',
         critic_best_prefix=EXP_NAME + 'critic_best',
         critic_current_prefix=EXP_NAME + 'critic_current',
+        keep_current=(args.road_scenario == 'highway'),
     )
     log_text(File, 'checkpoint_cleanup', checkpoint_utils.summarize_checkpoint_cleanup(cleanup_summary), onscreen=False)
     log_text(File, 'finish', str(datetime.datetime.now()))
