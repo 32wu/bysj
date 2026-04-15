@@ -59,20 +59,43 @@ def get_arguments():
 
 
 def reload_log_file(filename):
-    train_epi_num, val_best = None, None
+    train_epi_num = 0
+    val_best_return = -10000.0
+    val_best_collision = float('inf')
+    val_best_length = 0.0
+    val_best_success = 0.0
+    val_best_speed = 0.0
+    val_best_lane_change = 0.0
     with open(filename) as file:
         for line in file:
             str_list = [i for i in re.sub(',', ' ', line).split()]
+            if not str_list:
+                continue
             if str_list[0] == 'train':
                 train_epi_num = int(str_list[1])
-            if str_list[0] == 'val':
-                val_best = float(str_list[2])
-    if train_epi_num is None:
-        train_epi_num = 0
-        val_best = -10000
-    if val_best is None:
-        val_best = -10000
-    return train_epi_num, val_best
+            if str_list[0] == 'val_save':
+                val_best_return = float(str_list[2])
+                if len(str_list) > 3:
+                    val_best_collision = float(str_list[3])
+                if len(str_list) > 4:
+                    val_best_length = float(str_list[4])
+                if len(str_list) > 6:
+                    val_best_success = float(str_list[6])
+                if len(str_list) > 7:
+                    val_best_speed = float(str_list[7])
+                if len(str_list) > 5:
+                    val_best_lane_change = float(str_list[5])
+            elif str_list[0] == 'val' and val_best_return <= -9999.0 and len(str_list) > 2:
+                val_best_return = float(str_list[2])
+    return (
+        train_epi_num,
+        val_best_return,
+        val_best_collision,
+        val_best_length,
+        val_best_success,
+        val_best_speed,
+        val_best_lane_change,
+    )
 
 
 def log_text(file_handle, type_str, record_text, onscreen=True):
@@ -115,6 +138,187 @@ class TimeMonitor:
                         np.max(self.time_optimize), ))
 
 
+def apply_lane_baseline_profile(args):
+    if args.task != 'gymip':
+        return []
+    adjustments = []
+
+    def clamp_min(attr_name, target_value):
+        current_value = getattr(args, attr_name)
+        if current_value < target_value:
+            setattr(args, attr_name, target_value)
+            adjustments.append(f'{attr_name}->{target_value}')
+
+    def clamp_max(attr_name, target_value):
+        current_value = getattr(args, attr_name)
+        if current_value > target_value:
+            setattr(args, attr_name, target_value)
+            adjustments.append(f'{attr_name}->{target_value}')
+
+    if args.road_scenario == 'highway':
+        traffic_level = getattr(args, 'traffic_level', 'standard')
+        lr_cap = {
+            'light': 0.0008,
+            'standard': 0.0007,
+            'dense': 0.0006,
+        }
+        gamma_floor = {
+            'light': 0.992,
+            'standard': 0.994,
+            'dense': 0.995,
+        }
+        entropy_floor = {
+            'light': 0.25,
+            'standard': 0.30,
+            'dense': 0.35,
+        }
+        train_num_floor = {
+            'light': 2400,
+            'standard': 3200,
+            'dense': 4200,
+        }
+        clamp_max('lr', lr_cap.get(traffic_level, 0.0007))
+        clamp_min('gamma', gamma_floor.get(traffic_level, 0.994))
+        clamp_min('entropy', entropy_floor.get(traffic_level, 0.30))
+        clamp_max('PPO_epochs', 4)
+        clamp_max('eps_clip', 0.15)
+        if args.train_num < train_num_floor.get(traffic_level, 3200):
+            args.train_num = train_num_floor.get(traffic_level, 3200)
+            adjustments.append(f'train_num->{args.train_num}')
+    return adjustments
+
+
+def select_lane_vehicle_count(args, train_epi_i):
+    if args.task != 'gymip' or getattr(args, 'road_scenario', None) != 'highway':
+        return None
+    traffic_target = {
+        'light': 40,
+        'standard': 60,
+        'dense': 84,
+    }
+    traffic_start = {
+        'light': 28,
+        'standard': 36,
+        'dense': 46,
+    }
+    curriculum_span = {
+        'light': 160,
+        'standard': 320,
+        'dense': 480,
+    }
+    traffic_level = getattr(args, 'traffic_level', 'standard')
+    start_vehicle_num = traffic_start.get(traffic_level, 30)
+    end_vehicle_num = traffic_target.get(traffic_level, 50)
+    span = curriculum_span.get(traffic_level, 280)
+    progress = min(1.0, train_epi_i / max(1, span))
+    return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
+
+
+def evaluate_lane_policy(env, model, episode_num):
+    metrics = {
+        'mean_return': 0.0,
+        'mean_length': 0.0,
+        'mean_speed': 0.0,
+        'collision_rate': 0.0,
+        'mean_lane_change': 0.0,
+        'success_rate': 0.0,
+    }
+    returns = []
+    lengths = []
+    speeds = []
+    collisions = []
+    lane_changes = []
+    successes = []
+    with torch.no_grad():
+        for _ in range(episode_num):
+            env.init_val()
+            observation = env.get_val_observation()
+            for _step_i in range(env.max_step_num):
+                model_output, _ = model(observation)
+                action_index = torch.argmax(model_output, dim=1)
+                action_onehot = torch.nn.functional.one_hot(action_index, num_classes=env.action_num).float()
+                next_state, reward, done, info, step_record = env.make_action(action_onehot)
+                if env.done_signal:
+                    break
+                observation = next_state
+            returns.append(env.episode_return)
+            lengths.append(env.step_num)
+            speeds.append(env.episode_mean_speed())
+            collisions.append(1.0 if env.collision_count > 0 else 0.0)
+            lane_changes.append(env.lane_change_count)
+            successes.append(env.episode_success())
+    metrics['mean_return'] = float(np.mean(returns))
+    metrics['mean_length'] = float(np.mean(lengths))
+    metrics['mean_speed'] = float(np.mean(speeds))
+    metrics['collision_rate'] = float(np.mean(collisions))
+    metrics['mean_lane_change'] = float(np.mean(lane_changes))
+    metrics['success_rate'] = float(np.mean(successes))
+    return metrics
+
+
+def lane_validation_quality(metrics):
+    excessive_lane_changes = max(0.0, float(metrics['mean_lane_change']) - 4.0)
+    return (
+        float(metrics['mean_return'])
+        + 0.45 * float(metrics.get('mean_length', 0.0))
+        + 1.5 * float(metrics['mean_speed'])
+        - 30.0 * float(metrics['collision_rate'])
+        - 2.5 * excessive_lane_changes
+    )
+
+
+def align_action_to_env_execution(model_output, sampled_action_onehot, step_info, action_num):
+    executed_action_index = None
+    if isinstance(step_info, dict):
+        executed_action_index = step_info.get('executed_action')
+    if executed_action_index is None:
+        return sampled_action_onehot, torch.distributions.OneHotCategorical(model_output).log_prob(sampled_action_onehot)
+    executed_action_index = int(executed_action_index)
+    executed_action_onehot = torch.nn.functional.one_hot(
+        torch.tensor([executed_action_index], device=model_output.device),
+        num_classes=action_num,
+    ).float()
+    executed_action_logprob = torch.distributions.OneHotCategorical(model_output).log_prob(executed_action_onehot)
+    return executed_action_onehot, executed_action_logprob
+
+
+def is_better_lane_checkpoint(val_metrics, best_return, best_collision, best_length, best_success, best_speed, best_lane_change):
+    if val_metrics['success_rate'] > best_success + 1e-6:
+        return True
+    if (
+        abs(val_metrics['success_rate'] - best_success) <= 1e-6 and
+        val_metrics['collision_rate'] <= best_collision + 0.02 and
+        val_metrics['mean_length'] > best_length + 1.0
+    ):
+        return True
+    if best_success <= 1e-6 and val_metrics['success_rate'] <= 1e-6:
+        candidate_quality = lane_validation_quality(val_metrics)
+        best_quality = lane_validation_quality({
+            'mean_return': best_return,
+            'mean_length': best_length,
+            'mean_speed': best_speed,
+            'collision_rate': best_collision,
+            'mean_lane_change': best_lane_change,
+        })
+        return candidate_quality > best_quality + 1e-6
+    if abs(val_metrics['success_rate'] - best_success) <= 1e-6 and val_metrics['collision_rate'] < best_collision - 1e-6:
+        return True
+    if (
+        abs(val_metrics['success_rate'] - best_success) <= 1e-6 and
+        abs(val_metrics['collision_rate'] - best_collision) <= 1e-6 and
+        val_metrics['mean_speed'] > best_speed + 1e-6
+    ):
+        return True
+    if (
+        abs(val_metrics['success_rate'] - best_success) <= 1e-6 and
+        abs(val_metrics['collision_rate'] - best_collision) <= 1e-6 and
+        abs(val_metrics['mean_speed'] - best_speed) <= 1e-6 and
+        val_metrics['mean_return'] > best_return + 1e-6
+    ):
+        return True
+    return False
+
+
 if __name__ == "__main__":
     # Arguments
     args = get_arguments()
@@ -148,6 +352,7 @@ if __name__ == "__main__":
             args.train_num = 2000 if args.train_num == 20000 else args.train_num
         else:
             args.train_num = 5000 if args.train_num == 20000 else args.train_num
+    baseline_profile_adjustments = apply_lane_baseline_profile(args)
     run_kind = 'baseline'
     EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s_rep%02d' % (
             args.alg, args.task, args.model, model_str, args.optimizer,
@@ -158,8 +363,12 @@ if __name__ == "__main__":
             run_kind=run_kind, road_scenario=args.road_scenario, traffic_level=args.traffic_level, create=True)
     # Task specified variables
     if args.task in ['gymip',]:
-        val_freq, val_num, test_num = 100, 10, 10
-        train_frequency = 10
+        if args.road_scenario == 'highway' and args.alg == 'ppo':
+            val_freq, val_num, test_num = 25, 5, 10
+            train_frequency = 32
+        else:
+            val_freq, val_num, test_num = 100, 10, 10
+            train_frequency = 10
     elif args.task in ['vizdoom']:
         val_freq, val_num, test_num = 100, 10, 10
         train_frequency = 30
@@ -271,29 +480,47 @@ if __name__ == "__main__":
     if args.model == 'ann2snn':
         reload_data = False
     if reload_data:
-        last_train_epi_num, last_val_best = reload_log_file(log_filename)
+        (
+            last_train_epi_num,
+            last_val_best,
+            last_val_best_collision,
+            last_val_best_length,
+            last_val_best_success,
+            last_val_best_speed,
+            last_val_best_lane_change,
+        ) = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
         model.load_model(EXP_NAME + '_current')
         model_c.load_model(EXP_NAME + 'critic' + '_current')
     else:           # Initialize training
-        last_train_epi_num, last_val_best = 0, -10000
+        last_train_epi_num = 0
+        last_val_best = -10000.0
+        last_val_best_collision = float('inf')
+        last_val_best_length = 0.0
+        last_val_best_success = 0.0
+        last_val_best_speed = 0.0
+        last_val_best_lane_change = 0.0
         File = open(log_filename, 'w')
         log_text(File, 'init', str(datetime.datetime.now()))
         log_text(File, 'arguments', str(args))
+        if baseline_profile_adjustments:
+            log_text(File, 'profile', '; '.join(baseline_profile_adjustments))
         log_text(File, 'model_dir', active_model_dir)
         log_text(File, 'log_dir', active_log_dir, onscreen=False)
         if args.model == 'ann2snn':
             model.load_model_ann(EXP_NAME + '_best')
     # Time Monitor
     calculation_time_monitor = TimeMonitor()
+    use_short_horizon_replay = bool(args.task == 'gymip' and args.road_scenario == 'highway' and args.alg == 'ppo')
     # >>>>  Main Loop
     mem.reset()         # memory buffer is shared across episodes
     train_step_num_total = 0
     for train_epi_i in range((last_train_epi_num + 1), args.train_num):
         if args.model == 'ann2snn':
             break
-        env.init_train()
+        episode_vehicle_count = select_lane_vehicle_count(args, train_epi_i)
+        env.init_train(vehicles_count=episode_vehicle_count)
         observation = env.get_train_observation()
         for train_step_i in range(env.max_step_num):
             # Inference
@@ -305,20 +532,24 @@ if __name__ == "__main__":
             # Process Output
             if args.model in ['rwtaprob', 'rwtaspk']:
                 action_chosen_onehot = model_other_output[0]
-                action_logprob = model_other_output[1]
             else:
                 action_distribution = torch.distributions.OneHotCategorical(model_output)
                 action_chosen_onehot = action_distribution.sample()
-                action_logprob = action_distribution.log_prob(action_chosen_onehot)
-            observation_next, reward, _, _, step_record = env.make_action(action_chosen_onehot)
+            observation_next, reward, _, step_info, step_record = env.make_action(action_chosen_onehot)
+            action_executed_onehot, action_logprob = align_action_to_env_execution(
+                model_output,
+                action_chosen_onehot,
+                step_info,
+                env.action_num,
+            )
             if args.model in ['rwtaprob', 'rwtaspk']:
                 mem.add_transition(s1=observation, model_output=model_output,
-                                   a=action_chosen_onehot, a_log=action_logprob,
+                                   a=action_executed_onehot, a_log=action_logprob,
                                    r=reward, s2=observation_next, done=env.done_signal,
                                    q_has=model_other_output[2], v_ha=model_other_output[3])
             else:
                 mem.add_transition(s1=observation, model_output=model_output.detach(),
-                                   a=action_chosen_onehot, a_log=action_logprob.detach(),
+                                   a=action_executed_onehot, a_log=action_logprob.detach(),
                                    r=reward, s2=observation_next, done=env.done_signal)
             # >>>> Train
             train_step_num_total = (train_step_num_total + 1) % train_frequency     # every number of steps
@@ -389,6 +620,8 @@ if __name__ == "__main__":
                         model.learn_reinforce(action_logprob_rei, advantage, action_entropy,)
                     if args.monitor_time:
                         calculation_time_monitor.record_time(rec_type=2, value=(time.time()-start_time2))
+                if use_short_horizon_replay:
+                    mem.reset()
             # Episode End
             if env.done_signal == True:
                 break
@@ -401,54 +634,102 @@ if __name__ == "__main__":
         log_text(
             File,
             'train',
-            '%d, %8.6f, %4d' % (
+            '%d, %8.6f, %4d, %3d' % (
                 train_epi_i,
                 env.episode_return,
                 env.step_num,
+                -1 if episode_vehicle_count is None else int(episode_vehicle_count),
             ),
             onscreen=False,
         )
         # Validation
         if train_epi_i % val_freq == (val_freq - 1):
-            val_preformance_list = []
-            val_step_num_list = []
-            for val_epi_i in range(val_num):
-                env.init_val()
-                observation = env.get_val_observation()
-                for val_step_i in range(env.max_step_num):
-                    model_output, model_other_output = model(observation)
-                    action_chosen_index = torch.argmax(model_output, dim=1)
-                    action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                    observation_next, reward, _, _, step_record_val = env.make_action(action_chosen_onehot)
-                    if env.done_signal == True:
-                        break
-                    observation = observation_next
-                val_preformance_list.append(step_record_val[2])
-                val_step_num_list.append(env.step_num)
-            val_performance_mean = sum(val_preformance_list) / len(val_preformance_list)
-            val_step_num_mean = sum(val_step_num_list) / len(val_step_num_list)
-            if last_val_best <= val_performance_mean:
-                model.save_model(EXP_NAME + '_best')
-                model_c.save_model(EXP_NAME + 'critic' + '_best')
+            if args.task == 'gymip':
+                val_metrics = evaluate_lane_policy(env, model, val_num)
+                better_model = is_better_lane_checkpoint(
+                    val_metrics,
+                    last_val_best,
+                    last_val_best_collision,
+                    last_val_best_length,
+                    last_val_best_success,
+                    last_val_best_speed,
+                    last_val_best_lane_change,
+                )
+                if better_model:
+                    model.save_model(EXP_NAME + '_best')
+                    model_c.save_model(EXP_NAME + 'critic' + '_best')
+                    last_val_best = val_metrics['mean_return']
+                    last_val_best_collision = val_metrics['collision_rate']
+                    last_val_best_length = val_metrics['mean_length']
+                    last_val_best_success = val_metrics['success_rate']
+                    last_val_best_speed = val_metrics['mean_speed']
+                    last_val_best_lane_change = val_metrics['mean_lane_change']
+                    log_text(
+                        File,
+                        'val_save',
+                        '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                            train_epi_i,
+                            val_metrics['mean_return'],
+                            val_metrics['collision_rate'],
+                            val_metrics['mean_length'],
+                            val_metrics['mean_lane_change'],
+                            val_metrics['success_rate'],
+                            val_metrics['mean_speed'],
+                        ),
+                    )
                 log_text(
                     File,
-                    'val_save',
+                    'val',
+                    '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                        train_epi_i,
+                        val_metrics['mean_return'],
+                        val_metrics['collision_rate'],
+                        val_metrics['mean_length'],
+                        val_metrics['mean_lane_change'],
+                        val_metrics['success_rate'],
+                        val_metrics['mean_speed'],
+                    ),
+                )
+            else:
+                val_preformance_list = []
+                val_step_num_list = []
+                for val_epi_i in range(val_num):
+                    env.init_val()
+                    observation = env.get_val_observation()
+                    for val_step_i in range(env.max_step_num):
+                        model_output, model_other_output = model(observation)
+                        action_chosen_index = torch.argmax(model_output, dim=1)
+                        action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
+                        observation_next, reward, _, _, step_record_val = env.make_action(action_chosen_onehot)
+                        if env.done_signal == True:
+                            break
+                        observation = observation_next
+                    val_preformance_list.append(step_record_val[2])
+                    val_step_num_list.append(env.step_num)
+                val_performance_mean = sum(val_preformance_list) / len(val_preformance_list)
+                val_step_num_mean = sum(val_step_num_list) / len(val_step_num_list)
+                if last_val_best <= val_performance_mean:
+                    model.save_model(EXP_NAME + '_best')
+                    model_c.save_model(EXP_NAME + 'critic' + '_best')
+                    log_text(
+                        File,
+                        'val_save',
+                        '%d,   %8.6f,   %8.4f' % (
+                            train_epi_i,
+                            val_performance_mean,
+                            val_step_num_mean,
+                        ),
+                    )
+                    last_val_best = val_performance_mean
+                log_text(
+                    File,
+                    'val',
                     '%d,   %8.6f,   %8.4f' % (
                         train_epi_i,
                         val_performance_mean,
                         val_step_num_mean,
                     ),
                 )
-                last_val_best = val_performance_mean
-            log_text(
-                File,
-                'val',
-                '%d,   %8.6f,   %8.4f' % (
-                    train_epi_i,
-                    val_performance_mean,
-                    val_step_num_mean,
-                ),
-            )
 
 
     # ANN2SNN Implementation

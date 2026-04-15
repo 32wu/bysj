@@ -1,0 +1,28 @@
+init,     2026-04-13 12:43:31.717772
+arguments,Namespace(PPO_epochs=4, alg='ppo', cuda=-1, entropy=0.35, eps_clip=0.15, gamma=0.995, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lr=0.0006, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=19092, response_window=40, road_scenario='highway', rwta_del_connection='none', skip_post_tests=False, snn_num_steps=15, task='gymip', thread=-1, traffic_level='dense', train_num=4200)
+profile,  lr->0.0006; gamma->0.995; entropy->0.35; PPO_epochs->4; eps_clip->0.15; train_num->4200
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_dense/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_dense/logs
+train,    1, 1.520416,    4,  46
+train,    2, 22.700232,   11,  46
+train,    3, 27.710012,   11,  46
+train,    4, -6.186437,    2,  46
+train,    5, 24.009520,   12,  46
+train,    6, 5.234607,    6,  46
+train,    7, -3.791016,    3,  47
+train,    8, 6.368711,    7,  47
+train,    9, -5.452725,    2,  47
+train,    10, 57.525309,   27,  47
+train,    11, 8.756517,    7,  47
+train,    12, 7.879496,    6,  47
+train,    13, 2.128668,    4,  47
+train,    14, 12.759864,   10,  47
+train,    15, -4.437245,    3,  47
+train,    16, 1.265194,    4,  47
+train,    17, -2.476485,    3,  47
+train,    18, -2.684641,    3,  47
+train,    19, 14.665817,   10,  48
+train,    20, 0.525936,    4,  48
+train,    21, -0.774745,    3,  48
+train,    22, 7.777656,    7,  48
+train,    23, 21.620901,   13,  48

@@ -1,0 +1,28 @@
+init,     2026-04-13 21:19:46.287889
+arguments,Namespace(PPO_epochs=3, adv_norm=1, alg='ppo', cuda=0, curriculum_clean_ratio=0.97, curriculum_entropy_decay=0.95, curriculum_mode='adaptive', curriculum_noise_step=0.003, curriculum_patience=4, entropy=0.22, entropy_min=0.1, eps_clip=0.12, gae_lambda=0.98, gamma=0.997, grad_clip=0.4, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lane_profile='auto', lr=0.00032, max_noise=0.012, mini_batch_size=224, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=0.9, road_scenario='highway', rollout_steps=896, rwta_del_connection='none', seed=26184, snn_num_steps=15, task='gymip', thread=-1, traffic_level='dense', train_num=4800, warm_start_kind='none', warm_start_prefix='')
+seed,     26184
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/logs
+profile,  lane auto-stabilize: entropy->0.22, rollout_steps->896, mini_batch_size->224, curriculum_patience->4, train_num->4800
+train,    1, 20.519930,   11, 1.00,    4, 0.000, 0.000, 0.220, 44
+train,    2, 25.735991,   14, 1.00,    3, 0.000, 0.000, 0.220, 44
+train,    3, 7.553225,    6, 1.00,    2, 0.000, 0.000, 0.220, 44
+train,    4, -0.076968,    5, 1.00,    1, 0.000, 0.000, 0.220, 44
+train,    5, 5.001799,    7, 1.00,    1, 0.000, 0.000, 0.220, 44
+train,    6, 0.148385,    5, 1.00,    1, 0.000, 0.000, 0.220, 44
+train,    7, 26.942570,   12, 1.00,    3, 0.000, 0.000, 0.220, 44
+train,    8, -7.314990,    2, 1.00,    2, 0.000, 0.000, 0.220, 44
+train,    9, 114.785328,   67, 1.00,   14, 0.000, 0.000, 0.220, 44
+train,    10, 5.925901,    9, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    11, 46.449463,   22, 1.00,    4, 0.000, 0.000, 0.220, 45
+train,    12, 9.029650,    8, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    13, 8.227397,    8, 1.00,    0, 0.000, 0.000, 0.220, 45
+train,    14, -5.082949,    3, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    15, 23.272909,   12, 1.00,    5, 0.000, 0.000, 0.220, 45
+train,    16, 14.599727,    9, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    17, 38.706574,   22, 1.00,    6, 0.000, 0.000, 0.220, 45
+train,    18, 12.045855,    9, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    19, 5.061144,   13, 1.00,    3, 0.000, 0.000, 0.220, 45
+train,    20, 5.992362,    6, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    21, -3.287130,    6, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    22, 19.499033,   13, 1.00,    4, 0.000, 0.000, 0.220, 45

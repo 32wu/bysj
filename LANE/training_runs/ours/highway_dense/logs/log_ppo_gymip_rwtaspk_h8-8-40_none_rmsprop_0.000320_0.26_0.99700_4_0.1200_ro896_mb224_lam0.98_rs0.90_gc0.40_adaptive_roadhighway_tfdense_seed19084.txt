@@ -1,0 +1,56 @@
+init,     2026-04-13 12:43:32.008064
+arguments,Namespace(PPO_epochs=4, adv_norm=1, alg='ppo', cuda=-1, curriculum_clean_ratio=0.96, curriculum_entropy_decay=0.95, curriculum_mode='adaptive', curriculum_noise_step=0.004, curriculum_patience=4, entropy=0.26, entropy_min=0.1, eps_clip=0.12, gae_lambda=0.98, gamma=0.997, grad_clip=0.4, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lane_profile='auto', lr=0.00032, max_noise=0.02, mini_batch_size=224, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=0.9, road_scenario='highway', rollout_steps=896, rwta_del_connection='none', seed=19084, snn_num_steps=15, task='gymip', thread=-1, traffic_level='dense', train_num=4800, warm_start_kind='none', warm_start_prefix='')
+seed,     19084
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/logs
+profile,  lane auto-stabilize: lr->0.0005, gamma->0.995, PPO_epochs->4, eps_clip->0.15, rollout_steps->512, mini_batch_size->128, gae_lambda->0.97, grad_clip->0.5, curriculum_clean_ratio->0.8, max_noise->0.08, curriculum_noise_step->0.02, lr->0.00032, gamma->0.997, entropy->0.26, eps_clip->0.12, rollout_steps->896, mini_batch_size->224, gae_lambda->0.98, reward_scale->0.9, grad_clip->0.4, curriculum_clean_ratio->0.96, max_noise->0.02, curriculum_noise_step->0.004, curriculum_patience->3, curriculum_entropy_decay->0.94, curriculum_patience->4, curriculum_entropy_decay->0.95, train_num->4800
+train,    1, 2.219969,    4, 1.00,    3, 0.000, 0.000, 0.260, 44
+train,    2, 14.967727,   10, 1.00,    2, 0.000, 0.000, 0.260, 44
+train,    3, -1.282693,    4, 1.00,    2, 0.000, 0.000, 0.260, 44
+train,    4, 14.775457,    9, 1.00,    2, 0.000, 0.000, 0.260, 44
+train,    5, 14.095111,    9, 1.00,    3, 0.000, 0.000, 0.260, 44
+train,    6, -5.537031,    2, 1.00,    2, 0.000, 0.000, 0.260, 44
+train,    7, 0.432431,    4, 1.00,    2, 0.000, 0.000, 0.260, 44
+train,    8, -0.718857,    4, 1.00,    2, 0.000, 0.000, 0.260, 44
+train,    9, -2.315644,    3, 1.00,    1, 0.000, 0.000, 0.260, 44
+train,    10, -3.236045,    3, 1.00,    2, 0.000, 0.000, 0.260, 45
+train,    11, 21.911210,   12, 1.00,    5, 0.000, 0.000, 0.260, 45
+train,    12, 10.811769,    8, 1.00,    4, 0.000, 0.000, 0.260, 45
+train,    13, 24.033333,   13, 1.00,    6, 0.000, 0.000, 0.260, 45
+train,    14, -5.253063,    2, 1.00,    2, 0.000, 0.000, 0.260, 45
+train,    15, 38.819896,   17, 1.00,    6, 0.000, 0.000, 0.260, 45
+train,    16, 68.363437,   32, 1.00,   17, 0.000, 0.000, 0.260, 45
+train,    17, 2.503562,    5, 1.00,    1, 0.000, 0.000, 0.260, 45
+train,    18, -6.081520,    2, 1.00,    1, 0.000, 0.000, 0.260, 45
+train,    19, 0.972956,    4, 1.00,    2, 0.000, 0.000, 0.260, 45
+train,    20, 6.531224,    5, 1.00,    3, 0.000, 0.000, 0.260, 45
+train,    21, -2.225919,    3, 1.00,    3, 0.000, 0.000, 0.260, 45
+train,    22, 16.838664,   11, 1.00,    3, 0.000, 0.000, 0.260, 45
+train,    23, 7.827006,    6, 1.00,    3, 0.000, 0.000, 0.260, 45
+train,    24, -0.689688,    4, 1.00,    2, 0.000, 0.000, 0.260, 45
+val_save, 24, -0.346254, 1.0000,   3.6000,   3.0000, 0.0000,  23.5237
+val,      24, -0.346254, 1.0000,   3.6000,   3.0000, 0.0000,  23.5237
+train,    25, 12.978167,   15, 1.00,    5, 0.000, 0.000, 0.260, 45
+train,    26, 15.994810,    9, 1.00,    5, 0.000, 0.000, 0.260, 45
+train,    27, 0.957026,    5, 1.00,    0, 0.000, 0.000, 0.260, 45
+train,    28, -1.206756,    5, 1.00,    3, 0.000, 0.000, 0.260, 45
+train,    29, 48.812785,   21, 1.00,   11, 0.000, 0.000, 0.260, 46
+train,    30, 1.785780,    4, 1.00,    2, 0.000, 0.000, 0.260, 46
+train,    31, 4.718333,    5, 1.00,    4, 0.000, 0.000, 0.260, 46
+train,    32, 12.737809,    8, 1.00,    5, 0.000, 0.000, 0.260, 46
+train,    33, -5.545323,    2, 1.00,    1, 0.000, 0.000, 0.260, 46
+train,    34, -2.421244,    3, 1.00,    3, 0.000, 0.000, 0.260, 46
+train,    35, -2.029301,    4, 1.00,    2, 0.000, 0.000, 0.260, 46
+train,    36, 44.735916,   20, 1.00,    7, 0.000, 0.000, 0.260, 46
+train,    37, 15.752188,   13, 1.00,    2, 0.000, 0.000, 0.260, 46
+train,    38, 50.675006,   21, 1.00,    9, 0.000, 0.000, 0.260, 46
+train,    39, -0.648466,    4, 1.00,    4, 0.000, 0.000, 0.260, 46
+train,    40, 1.820970,    4, 1.00,    2, 0.000, 0.000, 0.260, 46
+train,    41, 28.949412,   13, 1.00,    5, 0.000, 0.000, 0.260, 46
+train,    42, 9.643230,    8, 1.00,    4, 0.000, 0.000, 0.260, 46
+train,    43, 8.203659,    7, 1.00,    1, 0.000, 0.000, 0.260, 46
+train,    44, -6.954386,    2, 1.00,    2, 0.000, 0.000, 0.260, 46
+train,    45, 2.243337,    5, 1.00,    0, 0.000, 0.000, 0.260, 46
+train,    46, -0.827566,    5, 1.00,    1, 0.000, 0.000, 0.260, 46
+train,    47, 12.867124,   15, 1.00,    5, 0.000, 0.000, 0.260, 46
+train,    48, 28.731459,   14, 1.00,    5, 0.000, 0.000, 0.260, 47

@@ -21,17 +21,23 @@ def print_info(input_string):
 SCENARIO_PRESETS = {
     'highway': {
         'env_id': 'highway-v0',
-        'max_step_num': 150,
-        'target_step_num': 140,
+        'max_step_num': 200,
+        'target_step_num': 200,
         'config': {
-            'duration': 150,
+            'duration': 200,
             'lanes_count': 4,
-            'vehicles_count': 40,
-            'high_speed_reward': 0.8,
-            'reward_speed_range': [22, 30],
+            'vehicles_count': 60,
+            'controlled_vehicles': 1,
+            'initial_lane_id': 2,
+            'ego_spacing': 1.55,
+            'vehicles_density': 1.20,
+            'high_speed_reward': 0.4,
+            'reward_speed_range': [20, 30],
             'collision_reward': -1.0,
             'lane_change_reward': 0.0,
-            'right_lane_reward': 0.0,
+            'right_lane_reward': 0.1,
+            'normalize_reward': True,
+            'offroad_terminal': False,
         },
         'supports_vehicles_count': True,
     },
@@ -61,49 +67,290 @@ SCENARIO_PRESETS = {
 }
 
 TRAFFIC_VEHICLE_COUNT = {
-    'light': 24,
-    'standard': 40,
-    'dense': 60,
+    'light': 40,
+    'standard': 48,
+    'dense': 72,
 }
 
 HIGHWAY_TRAFFIC_ENV_PROFILE = {
     'light': {
-        'vehicles_density': 0.75,
-        'ego_spacing': 2.8,
+        'vehicles_density': 0.90,
+        'ego_spacing': 2.4,
     },
     'standard': {
-        'vehicles_density': 1.00,
-        'ego_spacing': 2.0,
+        'vehicles_density': 0.95,
+        'ego_spacing': 2.30,
     },
     'dense': {
-        'vehicles_density': 1.55,
-        'ego_spacing': 1.2,
+        'vehicles_density': 1.35,
+        'ego_spacing': 1.50,
     },
+}
+
+HIGHWAY_LOCAL_CLEAR_ZONE_RADIUS = {
+    'light': 18.0,
+    'standard': 14.0,
+    'dense': 15.0,
+}
+
+HIGHWAY_REWARD_SPEED_RANGE = {
+    'light': [20.0, 30.0],
+    'standard': [20.0, 30.0],
+    'dense': [19.0, 29.0],
 }
 
 HIGHWAY_DESIRED_CRUISE_SPEED = {
     'light': 29.0,
-    'standard': 28.0,
-    'dense': 25.5,
+    'standard': 29.4,
+    'dense': 28.2,
 }
 
 HIGHWAY_SUCCESS_MIN_SPEED = {
-    'light': 25.0,
+    'light': 23.5,
     'standard': 24.0,
-    'dense': 23.0,
+    'dense': 22.5,
 }
 
-HIGHWAY_OVERTAKE_PASS_MARGIN = 6.0
-HIGHWAY_POST_OVERTAKE_SETTLE_STEPS = 4
-HIGHWAY_LANE_CHANGE_EVAL_WINDOW = 4
-HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN = 8.0
-HIGHWAY_MIN_EFFECTIVE_SPEED_GAIN = 1.0
-HIGHWAY_MIN_EFFECTIVE_FRONT_SPEED_GAIN = 1.5
+HIGHWAY_LANE_CONTEXT_THRESHOLDS = {
+    'light': {
+        'blocked_front_gap': 38.0,
+        'blocked_speed_margin': 0.8,
+        'clear_road_gap': 54.0,
+        'left_front_clear': 20.0,
+        'left_rear_clear': 10.0,
+        'right_front_clear': 18.0,
+        'right_rear_clear': 9.0,
+    },
+    'standard': {
+        'blocked_front_gap': 36.0,
+        'blocked_speed_margin': 0.4,
+        'clear_road_gap': 46.0,
+        'left_front_clear': 16.0,
+        'left_rear_clear': 9.0,
+        'right_front_clear': 14.0,
+        'right_rear_clear': 8.5,
+    },
+    'dense': {
+        'blocked_front_gap': 34.0,
+        'blocked_speed_margin': 0.3,
+        'clear_road_gap': 40.0,
+        'left_front_clear': 13.0,
+        'left_rear_clear': 8.0,
+        'right_front_clear': 11.5,
+        'right_rear_clear': 7.5,
+    },
+}
+
+HIGHWAY_OVERTAKE_WINDOW_PROFILE = {
+    'light': {
+        'ego_target_speed_bonus': 2.0,
+        'current_clear_rear_gap': 24.0,
+        'current_clear_front_gap': 88.0,
+        'left_clear_rear_gap': 40.0,
+        'left_clear_front_gap': 132.0,
+        'right_clear_rear_gap': 18.0,
+        'right_clear_front_gap': 52.0,
+        'current_lane_spawns': [
+            {'offset': 20.0, 'speed_delta': 8.2, 'target_speed_delta': 7.2, 'min_gap': 18.0},
+            {'offset': 48.0, 'speed_delta': 5.0, 'target_speed_delta': 4.2, 'min_gap': 18.0},
+            {'offset': 82.0, 'speed_delta': 2.4, 'target_speed_delta': 1.8, 'min_gap': 20.0},
+        ],
+        'left_lane_spawns': [
+            {'offset': -42.0, 'speed_delta': 0.5, 'target_speed_delta': -0.2, 'min_gap': 18.0},
+            {'offset': 96.0, 'speed_delta': -0.4, 'target_speed_delta': -1.0, 'min_gap': 20.0},
+        ],
+        'right_lane_spawns': [
+            {'offset': 26.0, 'speed_delta': 5.6, 'target_speed_delta': 4.8, 'min_gap': 18.0},
+        ],
+    },
+    'standard': {
+        'ego_target_speed_bonus': 2.0,
+        'current_clear_rear_gap': 16.0,
+        'current_clear_front_gap': 58.0,
+        'left_clear_rear_gap': 30.0,
+        'left_clear_front_gap': 88.0,
+        'right_clear_rear_gap': 16.0,
+        'right_clear_front_gap': 42.0,
+        'current_lane_spawns': [
+            {'offset': 18.0, 'speed_delta': 8.0, 'target_speed_delta': 7.0, 'min_gap': 16.0},
+            {'offset': 38.0, 'speed_delta': 5.4, 'target_speed_delta': 4.4, 'min_gap': 16.0},
+            {'offset': 72.0, 'speed_delta': 2.6, 'target_speed_delta': 2.0, 'min_gap': 18.0},
+        ],
+        'left_lane_spawns': [
+            {'offset': -34.0, 'speed_delta': 0.5, 'target_speed_delta': -0.2, 'min_gap': 18.0},
+            {'offset': 66.0, 'speed_delta': -0.2, 'target_speed_delta': -0.8, 'min_gap': 18.0},
+            {'offset': 108.0, 'speed_delta': 0.8, 'target_speed_delta': 0.2, 'min_gap': 20.0},
+        ],
+        'right_lane_spawns': [
+            {'offset': 24.0, 'speed_delta': 4.8, 'target_speed_delta': 4.0, 'min_gap': 16.0},
+            {'offset': 58.0, 'speed_delta': 3.2, 'target_speed_delta': 2.6, 'min_gap': 16.0},
+        ],
+    },
+    'dense': {
+        'ego_target_speed_bonus': 2.0,
+        'current_clear_rear_gap': 12.0,
+        'current_clear_front_gap': 48.0,
+        'left_clear_rear_gap': 26.0,
+        'left_clear_front_gap': 68.0,
+        'right_clear_rear_gap': 14.0,
+        'right_clear_front_gap': 40.0,
+        'current_lane_spawns': [
+            {'offset': 16.0, 'speed_delta': 7.0, 'target_speed_delta': 6.2, 'min_gap': 14.0},
+            {'offset': 32.0, 'speed_delta': 5.2, 'target_speed_delta': 4.5, 'min_gap': 14.0},
+            {'offset': 52.0, 'speed_delta': 3.6, 'target_speed_delta': 3.0, 'min_gap': 14.0},
+            {'offset': 78.0, 'speed_delta': 2.4, 'target_speed_delta': 2.0, 'min_gap': 15.0},
+        ],
+        'left_lane_spawns': [
+            {'offset': -30.0, 'speed_delta': 0.8, 'target_speed_delta': 0.2, 'min_gap': 16.0},
+            {'offset': 50.0, 'speed_delta': 0.6, 'target_speed_delta': 0.0, 'min_gap': 16.0},
+            {'offset': 80.0, 'speed_delta': 1.4, 'target_speed_delta': 0.8, 'min_gap': 16.0},
+        ],
+        'right_lane_spawns': [
+            {'offset': 20.0, 'speed_delta': 5.0, 'target_speed_delta': 4.2, 'min_gap': 14.0},
+            {'offset': 38.0, 'speed_delta': 4.2, 'target_speed_delta': 3.5, 'min_gap': 14.0},
+            {'offset': 64.0, 'speed_delta': 2.6, 'target_speed_delta': 2.0, 'min_gap': 15.0},
+        ],
+    },
+}
+
+HIGHWAY_OVERTAKE_PASS_MARGIN = 4.5
+HIGHWAY_POST_OVERTAKE_SETTLE_STEPS = 6
+HIGHWAY_LANE_CHANGE_EVAL_WINDOW = 8
+HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN = 3.0
+HIGHWAY_MIN_EFFECTIVE_SPEED_GAIN = 0.25
+HIGHWAY_MIN_EFFECTIVE_FRONT_SPEED_GAIN = 0.5
+HIGHWAY_ASSIST_PROFILE = {
+    'light': {
+        'min_score_gain': 0.18,
+        'keep_right_score_tolerance': 0.04,
+        'accelerate_speed_margin': 1.2,
+        'critical_front_gap': 13.0,
+        'lane_change_cooldown_steps': 1,
+        'purposeful_front_gap_ratio': 1.00,
+        'blocked_gain_relaxation': 0.00,
+        'faster_redirect_gap_ratio': 0.88,
+        'anticipatory_block_gap_ratio': 0.72,
+        'overtake_target_front_buffer': 3.0,
+        'overtake_target_speed_gain': 0.4,
+        'post_overtake_settle_steps': 3,
+    },
+    'standard': {
+        'min_score_gain': 0.18,
+        'keep_right_score_tolerance': 0.04,
+        'accelerate_speed_margin': 1.2,
+        'critical_front_gap': 13.0,
+        'lane_change_cooldown_steps': 2,
+        'purposeful_front_gap_ratio': 0.95,
+        'blocked_gain_relaxation': 0.02,
+        'faster_redirect_gap_ratio': 0.90,
+        'anticipatory_block_gap_ratio': 0.76,
+        'overtake_target_front_buffer': 3.5,
+        'overtake_target_speed_gain': 0.5,
+        'post_overtake_settle_steps': 4,
+    },
+    'dense': {
+        'min_score_gain': 0.08,
+        'keep_right_score_tolerance': 0.01,
+        'accelerate_speed_margin': 0.9,
+        'critical_front_gap': 22.0,
+        'lane_change_cooldown_steps': 3,
+        'purposeful_front_gap_ratio': 0.90,
+        'blocked_gain_relaxation': 0.06,
+        'faster_redirect_gap_ratio': 0.92,
+        'anticipatory_block_gap_ratio': 0.95,
+        'overtake_target_front_buffer': 5.0,
+        'overtake_target_speed_gain': 0.5,
+        'post_overtake_settle_steps': 8,
+        'yield_gap_ratio': 0.80,
+    },
+}
 
 HIGHWAY_TRAINING_SIMULATION_FREQUENCY = {
-    'light': 13,
-    'standard': 12,
-    'dense': 10,
+    'light': 15,
+    'standard': 15,
+    'dense': 18,
+}
+
+HIGHWAY_REWARD_PROFILE = {
+    'light': {
+        'lane_change_penalty_scale': 0.004,
+        'repeated_lane_change_scale': 0.025,
+        'zigzag_penalty_scale': 0.06,
+        'survival_bonus_scale': 0.03,
+        'speed_bonus_scale': 0.48,
+        'lane_bonus_scale': 0.04,
+        'raw_reward_scale': 1.28,
+        'offroad_penalty_scale': 2.00,
+        'low_speed_penalty_scale': 0.45,
+        'stop_penalty_scale': 0.35,
+        'crash_penalty_scale': 10.0,
+        'cruise_bonus_scale': 0.22,
+        'clear_road_bonus_scale': 0.18,
+        'overtake_bonus_scale': 1.50,
+        'blocked_penalty_scale': 0.32,
+        'beneficial_lane_change_bonus_scale': 0.45,
+        'missed_lane_change_penalty_scale': 0.22,
+        'ineffective_lane_change_penalty_scale': 0.14,
+        'keep_right_return_bonus_scale': 0.10,
+        'momentum_bonus_scale': 0.12,
+        'under_cruise_penalty_scale': 0.12,
+        'blocked_accelerate_penalty_scale': 0.12,
+        'progress_lane_change_bonus_scale': 0.35,
+    },
+    'standard': {
+        'lane_change_penalty_scale': 0.003,
+        'repeated_lane_change_scale': 0.020,
+        'zigzag_penalty_scale': 0.06,
+        'survival_bonus_scale': 0.03,
+        'speed_bonus_scale': 0.56,
+        'lane_bonus_scale': 0.03,
+        'raw_reward_scale': 1.28,
+        'offroad_penalty_scale': 2.20,
+        'low_speed_penalty_scale': 0.52,
+        'stop_penalty_scale': 0.40,
+        'crash_penalty_scale': 8.5,
+        'cruise_bonus_scale': 0.24,
+        'clear_road_bonus_scale': 0.22,
+        'overtake_bonus_scale': 1.85,
+        'blocked_penalty_scale': 0.45,
+        'beneficial_lane_change_bonus_scale': 0.65,
+        'missed_lane_change_penalty_scale': 0.34,
+        'ineffective_lane_change_penalty_scale': 0.18,
+        'keep_right_return_bonus_scale': 0.14,
+        'momentum_bonus_scale': 0.16,
+        'under_cruise_penalty_scale': 0.16,
+        'blocked_accelerate_penalty_scale': 0.18,
+        'progress_lane_change_bonus_scale': 0.35,
+    },
+    'dense': {
+        'lane_change_penalty_scale': 0.0022,
+        'repeated_lane_change_scale': 0.030,
+        'zigzag_penalty_scale': 0.060,
+        'survival_bonus_scale': 0.10,
+        'speed_bonus_scale': 0.56,
+        'lane_bonus_scale': 0.02,
+        'raw_reward_scale': 1.24,
+        'offroad_penalty_scale': 2.20,
+        'low_speed_penalty_scale': 0.52,
+        'stop_penalty_scale': 0.38,
+        'crash_penalty_scale': 14.0,
+        'cruise_bonus_scale': 0.24,
+        'clear_road_bonus_scale': 0.18,
+        'overtake_bonus_scale': 1.75,
+        'blocked_penalty_scale': 0.48,
+        'beneficial_lane_change_bonus_scale': 0.74,
+        'missed_lane_change_penalty_scale': 0.22,
+        'ineffective_lane_change_penalty_scale': 0.16,
+        'keep_right_return_bonus_scale': 0.05,
+        'momentum_bonus_scale': 0.18,
+        'under_cruise_penalty_scale': 0.16,
+        'blocked_accelerate_penalty_scale': 0.40,
+        'progress_lane_change_bonus_scale': 0.28,
+        'risky_lane_change_penalty_scale': 0.30,
+        'beneficial_post_gap_ratio': 0.44,
+        'safe_progress_post_gap_ratio': 0.34,
+        'post_overtake_stability_scale': 0.40,
+    },
 }
 
 VIDEO_LAYOUT_SCENARIOS = [
@@ -224,6 +471,7 @@ class GymLane:
         self.episode_speed_count = 0
         self.collision_count = 0
         self.lane_change_count = 0
+        self.assist_override_count = 0
         self.last_step_info = {}
         self.lane_change_action_ids = {0, 2}
         self.left_lane_action_id = 0
@@ -245,6 +493,8 @@ class GymLane:
         self.highway_overtake_stable_steps = 0
         self.highway_post_overtake_settle_steps = 0
         self.highway_recent_overtake_completion_steps = 0
+        self.highway_overtaken_vehicle_ids = set()
+        self.highway_relative_progress = {}
         self.highway_lane_change_eval_steps_remaining = 0
         self.highway_lane_change_eval_origin_lane_id = None
         self.highway_lane_change_eval_target_lane_id = None
@@ -351,6 +601,55 @@ class GymLane:
             return self._resolve_vehicle_count(None)
         return int(scenario_targets.get(self.traffic_level, scenario_targets['standard']))
 
+    def _get_highway_lane_context_thresholds(self):
+        return HIGHWAY_LANE_CONTEXT_THRESHOLDS.get(
+            self.traffic_level,
+            HIGHWAY_LANE_CONTEXT_THRESHOLDS['standard'],
+        )
+
+    def _get_highway_overtake_setup_profile(self):
+        return HIGHWAY_OVERTAKE_WINDOW_PROFILE.get(
+            self.traffic_level,
+            HIGHWAY_OVERTAKE_WINDOW_PROFILE['standard'],
+        )
+
+    def _get_highway_reward_profile(self):
+        return HIGHWAY_REWARD_PROFILE.get(
+            self.traffic_level,
+            HIGHWAY_REWARD_PROFILE['standard'],
+        )
+
+    def _get_highway_assist_profile(self):
+        return HIGHWAY_ASSIST_PROFILE.get(
+            self.traffic_level,
+            HIGHWAY_ASSIST_PROFILE['standard'],
+        )
+
+    def _highway_lane_change_gap_ok(
+        self,
+        front_gap,
+        rear_gap,
+        rear_speed,
+        front_reference,
+        rear_reference,
+        ego_speed,
+    ):
+        dynamic_front_reference = float(front_reference)
+        dynamic_rear_reference = float(rear_reference)
+        closing_speed = 0.0
+        if rear_speed is not None:
+            closing_speed = max(0.0, float(rear_speed) - max(0.0, float(ego_speed)))
+
+        if self.traffic_level == 'dense':
+            dynamic_front_reference = max(8.5, dynamic_front_reference * 0.82)
+            dynamic_rear_reference = max(5.0, dynamic_rear_reference * 0.72 + 0.45 * closing_speed)
+        else:
+            dynamic_rear_reference = max(dynamic_rear_reference, dynamic_rear_reference * 0.85 + 0.55 * closing_speed)
+
+        front_safe = front_gap is None or float(front_gap) >= dynamic_front_reference
+        rear_safe = rear_gap is None or float(rear_gap) >= dynamic_rear_reference
+        return bool(front_safe and rear_safe)
+
     def _configure_env(self, vehicles_count=None):
         config = dict(self.base_env_config)
         config['duration'] = self.max_step_num
@@ -362,6 +661,12 @@ class GymLane:
             )
             config['vehicles_density'] = float(traffic_profile.get('vehicles_density', 1.0))
             config['ego_spacing'] = float(traffic_profile.get('ego_spacing', 2.0))
+            config['reward_speed_range'] = list(
+                HIGHWAY_REWARD_SPEED_RANGE.get(
+                    self.traffic_level,
+                    HIGHWAY_REWARD_SPEED_RANGE['standard'],
+                )
+            )
             if self.mode in ['train', 'val']:
                 config['simulation_frequency'] = int(
                     HIGHWAY_TRAINING_SIMULATION_FREQUENCY.get(
@@ -437,6 +742,45 @@ class GymLane:
             return float(longitudinal)
         except Exception:
             return None
+
+    def _snapshot_highway_relative_progress(self):
+        if self.env is None or self.road_scenario != 'highway':
+            return {}
+        ego_vehicle = self._get_ego_vehicle()
+        lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
+        ego_longitudinal = self._lane_longitudinal(ego_vehicle, lane_index=lane_index)
+        if ego_vehicle is None or ego_longitudinal is None:
+            return {}
+        snapshot = {}
+        for vehicle in getattr(self.env.unwrapped.road, 'vehicles', []):
+            if vehicle is ego_vehicle:
+                continue
+            vehicle_lane_index = getattr(vehicle, 'lane_index', None)
+            vehicle_longitudinal = self._lane_longitudinal(vehicle, lane_index=vehicle_lane_index)
+            if vehicle_longitudinal is None:
+                continue
+            snapshot[id(vehicle)] = float(ego_longitudinal - vehicle_longitudinal)
+        return snapshot
+
+    def _update_highway_overtake_count(self):
+        if self.road_scenario != 'highway':
+            return 0
+        current_progress = self._snapshot_highway_relative_progress()
+        new_overtakes = 0
+        for vehicle_id, relative_progress in current_progress.items():
+            previous_progress = self.highway_relative_progress.get(vehicle_id)
+            if previous_progress is None or vehicle_id in self.highway_overtaken_vehicle_ids:
+                continue
+            if (
+                previous_progress <= -HIGHWAY_OVERTAKE_PASS_MARGIN
+                and relative_progress >= HIGHWAY_OVERTAKE_PASS_MARGIN
+            ):
+                self.highway_overtaken_vehicle_ids.add(vehicle_id)
+                new_overtakes += 1
+        self.highway_relative_progress = current_progress
+        if new_overtakes > 0:
+            self.highway_overtake_completion_count += int(new_overtakes)
+        return int(new_overtakes)
 
     def _lane_neighbor_profile(self, vehicle=None, lane_index=None):
         empty_profile = {
@@ -541,10 +885,14 @@ class GymLane:
             'current_front_gap': None,
             'current_front_speed': None,
             'left_front_gap': None,
+            'left_front_speed': None,
             'left_rear_gap': None,
+            'left_rear_speed': None,
             'left_lane_clear': False,
             'right_front_gap': None,
+            'right_front_speed': None,
             'right_rear_gap': None,
+            'right_rear_speed': None,
             'right_lane_clear': False,
         }
         if self.env is None or self.road_scenario != 'highway':
@@ -554,6 +902,7 @@ class GymLane:
         if ego_vehicle is None or lane_index is None or len(lane_index) < 3:
             return empty_context
 
+        thresholds = self._get_highway_lane_context_thresholds()
         current_profile = self._lane_neighbor_profile(ego_vehicle, lane_index=lane_index)
         road_network = self.env.unwrapped.road.network
         left_lane_index = None
@@ -570,24 +919,41 @@ class GymLane:
 
         left_profile = self._lane_neighbor_profile(ego_vehicle, lane_index=left_lane_index) if left_lane_index is not None else {}
         right_profile = self._lane_neighbor_profile(ego_vehicle, lane_index=right_lane_index) if right_lane_index is not None else {}
+        ego_speed = float(getattr(ego_vehicle, 'speed', 0.0))
         left_lane_clear = (
             left_lane_index is not None and
-            (left_profile.get('front_gap') is None or left_profile.get('front_gap') >= 24.0) and
-            (left_profile.get('rear_gap') is None or left_profile.get('rear_gap') >= 14.0)
+            self._highway_lane_change_gap_ok(
+                left_profile.get('front_gap'),
+                left_profile.get('rear_gap'),
+                left_profile.get('rear_speed'),
+                thresholds['left_front_clear'],
+                thresholds['left_rear_clear'],
+                ego_speed,
+            )
         )
         right_lane_clear = (
             right_lane_index is not None and
-            (right_profile.get('front_gap') is None or right_profile.get('front_gap') >= 20.0) and
-            (right_profile.get('rear_gap') is None or right_profile.get('rear_gap') >= 12.0)
+            self._highway_lane_change_gap_ok(
+                right_profile.get('front_gap'),
+                right_profile.get('rear_gap'),
+                right_profile.get('rear_speed'),
+                thresholds['right_front_clear'],
+                thresholds['right_rear_clear'],
+                ego_speed,
+            )
         )
         return {
             'current_front_gap': current_profile.get('front_gap'),
             'current_front_speed': current_profile.get('front_speed'),
             'left_front_gap': left_profile.get('front_gap'),
+            'left_front_speed': left_profile.get('front_speed'),
             'left_rear_gap': left_profile.get('rear_gap'),
+            'left_rear_speed': left_profile.get('rear_speed'),
             'left_lane_clear': bool(left_lane_clear),
             'right_front_gap': right_profile.get('front_gap'),
+            'right_front_speed': right_profile.get('front_speed'),
             'right_rear_gap': right_profile.get('rear_gap'),
+            'right_rear_speed': right_profile.get('rear_speed'),
             'right_lane_clear': bool(right_lane_clear),
         }
 
@@ -598,17 +964,18 @@ class GymLane:
         lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
         lane_id = int(lane_index[2]) if lane_index is not None and len(lane_index) >= 3 else None
         cruise_speed = self._target_highway_cruise_speed()
+        thresholds = self._get_highway_lane_context_thresholds()
         context = self._highway_lane_context(ego_vehicle)
         neighbor_snapshot = self._lane_neighbor_snapshot(ego_vehicle, lane_index=lane_index)
         front_gap = context.get('current_front_gap')
         front_speed = context.get('current_front_speed')
         blocked_by_slower_front = (
             front_gap is not None and
-            front_gap < 28.0 and
+            front_gap < thresholds['blocked_front_gap'] and
             front_speed is not None and
-            front_speed < (cruise_speed - 1.0)
+            front_speed < (cruise_speed - thresholds['blocked_speed_margin'])
         )
-        clear_road_ahead = front_gap is None or front_gap >= 36.0
+        clear_road_ahead = front_gap is None or front_gap >= thresholds['clear_road_gap']
         return {
             'lane_id': lane_id,
             'lane_index': lane_index,
@@ -618,6 +985,501 @@ class GymLane:
             'clear_road_ahead': bool(clear_road_ahead),
             'blocked_by_slower_front': bool(blocked_by_slower_front),
         }
+
+
+    def _available_actions(self):
+        if self.env is None:
+            return {0, 1, 2, 3, 4}
+        action_type = getattr(self.env.unwrapped, 'action_type', None)
+        if action_type is None or not hasattr(action_type, 'get_available_actions'):
+            return {0, 1, 2, 3, 4}
+        try:
+            return set(int(action_id) for action_id in action_type.get_available_actions())
+        except Exception:
+            return {0, 1, 2, 3, 4}
+
+    def _highway_lane_option_score(self, front_gap, front_speed, rear_gap, cruise_speed, front_reference, rear_reference):
+        gap_score = 1.20 if front_gap is None else float(np.clip(front_gap / max(1.0, front_reference), 0.0, 1.30))
+        if front_speed is None:
+            speed_score = 1.0
+        else:
+            speed_score = float(np.clip((front_speed - (cruise_speed - 7.0)) / 7.0, 0.0, 1.20))
+        rear_score = 1.0 if rear_gap is None else float(np.clip(rear_gap / max(1.0, rear_reference), 0.0, 1.0))
+        return 0.58 * gap_score + 0.28 * speed_score + 0.14 * rear_score
+
+    def _highway_lane_change_window_ready(
+        self,
+        direction,
+        context,
+        thresholds,
+        assist_profile,
+        current_front_gap,
+        current_front_speed,
+        ego_speed,
+    ):
+        if direction == 'left':
+            lane_clear = bool(context.get('left_lane_clear', False))
+            if not lane_clear:
+                return False
+            if self.traffic_level != 'dense':
+                return True
+            left_front_gap = context.get('left_front_gap')
+            left_front_speed = context.get('left_front_speed')
+            current_front_gap_value = float(current_front_gap) if current_front_gap is not None else thresholds['blocked_front_gap']
+            current_front_speed_value = float(current_front_speed) if current_front_speed is not None else float(ego_speed)
+            target_front_gap = max(
+                thresholds['left_front_clear'],
+                min(
+                    thresholds['clear_road_gap'] * 0.55,
+                    current_front_gap_value + float(assist_profile.get('overtake_target_front_buffer', 4.0)),
+                ),
+            )
+            target_speed_gain = float(assist_profile.get('overtake_target_speed_gain', 0.5))
+            return bool(
+                left_front_gap is None or
+                float(left_front_gap) >= target_front_gap or
+                (
+                    left_front_gap is not None and
+                    float(left_front_gap) >= thresholds['left_front_clear'] and
+                    (
+                        left_front_speed is None or
+                        float(left_front_speed) >= (current_front_speed_value + target_speed_gain)
+                    )
+                )
+            )
+        if direction == 'right':
+            return bool(context.get('right_lane_clear', False))
+        return False
+
+    def _derive_highway_tactical_plan(self, pre_step_highway_meta):
+        default_plan = {
+            'blocked': False,
+            'current_score': 0.0,
+            'left_score': -1.0,
+            'right_score': -1.0,
+            'best_lane_gain': 0.0,
+            'desired_action': None,
+            'reason': 'policy',
+            'accelerate': False,
+            'return_right': False,
+        }
+        if self.road_scenario != 'highway' or not pre_step_highway_meta:
+            return default_plan
+
+        thresholds = self._get_highway_lane_context_thresholds()
+        assist_profile = self._get_highway_assist_profile()
+        context = pre_step_highway_meta.get('context', {})
+        cruise_speed = self._target_highway_cruise_speed()
+        speed = float(pre_step_highway_meta.get('speed', 0.0))
+        available_actions = self._available_actions()
+
+        current_score = self._highway_lane_option_score(
+            context.get('current_front_gap'),
+            context.get('current_front_speed'),
+            None,
+            cruise_speed,
+            thresholds['clear_road_gap'],
+            thresholds['left_rear_clear'],
+        )
+        left_score = -1.0
+        right_score = -1.0
+        if context.get('left_lane_clear', False):
+            left_score = self._highway_lane_option_score(
+                context.get('left_front_gap'),
+                context.get('left_front_speed'),
+                context.get('left_rear_gap'),
+                cruise_speed,
+                thresholds['clear_road_gap'],
+                thresholds['left_rear_clear'],
+            )
+        if context.get('right_lane_clear', False):
+            right_score = self._highway_lane_option_score(
+                context.get('right_front_gap'),
+                context.get('right_front_speed'),
+                context.get('right_rear_gap'),
+                cruise_speed,
+                thresholds['clear_road_gap'],
+                thresholds['right_rear_clear'],
+            )
+
+        current_front_gap = context.get('current_front_gap')
+        current_front_speed = context.get('current_front_speed')
+        blocked = bool(pre_step_highway_meta.get('blocked_by_slower_front'))
+        if self.traffic_level == 'dense' and not blocked:
+            anticipatory_block_gap = thresholds['clear_road_gap'] * float(
+                assist_profile.get('anticipatory_block_gap_ratio', 0.80)
+            )
+            blocked = (
+                current_front_gap is not None and
+                current_front_gap < anticipatory_block_gap and
+                current_front_speed is not None and
+                current_front_speed < max(speed - 0.4, cruise_speed - 1.8)
+            )
+        if not blocked:
+            blocked = (
+                current_front_gap is not None and
+                current_front_gap < thresholds['blocked_front_gap'] and
+                speed < cruise_speed + 1.0
+            )
+
+        left_window_ready = self._highway_lane_change_window_ready(
+            'left',
+            context,
+            thresholds,
+            assist_profile,
+            current_front_gap,
+            current_front_speed,
+            speed,
+        )
+        right_window_ready = self._highway_lane_change_window_ready(
+            'right',
+            context,
+            thresholds,
+            assist_profile,
+            current_front_gap,
+            current_front_speed,
+            speed,
+        )
+
+        best_lane_gain = 0.0
+        desired_action = None
+        reason = 'policy'
+        if left_window_ready:
+            left_gain = float(left_score - current_score)
+            if left_gain > best_lane_gain:
+                best_lane_gain = left_gain
+                desired_action = self.left_lane_action_id
+                reason = 'blocked_left_overtake'
+        if right_window_ready:
+            right_gain = float(right_score - current_score)
+            if right_gain > best_lane_gain:
+                best_lane_gain = right_gain
+                desired_action = self.right_lane_action_id
+                reason = 'blocked_right_escape'
+
+        effective_min_score_gain = float(assist_profile['min_score_gain'])
+        if self.traffic_level == 'dense' and blocked and current_front_gap is not None:
+            blocked_gap_pressure = float(
+                np.clip(
+                    (thresholds['blocked_front_gap'] - float(current_front_gap)) / max(1.0, thresholds['blocked_front_gap']),
+                    0.0,
+                    1.0,
+                )
+            )
+            effective_min_score_gain = max(
+                0.03,
+                effective_min_score_gain - float(assist_profile.get('blocked_gain_relaxation', 0.0)) * blocked_gap_pressure,
+            )
+        if best_lane_gain < effective_min_score_gain:
+            desired_action = None
+        if not blocked:
+            desired_action = None
+        if desired_action is not None and desired_action not in available_actions:
+            desired_action = None
+
+        critical_blocked = (
+            blocked and
+            current_front_gap is not None and
+            current_front_gap < float(assist_profile['critical_front_gap'])
+        )
+        if desired_action is None and critical_blocked:
+            if left_window_ready and left_score >= right_score:
+                desired_action = self.left_lane_action_id
+                reason = 'critical_left_escape'
+            elif right_window_ready:
+                desired_action = self.right_lane_action_id
+                reason = 'critical_right_escape'
+            elif left_window_ready:
+                desired_action = self.left_lane_action_id
+                reason = 'critical_left_escape'
+
+        clear_road_ahead = bool(pre_step_highway_meta.get('clear_road_ahead'))
+        accelerate = (
+            clear_road_ahead and
+            speed < (cruise_speed - float(assist_profile['accelerate_speed_margin'])) and
+            self.faster_action_id in available_actions
+        )
+        return_right = (
+            context.get('right_lane_clear', False) and
+            not blocked and
+            right_score >= (current_score - float(assist_profile['keep_right_score_tolerance']))
+        )
+        if self.traffic_level == 'dense':
+            return_right = (
+                return_right and
+                clear_road_ahead and
+                speed >= max(self._minimum_success_speed(), cruise_speed - 1.0)
+            )
+
+        if desired_action is None and blocked:
+            front_gap = context.get('current_front_gap')
+            front_speed = context.get('current_front_speed')
+            yield_gap_ratio = float(assist_profile.get('yield_gap_ratio', 0.45))
+            should_yield = (
+                front_gap is not None and
+                front_gap < max(12.0, thresholds['blocked_front_gap'] * yield_gap_ratio) and
+                front_speed is not None and
+                speed > (front_speed + 1.0) and
+                self.slower_action_id in available_actions
+            )
+            if should_yield:
+                desired_action = self.slower_action_id
+                reason = 'yield_to_blocker'
+
+        if desired_action is None:
+            if return_right and self.right_lane_action_id in available_actions:
+                desired_action = self.right_lane_action_id
+                reason = 'keep_right'
+            elif accelerate:
+                desired_action = self.faster_action_id
+                reason = 'clear_road_accelerate'
+
+        return {
+            'blocked': bool(blocked),
+            'current_score': float(current_score),
+            'left_score': float(left_score),
+            'right_score': float(right_score),
+            'best_lane_gain': float(best_lane_gain),
+            'desired_action': desired_action,
+            'reason': reason,
+            'accelerate': bool(accelerate),
+            'return_right': bool(return_right),
+        }
+
+    def _select_highway_assisted_action(self, requested_action, pre_step_highway_meta):
+        if self.road_scenario != 'highway':
+            return int(requested_action), {'reason': 'non_highway'}
+
+        available_actions = self._available_actions()
+        tactical_plan = self._derive_highway_tactical_plan(pre_step_highway_meta)
+        desired_action = tactical_plan.get('desired_action')
+        executed_action = int(requested_action)
+        assist_reason = 'policy'
+        context = (pre_step_highway_meta or {}).get('context', {})
+        assist_profile = self._get_highway_assist_profile()
+        thresholds = self._get_highway_lane_context_thresholds()
+        dense_mode = self.traffic_level == 'dense'
+        current_front_gap = context.get('current_front_gap')
+        current_front_speed = context.get('current_front_speed')
+        ego_speed = float((pre_step_highway_meta or {}).get('speed', 0.0))
+        requested_lane_change_side_safe = (
+            (requested_action == self.left_lane_action_id and context.get('left_lane_clear', False)) or
+            (requested_action == self.right_lane_action_id and context.get('right_lane_clear', False))
+        )
+        requested_lane_change_window_ready = (
+            (
+                requested_action == self.left_lane_action_id and
+                self._highway_lane_change_window_ready(
+                    'left',
+                    context,
+                    thresholds,
+                    assist_profile,
+                    current_front_gap,
+                    current_front_speed,
+                    ego_speed,
+                )
+            ) or
+            (
+                requested_action == self.right_lane_action_id and
+                self._highway_lane_change_window_ready(
+                    'right',
+                    context,
+                    thresholds,
+                    assist_profile,
+                    current_front_gap,
+                    current_front_speed,
+                    ego_speed,
+                )
+            )
+        )
+        requested_lane_change_is_safe = requested_lane_change_side_safe and requested_lane_change_window_ready
+        dense_lane_change_cooldown = (
+            dense_mode and
+            self.steps_since_lane_change < int(assist_profile.get('lane_change_cooldown_steps', 0))
+        )
+        purposeful_dense_lane_change = (
+            tactical_plan.get('blocked', False) or
+            desired_action == requested_action or
+            (
+                current_front_gap is not None and
+                current_front_gap < thresholds['clear_road_gap'] * float(assist_profile.get('purposeful_front_gap_ratio', 1.0))
+            )
+        )
+        dense_critical_lane_change = tactical_plan.get('reason') in ['critical_left_escape', 'critical_right_escape']
+        dense_post_overtake_hold_steps = max(
+            int(self.highway_post_overtake_settle_steps),
+            int(self.highway_recent_overtake_completion_steps),
+        )
+        dense_post_overtake_settle_active = (
+            dense_mode and
+            dense_post_overtake_hold_steps > 0 and
+            not dense_critical_lane_change
+        )
+        forced_escape = False
+        if (
+            dense_mode and
+            current_front_gap is not None and
+            float(current_front_gap) < float(assist_profile['critical_front_gap']) * 0.85 and
+            desired_action in self.lane_change_action_ids and
+            desired_action in available_actions
+        ):
+            if desired_action == self.left_lane_action_id:
+                target_front_gap = context.get('left_front_gap')
+                target_rear_gap = context.get('left_rear_gap')
+                target_rear_speed = context.get('left_rear_speed')
+                front_ref = thresholds['left_front_clear']
+                rear_ref = thresholds['left_rear_clear']
+                lane_clear = context.get('left_lane_clear', False)
+                window_ready = self._highway_lane_change_window_ready(
+                    'left',
+                    context,
+                    thresholds,
+                    assist_profile,
+                    current_front_gap,
+                    current_front_speed,
+                    ego_speed,
+                )
+            else:
+                target_front_gap = context.get('right_front_gap')
+                target_rear_gap = context.get('right_rear_gap')
+                target_rear_speed = context.get('right_rear_speed')
+                front_ref = thresholds['right_front_clear']
+                rear_ref = thresholds['right_rear_clear']
+                lane_clear = context.get('right_lane_clear', False)
+                window_ready = self._highway_lane_change_window_ready(
+                    'right',
+                    context,
+                    thresholds,
+                    assist_profile,
+                    current_front_gap,
+                    current_front_speed,
+                    ego_speed,
+                )
+            safe_gap = self._highway_lane_change_gap_ok(
+                target_front_gap,
+                target_rear_gap,
+                target_rear_speed,
+                front_ref,
+                rear_ref,
+                ego_speed,
+            )
+            forced_escape = bool(lane_clear and safe_gap and window_ready)
+        if forced_escape:
+            executed_action = int(desired_action)
+            assist_reason = 'dense_forced_escape'
+        dense_critical_lane_change = dense_critical_lane_change or forced_escape
+
+        if executed_action == self.left_lane_action_id and not context.get('left_lane_clear', False):
+            if desired_action is not None and desired_action in available_actions and desired_action != self.left_lane_action_id:
+                executed_action = int(desired_action)
+                assist_reason = 'unsafe_left_redirect'
+            else:
+                executed_action = self.faster_action_id if tactical_plan.get('accelerate') and self.faster_action_id in available_actions else (1 if 1 in available_actions else min(available_actions))
+                assist_reason = 'unsafe_left_suppressed'
+        elif executed_action == self.right_lane_action_id and not context.get('right_lane_clear', False):
+            if desired_action is not None and desired_action in available_actions and desired_action != self.right_lane_action_id:
+                executed_action = int(desired_action)
+                assist_reason = 'unsafe_right_redirect'
+            else:
+                executed_action = self.faster_action_id if tactical_plan.get('accelerate') and self.faster_action_id in available_actions else (1 if 1 in available_actions else min(available_actions))
+                assist_reason = 'unsafe_right_suppressed'
+
+        if executed_action in self.lane_change_action_ids:
+            if (
+                dense_post_overtake_settle_active and
+                (
+                    not tactical_plan.get('blocked', False) or
+                    current_front_gap is None or
+                    float(current_front_gap) >= thresholds['blocked_front_gap'] * 0.82
+                )
+            ):
+                if tactical_plan.get('accelerate') and self.faster_action_id in available_actions:
+                    executed_action = self.faster_action_id
+                    assist_reason = 'dense_post_overtake_settle_to_accelerate'
+                elif tactical_plan.get('reason') == 'yield_to_blocker' and self.slower_action_id in available_actions:
+                    executed_action = self.slower_action_id
+                    assist_reason = 'dense_post_overtake_settle_to_yield'
+                else:
+                    executed_action = 1 if 1 in available_actions else min(available_actions)
+                    assist_reason = 'dense_post_overtake_settle_hold'
+            elif dense_lane_change_cooldown and not dense_critical_lane_change:
+                if tactical_plan.get('accelerate') and self.faster_action_id in available_actions:
+                    executed_action = self.faster_action_id
+                    assist_reason = 'dense_lane_change_cooldown_to_accelerate'
+                elif tactical_plan.get('reason') == 'yield_to_blocker' and self.slower_action_id in available_actions:
+                    executed_action = self.slower_action_id
+                    assist_reason = 'dense_lane_change_cooldown_to_yield'
+                else:
+                    executed_action = 1 if 1 in available_actions else min(available_actions)
+                    assist_reason = 'dense_lane_change_cooldown'
+            elif desired_action is None or desired_action != executed_action:
+                if dense_mode and requested_lane_change_is_safe and purposeful_dense_lane_change:
+                    assist_reason = 'safe_policy_lane_change'
+                elif tactical_plan.get('accelerate') and self.faster_action_id in available_actions:
+                    executed_action = self.faster_action_id
+                    assist_reason = 'nontactical_lane_change_to_accelerate'
+                elif tactical_plan.get('reason') == 'yield_to_blocker' and self.slower_action_id in available_actions:
+                    executed_action = self.slower_action_id
+                    assist_reason = 'nontactical_lane_change_to_yield'
+                else:
+                    executed_action = 1 if 1 in available_actions else min(available_actions)
+                    assist_reason = 'nontactical_lane_change_suppressed'
+
+        if executed_action not in available_actions:
+            if desired_action is not None and desired_action in available_actions:
+                executed_action = int(desired_action)
+                assist_reason = 'mask_to_tactical_action'
+            elif 1 in available_actions:
+                executed_action = 1
+                assist_reason = 'mask_to_idle'
+            else:
+                executed_action = min(available_actions)
+                assist_reason = 'mask_to_available_action'
+        elif desired_action is not None and desired_action in available_actions:
+            if tactical_plan.get('reason') in ['blocked_left_overtake', 'blocked_right_escape', 'critical_left_escape', 'critical_right_escape']:
+                if dense_mode:
+                    faster_redirect_blocked = (
+                        requested_action == self.faster_action_id and
+                        current_front_gap is not None and
+                        current_front_gap < thresholds['blocked_front_gap'] * float(assist_profile.get('faster_redirect_gap_ratio', 0.90))
+                    )
+                    should_override = (
+                        not dense_lane_change_cooldown or dense_critical_lane_change
+                    ) and (
+                        requested_action in [1, self.slower_action_id] or
+                        faster_redirect_blocked
+                    )
+                else:
+                    should_override = requested_action in [1, self.faster_action_id, self.slower_action_id, self.left_lane_action_id, self.right_lane_action_id]
+                if should_override:
+                    executed_action = int(desired_action)
+                    assist_reason = tactical_plan['reason']
+            elif tactical_plan.get('reason') == 'keep_right':
+                if not dense_mode and requested_action in [1, self.faster_action_id]:
+                    executed_action = int(desired_action)
+                    assist_reason = tactical_plan['reason']
+            elif tactical_plan.get('reason') == 'clear_road_accelerate':
+                if requested_action in [1, self.slower_action_id]:
+                    executed_action = int(desired_action)
+                    assist_reason = tactical_plan['reason']
+            elif tactical_plan.get('reason') == 'yield_to_blocker':
+                if dense_mode:
+                    should_override = requested_action in [1, self.faster_action_id]
+                else:
+                    should_override = requested_action in [1, self.faster_action_id, self.left_lane_action_id, self.right_lane_action_id]
+                if should_override:
+                    executed_action = int(desired_action)
+                    assist_reason = tactical_plan['reason']
+
+        if executed_action not in available_actions:
+            executed_action = 1 if 1 in available_actions else min(available_actions)
+            assist_reason = 'fallback_available_action'
+
+        tactical_plan = dict(tactical_plan)
+        tactical_plan['assist_reason'] = assist_reason
+        tactical_plan['requested_action'] = int(requested_action)
+        tactical_plan['executed_action'] = int(executed_action)
+        return int(executed_action), tactical_plan
 
     def _reset_highway_overtake_state(self, recent_completion_steps=0):
         self.highway_overtake_active = False
@@ -767,7 +1629,7 @@ class GymLane:
             'safe_window': bool(safe_window),
         }
     def _clear_ego_surroundings(self):
-        """无论什么场景，保证小车出生时，方圆 20 米内干干净净，没有其他车"""
+        """Keep a small safety buffer around ego while preserving local traffic differences."""
         if self.env is None:
             return
         base_env = self.env.unwrapped
@@ -775,12 +1637,25 @@ class GymLane:
         ego_vehicle = self._get_ego_vehicle()
         if road is None or ego_vehicle is None:
             return
-            
+
+        clear_radius = 20.0
+        if self.road_scenario == 'highway':
+            clear_radius = float(
+                HIGHWAY_LOCAL_CLEAR_ZONE_RADIUS.get(
+                    self.traffic_level,
+                    HIGHWAY_LOCAL_CLEAR_ZONE_RADIUS['standard'],
+                )
+            )
+        elif self.road_scenario == 'merge':
+            clear_radius = 20.0
+        elif self.road_scenario == 'roundabout':
+            clear_radius = 16.0
+
         for v in list(getattr(road, 'vehicles', [])):
             if v is not ego_vehicle:
-                # 凡是距离小车 20 米以内的车，全部删掉
-                if np.linalg.norm(np.array(v.position) - np.array(ego_vehicle.position)) < 20.0:
+                if np.linalg.norm(np.array(v.position) - np.array(ego_vehicle.position)) < clear_radius:
                     road.vehicles.remove(v)
+
     def _reposition_merge_ego_vehicle(self):
         if self.env is None or self.road_scenario != 'merge':
             return
@@ -837,7 +1712,7 @@ class GymLane:
         lane_count = int(base_env.config.get('lanes_count', 1))
         if lane_count < 2:
             return
-        target_lane_id = 1 if lane_count > 2 else lane_count - 1
+        target_lane_id = max(1, lane_count - 2) if lane_count > 2 else lane_count - 1
         if int(lane_index[2]) == target_lane_id:
             return
 
@@ -991,6 +1866,30 @@ class GymLane:
         if self.env is None or ego_vehicle is None or ego_lane_index is None:
             return
         cruise_speed = self._target_highway_cruise_speed()
+        if self.traffic_level == 'dense':
+            same_lane_close = (6.0, 7.4)
+            same_lane_mid = (4.0, 5.4)
+            same_lane_far = (2.2, 3.4)
+            left_lane_near = (-0.2, 0.8)
+            left_lane_far = (0.0, 1.0)
+            left_lane_rear = (-0.8, 0.4)
+            right_lane_penalty = (4.0, 5.8)
+        elif self.traffic_level == 'standard':
+            same_lane_close = (6.2, 7.8)
+            same_lane_mid = (4.4, 5.8)
+            same_lane_far = (2.2, 3.4)
+            left_lane_near = (0.3, 1.5)
+            left_lane_far = (0.4, 1.8)
+            left_lane_rear = (-0.4, 0.8)
+            right_lane_penalty = (3.8, 5.8)
+        else:
+            same_lane_close = (7.0, 8.5)
+            same_lane_mid = (4.8, 6.2)
+            same_lane_far = (2.5, 4.0)
+            left_lane_near = (0.6, 1.8)
+            left_lane_far = (0.8, 2.0)
+            left_lane_rear = (-0.2, 1.0)
+            right_lane_penalty = (4.2, 6.0)
         for vehicle in list(self.env.unwrapped.road.vehicles):
             if vehicle is ego_vehicle:
                 continue
@@ -1004,19 +1903,21 @@ class GymLane:
             lane_delta = 0 if len(lane_index) < 3 else int(lane_index[2] - ego_lane_index[2])
             target_speed = cruise_speed + np.random.uniform(-2.5, 0.8)
             if lane_delta == 0 and relative_longitudinal > 0.0:
-                if relative_longitudinal <= 38.0:
-                    target_speed = cruise_speed - np.random.uniform(5.0, 7.5)
-                elif relative_longitudinal <= 82.0:
-                    target_speed = cruise_speed - np.random.uniform(3.0, 5.5)
+                if relative_longitudinal <= 30.0:
+                    target_speed = cruise_speed - np.random.uniform(*same_lane_close)
+                elif relative_longitudinal <= 60.0:
+                    target_speed = cruise_speed - np.random.uniform(*same_lane_mid)
                 else:
-                    target_speed = cruise_speed - np.random.uniform(1.0, 3.0)
+                    target_speed = cruise_speed - np.random.uniform(*same_lane_far)
             elif lane_delta < 0:
-                if -12.0 <= relative_longitudinal <= 78.0:
-                    target_speed = cruise_speed - np.random.uniform(0.2, 1.4)
+                if relative_longitudinal < -10.0:
+                    target_speed = cruise_speed + np.random.uniform(*left_lane_rear)
+                elif relative_longitudinal <= 55.0:
+                    target_speed = cruise_speed + np.random.uniform(*left_lane_near)
                 else:
-                    target_speed = cruise_speed + np.random.uniform(-1.0, 0.5)
+                    target_speed = cruise_speed + np.random.uniform(*left_lane_far)
             elif lane_delta > 0:
-                target_speed = cruise_speed - np.random.uniform(2.5, 4.8)
+                target_speed = cruise_speed - np.random.uniform(*right_lane_penalty)
             target_speed = float(np.clip(target_speed, 17.0, 30.0))
             if hasattr(vehicle, 'target_speed'):
                 vehicle.target_speed = target_speed
@@ -1033,41 +1934,54 @@ class GymLane:
         ego_longitudinal = self._lane_longitudinal(ego_vehicle, lane_index=ego_lane_index)
         if ego_longitudinal is None:
             return
-        left_lane_index, _right_lane_index = self._nearest_side_lanes(ego_lane_index)
+        left_lane_index, right_lane_index = self._nearest_side_lanes(ego_lane_index)
         cruise_speed = self._target_highway_cruise_speed()
-        ego_target_speed = min(30.0, cruise_speed + 2.0)
+        profile = self._get_highway_overtake_setup_profile()
+        ego_target_speed = min(30.0, cruise_speed + float(profile.get('ego_target_speed_bonus', 2.0)))
         if hasattr(ego_vehicle, 'target_speed'):
             ego_vehicle.target_speed = ego_target_speed
         if hasattr(ego_vehicle, 'speed'):
             ego_vehicle.speed = max(float(getattr(ego_vehicle, 'speed', ego_target_speed)), ego_target_speed)
 
-        self._clear_highway_lane_window(ego_lane_index, ego_longitudinal, rear_gap=16.0, front_gap=72.0)
-        if left_lane_index is not None:
-            self._clear_highway_lane_window(left_lane_index, ego_longitudinal, rear_gap=32.0, front_gap=96.0)
-
-        slow_front_speed = max(16.5, cruise_speed - 8.5)
-        self._spawn_vehicle_on_lane(
-            lane_index=ego_lane_index,
-            longitudinal=ego_longitudinal + 28.0,
-            speed=slow_front_speed,
-            target_speed=slow_front_speed + 0.1,
-            min_gap=18.0,
-        )
-        self._spawn_vehicle_on_lane(
-            lane_index=ego_lane_index,
-            longitudinal=ego_longitudinal + 58.0,
-            speed=max(17.5, cruise_speed - 5.5),
-            target_speed=max(18.0, cruise_speed - 4.5),
-            min_gap=16.0,
+        self._clear_highway_lane_window(
+            ego_lane_index,
+            ego_longitudinal,
+            rear_gap=float(profile.get('current_clear_rear_gap', 16.0)),
+            front_gap=float(profile.get('current_clear_front_gap', 72.0)),
         )
         if left_lane_index is not None:
-            self._spawn_vehicle_on_lane(
-                lane_index=left_lane_index,
-                longitudinal=ego_longitudinal + 92.0,
-                speed=min(29.0, cruise_speed - 0.2),
-                target_speed=min(29.5, cruise_speed + 0.4),
-                min_gap=20.0,
+            self._clear_highway_lane_window(
+                left_lane_index,
+                ego_longitudinal,
+                rear_gap=float(profile.get('left_clear_rear_gap', 28.0)),
+                front_gap=float(profile.get('left_clear_front_gap', 96.0)),
             )
+        if right_lane_index is not None and profile.get('right_clear_front_gap', None) is not None:
+            self._clear_highway_lane_window(
+                right_lane_index,
+                ego_longitudinal,
+                rear_gap=float(profile.get('right_clear_rear_gap', 16.0)),
+                front_gap=float(profile.get('right_clear_front_gap', 56.0)),
+            )
+
+        def _spawn_profiled_vehicles(lane_index, spawn_specs):
+            if lane_index is None:
+                return
+            for spawn_spec in spawn_specs:
+                longitudinal = ego_longitudinal + float(spawn_spec.get('offset', 0.0))
+                speed = max(17.0, cruise_speed - float(spawn_spec.get('speed_delta', 0.0)))
+                target_speed = max(17.0, cruise_speed - float(spawn_spec.get('target_speed_delta', spawn_spec.get('speed_delta', 0.0))))
+                self._spawn_vehicle_on_lane(
+                    lane_index=lane_index,
+                    longitudinal=longitudinal,
+                    speed=speed,
+                    target_speed=target_speed,
+                    min_gap=float(spawn_spec.get('min_gap', 16.0)),
+                )
+
+        _spawn_profiled_vehicles(ego_lane_index, profile.get('current_lane_spawns', []))
+        _spawn_profiled_vehicles(left_lane_index, profile.get('left_lane_spawns', []))
+        _spawn_profiled_vehicles(right_lane_index, profile.get('right_lane_spawns', []))
         self._retune_highway_vehicle_speeds(ego_vehicle, ego_lane_index, ego_longitudinal)
 
     def _top_up_scenario_traffic(self):
@@ -1139,19 +2053,8 @@ class GymLane:
         return 18.0
 
     def _should_abort_low_speed_highway_episode(self, info=None):
-        if self.road_scenario != 'highway' or self.mode not in ['train', 'val']:
-            return False
-        if self.collision_count > 0 or self.step_num < 36:
-            return False
-        mean_speed = self.episode_mean_speed()
-        current_speed = self._current_speed(info)
-        min_success_speed = self._minimum_success_speed()
-        if current_speed < (min_success_speed - 5.0) and mean_speed < (min_success_speed - 3.5):
-            return True
-        if self.step_num >= 60 and mean_speed < (min_success_speed - 2.5):
-            return True
-        if self.step_num >= 90 and mean_speed < (min_success_speed - 1.0):
-            return True
+        del info
+        # Keep HighwayEnv termination close to the official behavior: crash/off-road/time only.
         return False
 
     def _reset_episode_trackers(self, episode_seed=None):
@@ -1173,6 +2076,8 @@ class GymLane:
         self.highway_overtake_completion_count = 0
         self._reset_highway_overtake_state()
         self.highway_recent_overtake_completion_steps = 0
+        self.highway_overtaken_vehicle_ids = set()
+        self.highway_relative_progress = {}
         self._reset_highway_lane_change_eval()
         if episode_seed is None:
             self.state_original = self.env.reset()[0]
@@ -1180,13 +2085,16 @@ class GymLane:
             self.state_original = self.env.reset(seed=int(episode_seed))[0]
             
         self._reposition_merge_ego_vehicle()
-        self._reposition_highway_ego_vehicle()
-        # 【核心修改 5】在生成交通车之前，先清空小车周围的障碍物！
-        self._clear_ego_surroundings() 
+        if self.road_scenario in ['merge', 'roundabout']:
+            self._clear_ego_surroundings()
         self._top_up_scenario_traffic()
         if self.road_scenario == 'highway':
-            self._setup_highway_overtake_window()
-        
+            ego_vehicle = self._get_ego_vehicle()
+            cruise_speed = self._target_highway_cruise_speed()
+            if ego_vehicle is not None and hasattr(ego_vehicle, 'target_speed'):
+                ego_vehicle.target_speed = float(np.clip(cruise_speed, 20.0, 30.0))
+            self.highway_relative_progress = self._snapshot_highway_relative_progress()
+
         self.state_original = self._refresh_observation_from_env(self.state_original)
         self.state_processed = self.state_to_tensor(self.state_original)
 
@@ -1292,6 +2200,12 @@ class GymLane:
         highway_tailgating_penalty = 0.0
         highway_under_cruise_penalty = 0.0
         highway_unnecessary_slow_penalty = 0.0
+        highway_blocked_accelerate_penalty = 0.0
+        highway_risky_lane_change_penalty = 0.0
+        highway_momentum_bonus = 0.0
+        highway_safe_gap_bonus = 0.0
+        dense_post_overtake_hold_steps = 0
+        post_overtake_settle_window = 0
 
         if self.road_scenario == 'merge':
             lane_change_penalty_scale = 0.08
@@ -1326,220 +2240,231 @@ class GymLane:
             crash_penalty = crashed * 50.0
             completion_bonus_value = 50.0
         else:
-            cruise_speed = self._target_highway_cruise_speed()
             success_speed = self._minimum_success_speed()
-            lane_change_penalty_scale = 0.10
-            repeated_lane_change_scale = 0.85
-            zigzag_penalty_scale = 1.40
+            reward_profile = self._get_highway_reward_profile()
+            assist_profile = self._get_highway_assist_profile()
+            reward_speed_range = self.env.unwrapped.config.get(
+                'reward_speed_range',
+                HIGHWAY_REWARD_SPEED_RANGE.get(self.traffic_level, HIGHWAY_REWARD_SPEED_RANGE['standard']),
+            )
+            speed_floor = float(reward_speed_range[0])
+            speed_ceiling = float(reward_speed_range[1])
+            speed_span = max(1.0, speed_ceiling - speed_floor)
+            highway_context = self._highway_lane_context()
+            front_gap = highway_context.get('current_front_gap')
+            overtake_events = int(info.get('highway_overtake_events', 0))
+            cruise_speed = self._target_highway_cruise_speed()
+            thresholds = self._get_highway_lane_context_thresholds()
+
+            lane_change_penalty_scale = float(reward_profile['lane_change_penalty_scale'])
+            repeated_lane_change_scale = float(reward_profile['repeated_lane_change_scale'])
+            zigzag_penalty_scale = float(reward_profile['zigzag_penalty_scale'])
             steady_action_bonus_scale = 0.0
-            survival_bonus_scale = 0.01
-            speed_bonus_scale = 1.55
-            lane_bonus_scale = 0.0
-            raw_reward_scale = 0.18
+            survival_bonus_scale = float(reward_profile['survival_bonus_scale'])
+            speed_bonus_scale = float(reward_profile['speed_bonus_scale'])
+            lane_bonus_scale = float(reward_profile['lane_bonus_scale'])
+            raw_reward_scale = float(reward_profile['raw_reward_scale'])
             merging_speed_penalty_scale = 0.0
-            offroad_penalty_scale = 0.60
-            low_speed_threshold = max(success_speed + 1.0, cruise_speed - 1.5)
-            low_speed_penalty_scale = 4.80
-            stop_penalty = 3.20 if (self.step_num > 4 and ego_speed_value < 5.0) else 0.0
-            crash_penalty = crashed * 14.0
+            offroad_penalty_scale = float(reward_profile['offroad_penalty_scale'])
+            low_speed_threshold = max(float(success_speed), speed_floor - 1.0)
+            low_speed_penalty_scale = float(reward_profile['low_speed_penalty_scale'])
+            stop_penalty = (
+                float(reward_profile['stop_penalty_scale'])
+                if (self.step_num > 6 and ego_speed_value < 2.5)
+                else 0.0
+            )
+            crash_penalty = crashed * float(reward_profile['crash_penalty_scale'])
             completion_bonus_value = 0.0
 
-            ego_vehicle = self._get_ego_vehicle()
-            lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
-            lane_id = int(lane_index[2]) if lane_index is not None and len(lane_index) >= 3 else None
-            highway_context = self._highway_lane_context(ego_vehicle)
-            pre_step_highway_meta = pre_step_highway_meta or {}
-            pre_context = pre_step_highway_meta.get('context', {})
-            pre_lane_id = pre_step_highway_meta.get('lane_id')
-            pre_clear_road_ahead = bool(pre_step_highway_meta.get('clear_road_ahead', False))
-            pre_blocked_by_slower_front = bool(pre_step_highway_meta.get('blocked_by_slower_front', False))
-            front_gap = highway_context['current_front_gap']
-            front_speed = highway_context['current_front_speed']
-            clear_road_ahead = front_gap is None or front_gap >= 36.0
-            speed_floor = max(18.0, success_speed - 1.0)
-            speed_window = max(1.0, cruise_speed - speed_floor)
-            highway_cruise_bonus = 0.95 * float(
-                np.clip((ego_speed_value - speed_floor) / speed_window, 0.0, 1.0)
-            )
-            if clear_road_ahead:
-                clear_speed_ratio = float(np.clip((ego_speed_value - (cruise_speed - 6.0)) / 6.0, 0.0, 1.0))
-                highway_clear_road_bonus = 0.78 * clear_speed_ratio
-                if action_index == self.faster_action_id and ego_speed_value < cruise_speed + 0.5:
-                    highway_clear_road_bonus += 0.55 * float(
-                        np.clip((cruise_speed - ego_speed_value) / max(1.0, cruise_speed), 0.0, 1.0)
-                    )
-                if ego_speed_value < success_speed:
-                    highway_under_cruise_penalty = 1.10 * float(
-                        np.clip((success_speed - ego_speed_value) / max(1.0, success_speed), 0.0, 1.0)
-                    )
-                if action_index == self.slower_action_id and ego_speed_value >= (success_speed - 0.5):
-                    highway_unnecessary_slow_penalty = 0.90
-
-            blocked_by_slower_front = (
-                front_gap is not None and
-                front_gap < 28.0 and
-                front_speed is not None and
-                front_speed < (cruise_speed - 1.0)
+            speed_ratio = float(np.clip((ego_speed_value - speed_floor) / speed_span, 0.0, 1.0))
+            tactical_plan = (pre_step_highway_meta or {}).get('tactical_plan')
+            if tactical_plan is None:
+                tactical_plan = self._derive_highway_tactical_plan(pre_step_highway_meta)
+            pre_context = (pre_step_highway_meta or {}).get('context', {})
+            pre_lane_id = (pre_step_highway_meta or {}).get('lane_id')
+            context = pre_context
+            post_lane_index = getattr(self._get_ego_vehicle(), 'lane_index', None)
+            post_lane_id = int(post_lane_index[2]) if post_lane_index is not None and len(post_lane_index) >= 3 else pre_lane_id
+            lane_changed = (
+                action_index in self.lane_change_action_ids and
+                pre_lane_id is not None and
+                post_lane_id is not None and
+                int(post_lane_id) != int(pre_lane_id)
             )
             pre_front_gap = pre_context.get('current_front_gap')
-            pre_block_ratio = 0.0
-            if pre_front_gap is not None:
-                pre_block_ratio = float(np.clip((28.0 - pre_front_gap) / 18.0, 0.0, 1.0))
-            justified_left_overtake = False
-            justified_right_settle = False
-            recent_completion_started_this_step = False
-            if blocked_by_slower_front:
-                block_ratio = float(np.clip((28.0 - front_gap) / 18.0, 0.0, 1.0))
-                if front_gap < 12.0:
-                    highway_tailgating_penalty = 1.10 * float(np.clip((12.0 - front_gap) / 12.0, 0.0, 1.0))
-                if highway_context['left_lane_clear']:
-                    if action_index == self.left_lane_action_id:
-                        highway_overtake_bonus = 2.30 * block_ratio
-                    elif action_index == self.slower_action_id and front_gap > 14.0:
-                        highway_missed_overtake_penalty = 1.20 * block_ratio
-                    elif action_index != self.faster_action_id:
-                        highway_blocking_penalty = 0.95 * block_ratio
-                    else:
-                        highway_blocking_penalty = 0.80 * block_ratio
-                elif action_index == self.slower_action_id and front_gap > 18.0:
-                    highway_unnecessary_slow_penalty = max(highway_unnecessary_slow_penalty, 0.30 * block_ratio)
-                elif action_index == self.slower_action_id and front_gap <= 18.0:
-                    highway_safe_follow_bonus = 0.25 * block_ratio
-                if ego_speed_value < success_speed - 1.0:
-                    highway_under_cruise_penalty *= 0.40
+            pre_front_speed = pre_context.get('current_front_speed')
+            post_front_gap = highway_context.get('current_front_gap')
+            post_front_speed = highway_context.get('current_front_speed')
+            gap_gain = 0.0
+            if pre_front_gap is None:
+                gap_gain = 0.0 if post_front_gap is None else float(post_front_gap)
+            elif post_front_gap is None:
+                gap_gain = float(thresholds['clear_road_gap'])
+            else:
+                gap_gain = float(post_front_gap - pre_front_gap)
+            front_speed_gain = 0.0
+            if pre_front_speed is not None and post_front_speed is not None:
+                front_speed_gain = float(post_front_speed - pre_front_speed)
+            elif pre_front_speed is not None and post_front_speed is None:
+                front_speed_gain = max(0.0, float(cruise_speed - pre_front_speed))
 
-            if lane_change_action:
-                justified_left_overtake = (
-                    action_index == self.left_lane_action_id and
-                    pre_blocked_by_slower_front and
-                    bool(pre_context.get('left_lane_clear', False)) and
-                    pre_lane_id is not None
+            post_front_gap_reference = thresholds['left_front_clear'] if action_index == self.left_lane_action_id else thresholds['right_front_clear']
+            dense_beneficial_post_gap = max(
+                float(post_front_gap_reference),
+                float(thresholds['blocked_front_gap']) * float(reward_profile.get('beneficial_post_gap_ratio', 0.40)),
+            )
+            dense_progress_post_gap = max(
+                float(post_front_gap_reference) * 0.92,
+                float(thresholds['blocked_front_gap']) * float(reward_profile.get('safe_progress_post_gap_ratio', 0.32)),
+            )
+            post_gap_is_safe = post_front_gap is None or float(post_front_gap) >= dense_beneficial_post_gap
+            post_gap_allows_progress = post_front_gap is None or float(post_front_gap) >= dense_progress_post_gap
+
+            beneficial_lane_change = lane_changed and (
+                post_gap_is_safe and
+                (
+                    gap_gain >= HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN or
+                    front_speed_gain >= HIGHWAY_MIN_EFFECTIVE_FRONT_SPEED_GAIN or
+                    (pre_front_gap is not None and post_front_gap is None)
                 )
-                justified_right_settle = (
-                    action_index == self.right_lane_action_id and
-                    self.highway_overtake_active and
-                    self.highway_overtake_completed and
-                    bool(pre_context.get('right_lane_clear', False)) and
-                    ego_speed_value >= success_speed and
-                    pre_lane_id is not None and
-                    self.highway_overtake_target_lane_id is not None and
-                    pre_lane_id == self.highway_overtake_target_lane_id
-                )
-                if justified_left_overtake:
-                    highway_overtake_bonus = max(highway_overtake_bonus, 2.50 * pre_block_ratio)
-                    self.highway_overtake_active = True
-                    self.highway_overtake_origin_lane_id = pre_lane_id
-                    self.highway_overtake_target_lane_id = pre_lane_id - 1 if pre_lane_id is not None else None
-                    self.highway_overtake_target_vehicle = pre_step_highway_meta.get('front_vehicle')
-                    self.highway_overtake_completed = False
-                    self.highway_overtake_stable_steps = 0
-                    self.highway_recent_overtake_completion_steps = 0
-                    self.highway_post_overtake_settle_steps = 0
-                    self._start_highway_lane_change_eval(pre_step_highway_meta, action_index)
-                elif justified_right_settle:
-                    highway_return_after_overtake_bonus = 1.60
-                    recent_completion_started_this_step = True
-                    self._reset_highway_overtake_state(
-                        recent_completion_steps=HIGHWAY_POST_OVERTAKE_SETTLE_STEPS,
+            )
+            dense_progress_lane_change = (
+                self.traffic_level == 'dense' and
+                lane_changed and
+                tactical_plan.get('blocked', False) and
+                post_gap_allows_progress and
+                (
+                    post_front_gap is None or
+                    pre_front_gap is None or
+                    float(post_front_gap) >= float(pre_front_gap) - 1.0 or
+                    (
+                        post_front_speed is not None and
+                        pre_front_speed is not None and
+                        float(post_front_speed) >= float(pre_front_speed) - 0.3
                     )
-                    self._reset_highway_lane_change_eval()
-                else:
-                    highway_unnecessary_lane_change_penalty = 1.30
-                    if pre_clear_road_ahead:
-                        highway_unnecessary_lane_change_penalty = 1.80
-                    elif action_index == self.right_lane_action_id and self.highway_overtake_active:
-                        highway_unnecessary_lane_change_penalty = 1.60
-                    elif not pre_blocked_by_slower_front:
-                        highway_unnecessary_lane_change_penalty = 1.45
-                    self._reset_highway_lane_change_eval()
-
-            if self.highway_overtake_active:
-                on_target_lane = lane_id is not None and lane_id == self.highway_overtake_target_lane_id
-                back_on_origin_lane = (
-                    lane_id is not None and
-                    self.highway_overtake_origin_lane_id is not None and
-                    lane_id == self.highway_overtake_origin_lane_id
                 )
-                if on_target_lane and not self.highway_overtake_completed:
-                    if not lane_change_action and action_index == self.faster_action_id and ego_speed_value < min(30.0, cruise_speed + 1.2):
-                        highway_overtake_bonus += 0.45
-                    elif not lane_change_action and ego_speed_value < cruise_speed - 0.5:
-                        highway_under_cruise_penalty += 0.35
-                    if self._has_completed_highway_overtake(ego_vehicle, lane_index=lane_index):
-                        self.highway_overtake_completed = True
-                        self.highway_overtake_completion_count += 1
-                        self.highway_overtake_stable_steps = 0
-                        self.highway_post_overtake_settle_steps = 0
-                        highway_overtake_completion_bonus = 2.20
-                if on_target_lane and self.highway_overtake_completed and not lane_change_action and clear_road_ahead and ego_speed_value >= success_speed:
-                    self.highway_overtake_stable_steps += 1
-                    highway_post_overtake_stability_bonus = 0.30 + 0.18 * min(self.highway_overtake_stable_steps, 4)
-                elif back_on_origin_lane and not lane_change_action and self.highway_lane_change_eval_steps_remaining <= 0:
-                    if self.highway_overtake_completed and clear_road_ahead and ego_speed_value >= success_speed:
-                        highway_return_after_overtake_bonus = max(highway_return_after_overtake_bonus, 0.55)
-                        recent_completion_started_this_step = True
-                        self._reset_highway_overtake_state(
-                            recent_completion_steps=HIGHWAY_POST_OVERTAKE_SETTLE_STEPS,
-                        )
-                    else:
-                        highway_aborted_overtake_penalty = 1.80
-                        self._reset_highway_overtake_state()
-                        self._reset_highway_lane_change_eval()
-                elif lane_change_action and not justified_left_overtake and not justified_right_settle:
-                    self.highway_overtake_stable_steps = 0
-                elif not clear_road_ahead or ego_speed_value < success_speed - 1.0:
-                    self.highway_overtake_stable_steps = 0
-
-            if self.highway_lane_change_eval_steps_remaining > 0 and not lane_change_action:
-                target_lane_reached = (
-                    lane_id is not None and
-                    lane_id == self.highway_lane_change_eval_target_lane_id
+            )
+            post_overtake_settle_window = int(
+                assist_profile.get('post_overtake_settle_steps', HIGHWAY_POST_OVERTAKE_SETTLE_STEPS)
+            )
+            if ego_speed_value >= success_speed:
+                highway_cruise_bonus = float(reward_profile['cruise_bonus_scale']) * speed_ratio
+            if front_gap is None or front_gap >= thresholds['clear_road_gap'] * 0.8:
+                highway_clear_road_bonus = float(reward_profile['clear_road_bonus_scale']) * speed_ratio
+           # 【修改】：将追尾惩罚的警戒线从 10.0 米拉长到 25.0 米，并加重惩罚力度
+            tailgate_dist = 25.0
+            if front_gap is not None and front_gap < tailgate_dist and ego_speed_value >= max(18.0, success_speed - 1.0):
+                highway_tailgating_penalty = 2.0 * float(reward_profile['blocked_penalty_scale']) * float(
+                    np.clip((tailgate_dist - front_gap) / tailgate_dist, 0.0, 1.0)
                 )
-                reference_front_gap = self.highway_lane_change_eval_reference_front_gap
-                reference_front_speed = self.highway_lane_change_eval_reference_front_speed
-                if reference_front_gap is None:
-                    front_gap_gain = HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN if clear_road_ahead else 0.0
-                elif front_gap is None:
-                    front_gap_gain = HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN + 1.0
+            # 【方案B】动态安全距离奖励：前方间距充足时给额外奖励，激励智能体主动保持安全距离
+            # 安全间距 > 40m 时奖励 0.02*speed_ratio，随间距衰减，防止碰撞延长存活步数
+            highway_safe_gap_bonus = 0.0
+            safe_gap_threshold = 40.0
+            if front_gap is None:
+                highway_safe_gap_bonus = 0.02 * max(0.3, speed_ratio)
+            elif front_gap >= safe_gap_threshold:
+                gap_factor = float(np.clip((front_gap - safe_gap_threshold) / safe_gap_threshold + 1.0, 1.0, 2.0))
+                highway_safe_gap_bonus = 0.02 * max(0.3, speed_ratio) * gap_factor
+            if lane_changed and beneficial_lane_change:
+                improvement_score = 0.5
+                improvement_score += 0.35 * float(np.clip(gap_gain / max(1.0, thresholds['blocked_front_gap']), 0.0, 1.0))
+                improvement_score += 0.15 * float(np.clip(front_speed_gain / 4.0, 0.0, 1.0))
+                highway_safe_follow_bonus = float(reward_profile['beneficial_lane_change_bonus_scale']) * improvement_score
+            elif lane_changed:
+                if dense_progress_lane_change:
+                    highway_safe_follow_bonus = float(reward_profile.get('progress_lane_change_bonus_scale', 0.35)) * float(reward_profile['beneficial_lane_change_bonus_scale']) * max(0.45, speed_ratio)
                 else:
-                    front_gap_gain = float(front_gap - reference_front_gap)
-                front_speed_gain = 0.0
-                if reference_front_speed is not None and front_speed is not None:
-                    front_speed_gain = float(front_speed - reference_front_speed)
-                speed_gain = float(ego_speed_value - self.highway_lane_change_eval_reference_speed)
-                effective_lane_change = target_lane_reached and (
-                    self.highway_overtake_completed or
-                    clear_road_ahead or
-                    front_gap_gain >= HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN or
-                    speed_gain >= HIGHWAY_MIN_EFFECTIVE_SPEED_GAIN or
-                    front_speed_gain >= HIGHWAY_MIN_EFFECTIVE_FRONT_SPEED_GAIN
-                )
-                if effective_lane_change:
-                    self._reset_highway_lane_change_eval()
-                else:
-                    self.highway_lane_change_eval_steps_remaining -= 1
-                    if self.highway_lane_change_eval_steps_remaining <= 0:
-                        highway_ineffective_lane_change_penalty = 2.00
-                        self._reset_highway_lane_change_eval()
+                    highway_ineffective_lane_change_penalty = float(reward_profile['ineffective_lane_change_penalty_scale'])
 
-            if self.highway_recent_overtake_completion_steps > 0 and not recent_completion_started_this_step:
-                if not lane_change_action and clear_road_ahead and ego_speed_value >= success_speed:
-                    self.highway_post_overtake_settle_steps += 1
-                    highway_post_overtake_stability_bonus += 0.20 + 0.08 * min(
+            if self.traffic_level == 'dense' and lane_changed and post_front_gap is not None and not post_gap_allows_progress:
+                risky_gap_ratio = float(np.clip(
+                    (dense_progress_post_gap - float(post_front_gap)) / max(1.0, dense_progress_post_gap),
+                    0.0,
+                    1.0,
+                ))
+                risky_closing_ratio = 0.0
+                if post_front_speed is not None:
+                    risky_closing_ratio = float(np.clip((ego_speed_value - float(post_front_speed)) / 6.0, 0.0, 1.0))
+                highway_risky_lane_change_penalty = float(reward_profile.get('risky_lane_change_penalty_scale', 0.0)) * (0.65 * risky_gap_ratio + 0.35 * risky_closing_ratio)
+            if tactical_plan.get('blocked', False) and not lane_changed:
+                blocking_reference_gap = float(pre_front_gap) if pre_front_gap is not None else 0.0
+                blocked_gap_pressure = float(
+                    np.clip((thresholds['blocked_front_gap'] - blocking_reference_gap) / max(1.0, thresholds['blocked_front_gap']), 0.0, 1.0)
+                )
+                highway_blocking_penalty = float(reward_profile['blocked_penalty_scale']) * blocked_gap_pressure
+                if action_index == self.faster_action_id:
+                    highway_blocked_accelerate_penalty = float(reward_profile.get('blocked_accelerate_penalty_scale', 0.0)) * blocked_gap_pressure
+                if tactical_plan.get('desired_action') in [self.left_lane_action_id, self.right_lane_action_id]:
+                    highway_missed_overtake_penalty = float(reward_profile['missed_lane_change_penalty_scale']) * float(
+                        np.clip(tactical_plan.get('best_lane_gain', 0.0) / 0.40, 0.0, 1.0)
+                    )
+            if lane_changed and action_index == self.right_lane_action_id and not tactical_plan.get('blocked', False):
+                highway_return_after_overtake_bonus = float(reward_profile['keep_right_return_bonus_scale']) * max(0.5, speed_ratio)
+            clear_road_for_speed = front_gap is None or front_gap >= thresholds['clear_road_gap'] * 0.75
+            if clear_road_for_speed and ego_speed_value < (cruise_speed - float(assist_profile['accelerate_speed_margin'])):
+                highway_under_cruise_penalty = float(reward_profile['under_cruise_penalty_scale']) * float(
+                    np.clip((cruise_speed - ego_speed_value) / max(1.0, cruise_speed), 0.0, 1.0)
+                )
+            if action_index == self.slower_action_id and clear_road_for_speed:
+                highway_unnecessary_slow_penalty = 0.5 * float(reward_profile['under_cruise_penalty_scale'])
+            if ego_speed_value >= max(success_speed, cruise_speed - 2.0):
+                highway_momentum_bonus = float(reward_profile['momentum_bonus_scale']) * speed_ratio
+            highway_overtake_bonus = float(reward_profile['overtake_bonus_scale']) * float(overtake_events)
+            if self.traffic_level == 'dense':
+                if lane_changed and (beneficial_lane_change or dense_progress_lane_change):
+                    settle_steps = post_overtake_settle_window if action_index == self.left_lane_action_id else max(2, post_overtake_settle_window // 2)
+                    self.highway_post_overtake_settle_steps = max(
                         self.highway_post_overtake_settle_steps,
-                        3,
+                        int(settle_steps),
                     )
-                elif lane_change_action:
-                    highway_unnecessary_lane_change_penalty = max(highway_unnecessary_lane_change_penalty, 1.00)
-                    self.highway_post_overtake_settle_steps = 0
-                else:
-                    self.highway_post_overtake_settle_steps = 0
-                self.highway_recent_overtake_completion_steps = max(0, self.highway_recent_overtake_completion_steps - 1)
+                if overtake_events > 0:
+                    self.highway_recent_overtake_completion_steps = max(
+                        self.highway_recent_overtake_completion_steps,
+                        post_overtake_settle_window,
+                    )
+                    self.highway_post_overtake_settle_steps = max(
+                        self.highway_post_overtake_settle_steps,
+                        post_overtake_settle_window,
+                    )
+                dense_post_overtake_hold_steps = max(
+                    int(self.highway_post_overtake_settle_steps),
+                    int(self.highway_recent_overtake_completion_steps),
+                )
+                if (
+                    dense_post_overtake_hold_steps > 0 and
+                    not lane_change_action and
+                    not tactical_plan.get('blocked', False) and
+                    (front_gap is None or front_gap >= thresholds['blocked_front_gap'] * 0.85)
+                ):
+                    settle_ratio = float(np.clip(
+                        dense_post_overtake_hold_steps / max(1.0, float(post_overtake_settle_window)),
+                        0.0,
+                        1.0,
+                    ))
+                    highway_post_overtake_stability_bonus = float(
+                        reward_profile.get('post_overtake_stability_scale', 0.18)
+                    ) * float(
+                        reward_profile['beneficial_lane_change_bonus_scale']
+                    ) * max(0.45, speed_ratio) * settle_ratio
 
         lane_change_penalty = lane_change_penalty_scale if lane_change_action else 0.0
         repeated_lane_change_penalty = 0.0
         if lane_change_action and self.steps_since_lane_change < 6:
             repeated_lane_change_penalty = repeated_lane_change_scale * (6 - self.steps_since_lane_change) / 6.0
+        if (
+            self.road_scenario == 'highway' and
+            self.traffic_level == 'dense' and
+            lane_change_action and
+            dense_post_overtake_hold_steps > 0 and
+            tactical_plan.get('reason') not in ['critical_left_escape', 'critical_right_escape']
+        ):
+            settle_ratio = float(np.clip(
+                dense_post_overtake_hold_steps / max(1.0, float(max(1, post_overtake_settle_window))),
+                0.0,
+                1.0,
+            ))
+            repeated_lane_change_penalty += 0.75 * repeated_lane_change_scale * settle_ratio
         zigzag_penalty = zigzag_penalty_scale if (
             self.previous_action_index in self.lane_change_action_ids and
             lane_change_action and
@@ -1597,8 +2522,16 @@ class GymLane:
         merging_speed_penalty = merging_speed_penalty_scale * max(0.0, merging_speed_reward)
         completion_bonus = completion_bonus_value if (scenario_completed and not crashed and not self.scenario_completion_awarded) else 0.0
 
+        # 【方案A】存活步数递增奖励：step越大奖励越高，激励智能体尽量存活更长时间
+        # 奖励 = 0.004 * (step_num / max_step_num)^1.5，满步时约 +0.004，无量纲小量不影响现有奖励规模
+        step_survival_bonus = 0.0
+        if not crashed:
+            step_progress = float(self.step_num) / max(1.0, float(self.max_step_num))
+            step_survival_bonus = 0.004 * (step_progress ** 1.5)
+
         shaped_reward = (
             survival_bonus
+            + step_survival_bonus
             + steady_action_bonus
             + merge_mainline_bonus
             + merge_progress_bonus
@@ -1606,11 +2539,13 @@ class GymLane:
             + merge_commit_bonus
             + highway_clear_road_bonus
             + highway_cruise_bonus
+            + highway_safe_gap_bonus
             + highway_overtake_bonus
             + highway_overtake_completion_bonus
             + highway_safe_follow_bonus
             + highway_post_overtake_stability_bonus
             + highway_return_after_overtake_bonus
+            + highway_momentum_bonus
             + speed_bonus_scale * speed_reward
             + lane_bonus_scale * lane_reward
             + raw_reward_scale * float(raw_reward)
@@ -1633,6 +2568,8 @@ class GymLane:
             - highway_tailgating_penalty
             - highway_under_cruise_penalty
             - highway_unnecessary_slow_penalty
+            - highway_blocked_accelerate_penalty
+            - highway_risky_lane_change_penalty
             - crash_penalty
         )
 
@@ -1641,6 +2578,7 @@ class GymLane:
         info['scenario_completed'] = bool(scenario_completed)
         info['reward_breakdown'] = {
             'survival_bonus': float(survival_bonus),
+            'step_survival_bonus': float(step_survival_bonus),
             'steady_action_bonus': float(steady_action_bonus),
             'merge_mainline_bonus': float(merge_mainline_bonus),
             'merge_progress_bonus': float(merge_progress_bonus),
@@ -1652,8 +2590,10 @@ class GymLane:
             'highway_overtake_bonus': float(highway_overtake_bonus),
             'highway_overtake_completion_bonus': float(highway_overtake_completion_bonus),
             'highway_safe_follow_bonus': float(highway_safe_follow_bonus),
+            'highway_safe_gap_bonus': float(highway_safe_gap_bonus),
             'highway_post_overtake_stability_bonus': float(highway_post_overtake_stability_bonus),
             'highway_return_after_overtake_bonus': float(highway_return_after_overtake_bonus),
+            'highway_momentum_bonus': float(highway_momentum_bonus),
             'speed_bonus': float(speed_bonus_scale * speed_reward),
             'lane_bonus': float(lane_bonus_scale * lane_reward),
             'base_reward_bonus': float(raw_reward_scale * float(raw_reward)),
@@ -1673,6 +2613,8 @@ class GymLane:
             'highway_tailgating_penalty': float(highway_tailgating_penalty),
             'highway_under_cruise_penalty': float(highway_under_cruise_penalty),
             'highway_unnecessary_slow_penalty': float(highway_unnecessary_slow_penalty),
+            'highway_blocked_accelerate_penalty': float(highway_blocked_accelerate_penalty),
+            'highway_risky_lane_change_penalty': float(highway_risky_lane_change_penalty),
             'offroad_penalty': float(offroad_penalty_scale * (1.0 - on_road_reward)),
             'crash_penalty': float(crash_penalty),
             'completion_bonus': float(completion_bonus),
@@ -1701,12 +2643,17 @@ class GymLane:
         action_index = int(torch.argmax(action).item())
         show_live_progress = (self.mode == 'test')
         pre_step_highway_meta = self._capture_highway_step_context() if self.road_scenario == 'highway' else {}
+        executed_action_index = int(action_index)
+        highway_tactical_plan = None
+        if self.road_scenario == 'highway':
+            executed_action_index, highway_tactical_plan = self._select_highway_assisted_action(action_index, pre_step_highway_meta)
+            pre_step_highway_meta['tactical_plan'] = highway_tactical_plan
 
         if show_live_progress and self.step_num % 10 == 0:
             print(f"\r🚗 正在马路上飞驰... 当前回合已开 {self.step_num} 步", end='', flush=True)
 
 
-        next_state, reward_value, terminated, truncated, info = self.env.step(action_index)
+        next_state, reward_value, terminated, truncated, info = self.env.step(executed_action_index)
         replenish_interval = SCENARIO_REPLENISH_INTERVAL.get(self.road_scenario)
         traffic_replenished = False
         if replenish_interval is not None and (self.step_num + 1) % replenish_interval == 0:
@@ -1724,7 +2671,15 @@ class GymLane:
         self.episode_speed_sum += self._current_speed(info)
         self.episode_speed_count += 1
 
-        info_action = info.get('action', action_index)
+        info['policy_action'] = int(action_index)
+        info['executed_action'] = int(executed_action_index)
+        info['assist_overrode_policy'] = int(int(executed_action_index) != int(action_index))
+        self.assist_override_count += int(info['assist_overrode_policy'])
+        if highway_tactical_plan is not None:
+            info['highway_assist_reason'] = highway_tactical_plan.get('assist_reason', 'policy')
+            info['highway_tactical_reason'] = highway_tactical_plan.get('reason', 'policy')
+            info['highway_best_lane_gain'] = float(highway_tactical_plan.get('best_lane_gain', 0.0))
+        info_action = int(info.get('executed_action', info.get('action', executed_action_index)))
         if info_action in self.lane_change_action_ids:
             self.lane_change_count += 1
         if bool(info.get('crashed', False)):
@@ -1744,6 +2699,10 @@ class GymLane:
         scenario_completed = self._scenario_completed_now(info)
         if scenario_completed and not bool(info.get('crashed', False)):
             self.scenario_completed = True
+        if self.road_scenario == 'highway':
+            info['highway_overtake_events'] = int(self._update_highway_overtake_count())
+        else:
+            info['highway_overtake_events'] = 0
 
         shaped_reward = self._shape_reward(
             reward_value,
@@ -1788,6 +2747,10 @@ class GymLane:
             self.steps_since_lane_change = 0
         else:
             self.steps_since_lane_change += 1
+        if self.highway_post_overtake_settle_steps > 0:
+            self.highway_post_overtake_settle_steps -= 1
+        if self.highway_recent_overtake_completion_steps > 0:
+            self.highway_recent_overtake_completion_steps -= 1
         self.previous_action_index = info_action
         return self.state_processed, reward_tensor, done, info, step_record
 

@@ -1,0 +1,10 @@
+init,     2026-04-14 17:37:10.629663
+arguments,Namespace(PPO_epochs=5, adv_norm=1, alg='ppo', cuda=-1, curriculum_clean_ratio=0.7, curriculum_entropy_decay=0.9, curriculum_mode='adaptive', curriculum_noise_step=0.03, curriculum_patience=2, entropy=0.1, entropy_min=0.1, eps_clip=0.2, gae_lambda=0.95, gamma=0.97, grad_clip=1.0, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lane_profile='legacy', lr=0.001, max_noise=0.15, mini_batch_size=64, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=1.0, road_scenario='highway', rollout_steps=256, rwta_del_connection='none', seed=999, snn_num_steps=15, task='gymip', thread=-1, traffic_level='dense', train_envs=2, train_num=2, warm_start_kind='none', warm_start_prefix='')
+seed,     999
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/logs
+parallel, train_envs 2
+train,    1, 29.025352,   19, 1.00,    7, 0.000, 0.000, 0.100, 40
+update,   2,    1,   19, 5.424005, 0.000000
+checkpoint_cleanup,promoted=8, kept=8, removed=8
+finish,   2026-04-14 17:37:21.589828

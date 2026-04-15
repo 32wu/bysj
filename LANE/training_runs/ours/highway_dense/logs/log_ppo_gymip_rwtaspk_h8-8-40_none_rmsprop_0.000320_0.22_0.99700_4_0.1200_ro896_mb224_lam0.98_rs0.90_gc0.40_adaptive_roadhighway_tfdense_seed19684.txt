@@ -1,0 +1,33 @@
+init,     2026-04-13 13:27:05.000846
+arguments,Namespace(PPO_epochs=4, adv_norm=1, alg='ppo', cuda=0, curriculum_clean_ratio=0.97, curriculum_entropy_decay=0.95, curriculum_mode='adaptive', curriculum_noise_step=0.003, curriculum_patience=4, entropy=0.22, entropy_min=0.1, eps_clip=0.12, gae_lambda=0.98, gamma=0.997, grad_clip=0.4, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lane_profile='auto', lr=0.00032, max_noise=0.015, mini_batch_size=224, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=0.9, road_scenario='highway', rollout_steps=896, rwta_del_connection='none', seed=19684, snn_num_steps=15, task='gymip', thread=-1, traffic_level='dense', train_num=4800, warm_start_kind='none', warm_start_prefix='')
+seed,     19684
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/logs
+profile,  lane auto-stabilize: lr->0.0005, gamma->0.995, PPO_epochs->4, eps_clip->0.15, rollout_steps->512, mini_batch_size->128, gae_lambda->0.97, grad_clip->0.5, curriculum_clean_ratio->0.8, max_noise->0.08, curriculum_noise_step->0.02, lr->0.00032, gamma->0.997, entropy->0.22, eps_clip->0.12, rollout_steps->896, mini_batch_size->224, gae_lambda->0.98, reward_scale->0.9, grad_clip->0.4, curriculum_clean_ratio->0.97, max_noise->0.015, curriculum_noise_step->0.003, curriculum_patience->3, curriculum_entropy_decay->0.94, curriculum_patience->4, curriculum_entropy_decay->0.95, train_num->4800
+train,    1, 2.506400,    5, 1.00,    2, 0.000, 0.000, 0.220, 44
+train,    2, 13.971370,    9, 1.00,    1, 0.000, 0.000, 0.220, 44
+train,    3, -3.372503,    3, 1.00,    1, 0.000, 0.000, 0.220, 44
+train,    4, 27.331285,   17, 1.00,    3, 0.000, 0.000, 0.220, 44
+train,    5, 2.181716,    5, 1.00,    2, 0.000, 0.000, 0.220, 44
+train,    6, 16.005543,   10, 1.00,    4, 0.000, 0.000, 0.220, 44
+train,    7, 40.053186,   19, 1.00,    3, 0.000, 0.000, 0.220, 44
+train,    8, 60.541263,   23, 1.00,    3, 0.000, 0.000, 0.220, 44
+train,    9, 15.878062,   10, 1.00,    3, 0.000, 0.000, 0.220, 44
+train,    10, 8.849020,    6, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    11, 12.394521,    7, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    12, 376.899500,  150, 0.00,   19, 0.000, 0.000, 0.220, 45
+train,    13, 15.709126,    9, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    14, 40.420901,   17, 1.00,    4, 0.000, 0.000, 0.220, 45
+train,    15, -3.184855,    3, 1.00,    1, 0.000, 0.000, 0.220, 45
+train,    16, 118.236168,   64, 1.00,   17, 0.000, 0.000, 0.220, 45
+train,    17, 9.166780,    8, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    18, 77.103654,   34, 1.00,    9, 0.000, 0.000, 0.220, 45
+train,    19, 12.378231,    8, 1.00,    1, 0.000, 0.000, 0.220, 45
+train,    20, 22.591581,   10, 1.00,    2, 0.000, 0.000, 0.220, 45
+train,    21, 37.522950,   17, 1.00,    3, 0.000, 0.000, 0.220, 45
+train,    22, 6.927455,    7, 1.00,    1, 0.000, 0.000, 0.220, 45
+train,    23, 60.889580,   29, 1.00,    9, 0.000, 0.000, 0.220, 45
+train,    24, 55.192679,   21, 1.00,    2, 0.000, 0.000, 0.220, 45
+val_save, 24, 9.154869, 1.0000,   7.2000,   2.2000, 0.0000,  27.2457
+val,      24, 9.154869, 1.0000,   7.2000,   2.2000, 0.0000,  27.2457
+train,    25, 15.851451,    9, 1.00,    1, 0.000, 0.000, 0.220, 45

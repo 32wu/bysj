@@ -470,45 +470,37 @@ class RWTAspike(RWTAprob):
     def forward(self, x):
         input_batch_size = x.shape[0]
         # SPIKE MODE
-        # Initialize neuron states
         q_s = x.clone()
         q_ha = self.hid_act_softmax(torch.rand([input_batch_size, self.dim_ha], dtype=torch.float32, device=self.dev))
         q_has = torch.cat([q_ha, q_s], dim=1)
-        spike_record = torch.zeros([input_batch_size, self.dim_has, self.spk_full_time+self.spk_resp_time]).to(self.dev)
-        prob_record = torch.zeros([input_batch_size, self.dim_has, self.spk_full_time]).to(self.dev)
+        spike_record = torch.zeros(
+            [input_batch_size, self.dim_has, self.spk_full_time + self.spk_resp_time],
+            dtype=torch.float32,
+            device=self.dev,
+        )
+        spike_response = self.spike_response.view(1, 1, self.spk_resp_time)
+        response_ha = spike_response.expand(input_batch_size, self.dim_ha, self.spk_resp_time)
+        response_s = spike_response.expand(input_batch_size, self.dim_s, self.spk_resp_time)
         for spike_i in range(self.spk_full_time):
-            # Get sample
-            v_ha = torch.zeros_like(q_ha).to(self.dev)
-            q_hid_reshape = torch.clone(q_ha[:, 0:self.dim_h]).reshape([input_batch_size, self.num_hidden, self.dim_hidden])
-            _distribution = torch.distributions.OneHotCategorical(q_hid_reshape)
-            q_hid_sample = _distribution.sample().reshape([input_batch_size, self.dim_h])
+            v_ha = torch.zeros_like(q_ha)
+            q_hid_reshape = q_ha[:, 0:self.dim_h].reshape([input_batch_size, self.num_hidden, self.dim_hidden])
+            q_hid_sample = torch.distributions.OneHotCategorical(q_hid_reshape).sample().reshape([input_batch_size, self.dim_h])
             v_ha[:, 0:self.dim_h] = q_hid_sample
-            q_act_reshape = torch.clone(q_ha[:, self.dim_h:self.dim_ha])
-            _distribution = torch.distributions.OneHotCategorical(q_act_reshape)
-            q_act_sample = _distribution.sample()
+            q_act_reshape = q_ha[:, self.dim_h:self.dim_ha]
+            q_act_sample = torch.distributions.OneHotCategorical(q_act_reshape).sample()
             v_ha[:, self.dim_h:self.dim_ha] = q_act_sample
-            v_ha_resp = v_ha.expand([self.spk_resp_time, input_batch_size, self.dim_ha]).permute([1, 2, 0]).clone()
-            v_s = (torch.rand_like(q_s).to(self.dev) < q_s).float().expand([self.spk_resp_time, input_batch_size, self.dim_s]).permute([1, 2, 0]).clone()
-            # Record sample
-            spike_record[:, 0:self.dim_ha, spike_i:(spike_i+self.spk_resp_time)] += v_ha_resp \
-                                    * self.spike_response.expand([input_batch_size, self.dim_ha, self.spk_resp_time])
-            spike_record[:, self.dim_ha:self.dim_has, spike_i:(spike_i+self.spk_resp_time)] += v_s \
-                                    * self.spike_response.expand([input_batch_size, self.dim_s, self.spk_resp_time])
-            prob_record[:, :, spike_i] = q_has
-            # Update q_ha
+            v_s = (torch.rand_like(q_s) < q_s).float()
+            spike_record[:, 0:self.dim_ha, spike_i:(spike_i + self.spk_resp_time)] += v_ha.unsqueeze(-1) * response_ha
+            spike_record[:, self.dim_ha:self.dim_has, spike_i:(spike_i + self.spk_resp_time)] += v_s.unsqueeze(-1) * response_s
             if spike_i >= (self.spk_resp_time - 1):
                 q_est_has = spike_record[:, :, spike_i].clone()
                 q_est_has[:, 0:self.dim_ha] = q_est_has[:, 0:self.dim_ha] * 2
                 temp_q_ha = torch.mm(q_est_has, self.weight) + self.bias.expand([input_batch_size, self.dim_ha])
-                target_q_ha = self.hid_act_softmax(temp_q_ha)
-                q_ha = target_q_ha
+                q_ha = self.hid_act_softmax(temp_q_ha)
                 q_has = torch.cat([q_ha, q_s], dim=1)
-        # (Use the last q_has for action generation)
-        # Get Sample
         v_hid_act = torch.zeros_like(q_ha, device=self.dev)
         q_hid = q_ha[:, 0:self.dim_h].reshape([input_batch_size, self.num_hidden, self.dim_hidden])
-        hid_dist = torch.distributions.OneHotCategorical(q_hid)
-        hid_sample = hid_dist.sample()
+        hid_sample = torch.distributions.OneHotCategorical(q_hid).sample()
         v_hid_act[:, 0:self.dim_h] = hid_sample.reshape([input_batch_size, self.dim_h])
         q_act = q_ha[:, self.dim_h:self.dim_ha]
         act_dist = torch.distributions.OneHotCategorical(q_act)
@@ -516,8 +508,6 @@ class RWTAspike(RWTAprob):
         act_sample = act_dist.sample()
         act_logprob = act_dist.log_prob(act_sample)
         v_hid_act[:, self.dim_h:self.dim_ha] = act_sample
-        output = torch.clone(q_ha[:, self.dim_h:self.dim_ha])
-        # Output
         return [q_act, [act_sample, act_logprob, q_has, v_hid_act, action_dist_entropy]]
     
 

@@ -1,0 +1,13 @@
+init,     2026-04-13 01:37:33.751212
+arguments,Namespace(PPO_epochs=4, alg='ppo', cuda=0, entropy=0.3, eps_clip=0.15, gamma=0.994, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, ignore_checkpoint=True, lr=0.0007, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=14071, response_window=40, road_scenario='highway', rwta_del_connection='none', skip_post_tests=True, snn_num_steps=15, task='gymip', thread=-1, traffic_level='standard', train_num=5000)
+profile,  lr->0.0007; gamma->0.994; entropy->0.3; PPO_epochs->4; eps_clip->0.15
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/logs
+train,    1, 87.359627,   78,  30
+train,    2, -1.855358,    5,  30
+train,    3, 147.906602,  150,  30
+train,    4, 135.436531,  150,  30
+train,    5, 132.496912,  150,  30
+train,    6, 137.163008,  150,  30
+train,    7, 131.896785,  150,  30
+train,    8, 137.526089,  150,  31
