@@ -2357,10 +2357,10 @@ class GymLane:
                 highway_tailgating_penalty = 2.0 * float(reward_profile['blocked_penalty_scale']) * float(
                     np.clip((tailgate_dist - front_gap) / tailgate_dist, 0.0, 1.0)
                 )
-            # 【方案B】动态安全距离奖励：前方间距充足时给额外奖励，激励智能体主动保持安全距离
-            # 安全间距 > 40m 时奖励 0.02*speed_ratio，随间距衰减，防止碰撞延长存活步数
+            # 【方案B/D】动态安全距离奖励：前方间距充足时给额外奖励，激励智能体主动保持安全距离
+            # dense场景阈值降至22m（车流密集无法保持40m），standard/light保持40m
             highway_safe_gap_bonus = 0.0
-            safe_gap_threshold = 40.0
+            safe_gap_threshold = 22.0 if self.traffic_level == 'dense' else 40.0
             if front_gap is None:
                 highway_safe_gap_bonus = 0.02 * max(0.3, speed_ratio)
             elif front_gap >= safe_gap_threshold:
@@ -2522,12 +2522,13 @@ class GymLane:
         merging_speed_penalty = merging_speed_penalty_scale * max(0.0, merging_speed_reward)
         completion_bonus = completion_bonus_value if (scenario_completed and not crashed and not self.scenario_completion_awarded) else 0.0
 
-        # 【方案A】存活步数递增奖励：step越大奖励越高，激励智能体尽量存活更长时间
-        # 奖励 = 0.004 * (step_num / max_step_num)^1.5，满步时约 +0.004，无量纲小量不影响现有奖励规模
+        # 【方案A/D】存活步数递增奖励：step越大奖励越高，激励智能体尽量存活更长时间
+        # dense场景下系数加倍（0.008），以抵消高密度碰撞风险对存活激励的削弱
         step_survival_bonus = 0.0
         if not crashed:
             step_progress = float(self.step_num) / max(1.0, float(self.max_step_num))
-            step_survival_bonus = 0.004 * (step_progress ** 1.5)
+            _ssb_scale = 0.008 if (self.road_scenario == 'highway' and self.traffic_level == 'dense') else 0.004
+            step_survival_bonus = _ssb_scale * (step_progress ** 1.5)
 
         shaped_reward = (
             survival_bonus

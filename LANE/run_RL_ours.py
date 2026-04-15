@@ -491,7 +491,7 @@ def run_validation_cycle(
             rollout.reset()
             curriculum_state['reanchor_pending'] = False
             curriculum_state['noise_cap'] = 0.0
-            curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.16))
+            curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.12))
             log_text(
                 file_handle,
                 'reanchor',
@@ -608,22 +608,23 @@ def apply_lane_stability_profile(args):
             'light': 0.996,
             # 【方案C】standard场景提升gamma下限至0.998，使智能体更重视长期存活奖励
             'standard': 0.998,
-            'dense': 0.997,
+            # 【方案C-dense】dense场景同样提升到0.998，强化高拥堵下的长期存活价值
+            'dense': 0.998,
         }
         entropy_floor = {
             'light': 0.22,
             'standard': 0.28,
-            'dense': 0.22,
+            'dense': 0.18,
         }
         entropy_cap = {
             'light': 0.90,
             'standard': 0.75,
-            'dense': 0.42,
+            'dense': 0.30,
         }
         entropy_min_floor = {
             'light': 0.08,
             'standard': 0.10,
-            'dense': 0.06,
+            'dense': 0.05,
         }
         rollout_floor = {
             'light': 640,
@@ -638,17 +639,17 @@ def apply_lane_stability_profile(args):
         clean_ratio_floor = {
             'light': 0.86,
             'standard': 0.90,
-            'dense': 0.98,
+            'dense': 0.99,
         }
         max_noise_cap = {
             'light': 0.05,
             'standard': 0.04,
-            'dense': 0.012,
+            'dense': 0.008,
         }
         noise_step_cap = {
             'light': 0.010,
             'standard': 0.008,
-            'dense': 0.002,
+            'dense': 0.001,
         }
         train_num_floor = {
             'light': 2800,
@@ -668,7 +669,10 @@ def apply_lane_stability_profile(args):
         clamp_max('eps_clip', 0.12)
         clamp_min('rollout_steps', rollout_floor.get(traffic_level, 768))
         clamp_min('mini_batch_size', mini_batch_floor.get(traffic_level, 192))
-        clamp_min('gae_lambda', 0.98 if traffic_level != 'standard' else 0.990)  # 【方案C】standard场景GAE lambda提升至0.99
+        if traffic_level == 'dense':
+            clamp_min('gae_lambda', 0.990)  # 【方案C-dense】dense场景同步提升GAE lambda，增强长期优势估计
+        else:
+            clamp_min('gae_lambda', 0.98 if traffic_level != 'standard' else 0.990)  # 【方案C】standard场景GAE lambda提升至0.99
         clamp_max('reward_scale', 0.90)
         clamp_max('grad_clip', 0.40)
         clamp_min('curriculum_clean_ratio', clean_ratio_floor.get(traffic_level, 0.90))
@@ -848,6 +852,31 @@ def update_dense_highway_vehicle_curriculum(curriculum_state, train_metrics, ful
     previous_next_prob = round(float(curriculum_state.get('train_vehicle_mix_next_prob', 0.0)), 2)
     previous_full_prob = round(float(curriculum_state.get('train_vehicle_mix_full_prob', 0.0)), 2)
 
+    # If full dense validation is already strong, sync the staged curriculum upward
+    # so training no longer lingers on easier traffic densities.
+    full_dense_target_stage = None
+    if full_val_metrics is not None:
+        if full_dense_length >= 145.0 and full_dense_collision <= 0.10:
+            full_dense_target_stage = len(stages) - 1
+        elif stage_index < len(stages) - 2 and full_dense_length >= 115.0 and full_dense_collision <= 0.28:
+            full_dense_target_stage = len(stages) - 2
+    if full_dense_target_stage is not None and full_dense_target_stage > stage_index:
+        next_vehicle_count = int(stages[full_dense_target_stage])
+        curriculum_state['train_vehicle_stage_index'] = int(full_dense_target_stage)
+        curriculum_state['train_vehicle_count'] = int(next_vehicle_count)
+        curriculum_state['train_vehicle_promote_streak'] = 0
+        curriculum_state['train_vehicle_collapse_streak'] = 0
+        curriculum_state['train_vehicle_mix_next_prob'] = 0.0
+        curriculum_state['train_vehicle_mix_full_prob'] = 0.0
+        return (
+            'dense_traffic_sync %d -> %d, full_length %.1f, full_collision %.3f'
+        ) % (
+            current_vehicle_count,
+            next_vehicle_count,
+            full_dense_length,
+            full_dense_collision,
+        )
+
     next_mix_prob = 0.0
     full_mix_prob = 0.0
     if stage_index < len(stages) - 1:
@@ -991,7 +1020,7 @@ def update_curriculum(args, curriculum_state, val_return, val_metrics=None):
             old_entropy = curriculum_state['entropy']
             curriculum_state['stability_phase'] = True
             curriculum_state['noise_cap'] = 0.0
-            curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.16))
+            curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.12))
             curriculum_state['improvement_streak'] = 0
             curriculum_state['reanchor_pending'] = False
             return 'dense_stability_on noise_cap %.4f -> %.4f, entropy %.4f -> %.4f, best_length %.4f' % (
@@ -1007,9 +1036,9 @@ def update_curriculum(args, curriculum_state, val_return, val_metrics=None):
             old_entropy = curriculum_state['entropy']
             curriculum_state['noise_cap'] = 0.0
             if mean_length >= max(80.0, 0.85 * curriculum_state['best_mean_length']) or success_rate >= 0.10:
-                curriculum_state['entropy'] = max(args.entropy_min, curriculum_state['entropy'] * 0.97)
+                curriculum_state['entropy'] = max(args.entropy_min, curriculum_state['entropy'] * 0.96)
             else:
-                curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.16))
+                curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.12))
             collapse = (
                 curriculum_state['best_mean_length'] >= 95.0 and
                 mean_length < max(28.0, 0.45 * curriculum_state['best_mean_length']) and

@@ -53,6 +53,7 @@ def get_arguments():
     parser.add_argument('--snn_num_steps', type=int, default=15)
     parser.add_argument('--road_scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
     parser.add_argument('--traffic_level', type=str, default='standard', choices=['light', 'standard', 'dense'])
+    parser.add_argument('--gae_lambda', type=float, default=0.95)
     parser.add_argument('--skip_post_tests', default=False, action='store_true')
     # ---------------------------------------------------
     return parser.parse_args()
@@ -164,8 +165,15 @@ def apply_lane_baseline_profile(args):
         }
         gamma_floor = {
             'light': 0.992,
-            'standard': 0.994,
-            'dense': 0.995,
+            # 【方案C-base】standard/dense场景对齐ours的长视野折扣，使base也重视长期存活
+            'standard': 0.998,
+            'dense': 0.998,
+        }
+        gae_lambda_floor = {
+            'light': 0.97,
+            # 【方案C-base】standard/dense提升GAE lambda，让优势估计更精确反映长期影响
+            'standard': 0.990,
+            'dense': 0.990,
         }
         entropy_floor = {
             'light': 0.25,
@@ -179,6 +187,7 @@ def apply_lane_baseline_profile(args):
         }
         clamp_max('lr', lr_cap.get(traffic_level, 0.0007))
         clamp_min('gamma', gamma_floor.get(traffic_level, 0.994))
+        clamp_min('gae_lambda', gae_lambda_floor.get(traffic_level, 0.97))
         clamp_min('entropy', entropy_floor.get(traffic_level, 0.30))
         clamp_max('PPO_epochs', 4)
         clamp_max('eps_clip', 0.15)
