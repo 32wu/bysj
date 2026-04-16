@@ -1,47 +1,133 @@
 import argparse
-import glob
+import csv
 import os
 import re
+from datetime import datetime
 
 import numpy as np
 import torch
 
 import checkpoint_utils
 import env_lane
+import model_mlp
 import model_rwta
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='LANE robustness evaluation')
     parser.add_argument('--device', type=str, default='cpu')
-    parser.add_argument('--checkpoints', nargs='*', default=None)
+    parser.add_argument('--road-scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
+    parser.add_argument('--traffic-level', type=str, default='dense', choices=['light', 'standard', 'dense'])
+    parser.add_argument('--baseline-prefix', type=str, default=None,
+                        help='Checkpoint prefix without _w_1.pt, or the checkpoint filename/path itself.')
+    parser.add_argument('--ours-prefix', type=str, default=None,
+                        help='Checkpoint prefix without _w_1.pt, or the checkpoint filename/path itself.')
     parser.add_argument('--episodes', type=int, default=10)
-    parser.add_argument('--max_models', type=int, default=2)
-    parser.add_argument('--failure_rates', type=float, nargs='*', default=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5])
-    parser.add_argument('--input_noise_levels', type=float, nargs='*', default=[0.0, 0.05, 0.10, 0.15, 0.20])
-    parser.add_argument('--weight_noise_levels', type=float, nargs='*', default=[0.0, 0.02, 0.05, 0.10])
+    parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--failure-rates', type=float, nargs='*', default=[0.0, 0.1, 0.2, 0.3, 0.4, 0.5])
+    parser.add_argument('--input-noise-levels', type=float, nargs='*', default=[0.0, 0.05, 0.10, 0.15, 0.20])
+    parser.add_argument('--weight-noise-levels', type=float, nargs='*', default=[0.0, 0.02, 0.05, 0.10])
+    parser.add_argument('--output-dir', type=str, default=os.path.join(checkpoint_utils.LANE_DIR, 'comparison_reports'))
     return parser.parse_args()
 
 
-def auto_detect_checkpoints(max_models):
-    prefixes = {}
-    for path in checkpoint_utils.iter_weight_files('*_best_w_1.pt'):
-        prefix = checkpoint_utils.checkpoint_prefix_from_weight_file(path)
-        prefixes[prefix] = os.path.getmtime(path)
-    ordered = [item[0] for item in sorted(prefixes.items(), key=lambda item: item[1], reverse=True)]
-    if not ordered:
-        raise FileNotFoundError('No RWTA best checkpoints were found under the LANE training_runs or legacy log_model directories.')
-    return ordered[:max_models]
+def normalize_prefix(prefix_value):
+    return checkpoint_utils.normalize_prefix(prefix_value) if prefix_value else None
+
+
+def auto_detect_prefix(kind, road_scenario, traffic_level):
+    return checkpoint_utils.find_latest_checkpoint_prefix(
+        kind=kind,
+        road_scenario=road_scenario,
+        traffic_level=traffic_level,
+        best_only=True,
+    )
+
+
+def resolve_prefixes(args):
+    return {
+        'baseline': normalize_prefix(args.baseline_prefix) or auto_detect_prefix(
+            'baseline',
+            args.road_scenario,
+            args.traffic_level,
+        ),
+        'optimized': normalize_prefix(args.ours_prefix) or auto_detect_prefix(
+            'ours',
+            args.road_scenario,
+            args.traffic_level,
+        ),
+    }
+
+
+def _parse_hidden_num(prefix_basename):
+    match = re.search(r'_h(\d+)_-', prefix_basename)
+    return int(match.group(1)) if match else 64
+
+
+def _parse_rwta_dims(prefix_basename):
+    match = re.search(r'_h(\d+)-(\d+)', prefix_basename)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return 8, 8
+
+
+def _parse_response_window(prefix_basename):
+    match = re.search(r'_h\d+-\d+-(\d+)_', prefix_basename)
+    return int(match.group(1)) if match else 40
+
+
+def _parse_snn_num_steps(prefix_basename):
+    match = re.search(r'_h(\d+)_(\d+)_', prefix_basename)
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    return 64, 15
 
 
 def build_model_from_prefix(prefix, device):
     basename = os.path.basename(prefix)
-    if 'rwtaprob' in basename:
+    if 'mlp3soft' in basename:
+        hidden_num = _parse_hidden_num(basename)
+        model = model_mlp.MLP_3(
+            layer_sizes=[25, hidden_num, 5],
+            hid_activate='softmax',
+            hid_group_size=8,
+            out_activate='softmax',
+            optimizer_name='rmsprop',
+            optimizer_learning_rate=0.001,
+            entropy_ratio=0.1,
+            dev=device,
+        )
+    elif 'mlp3relu' in basename:
+        hidden_num = _parse_hidden_num(basename)
+        model = model_mlp.MLP_3(
+            layer_sizes=[25, hidden_num, 5],
+            hid_activate='relu',
+            hid_group_size=8,
+            out_activate='softmax',
+            optimizer_name='rmsprop',
+            optimizer_learning_rate=0.001,
+            entropy_ratio=0.1,
+            dev=device,
+        )
+    elif 'snnbptt' in basename:
+        import model_snnbptt
+
+        hidden_num, snn_num_steps = _parse_snn_num_steps(basename)
+        model = model_snnbptt.SNNBPTT3(
+            layer_sizes=[25, hidden_num, 5],
+            snn_num_steps=snn_num_steps,
+            optimizer_name='rmsprop',
+            optimizer_learning_rate=0.001,
+            entropy_ratio=0.1,
+            dev=device,
+        )
+    elif 'rwtaprob' in basename:
+        hid_num, hid_size = _parse_rwta_dims(basename)
         model = model_rwta.RWTAprob(
             input_size=25,
             output_size=5,
-            hid_num=8,
-            hid_size=8,
+            hid_num=hid_num,
+            hid_size=hid_size,
             remove_connection_pattern='none',
             optimizer_name='rmsprop',
             optimizer_learning_rate=0.001,
@@ -49,13 +135,13 @@ def build_model_from_prefix(prefix, device):
             device=device,
         )
     else:
-        response_window_match = re.search(r'h\d+-\d+-(\d+)_', basename)
-        response_window = int(response_window_match.group(1)) if response_window_match else 40
+        hid_num, hid_size = _parse_rwta_dims(basename)
+        response_window = _parse_response_window(basename)
         model = model_rwta.RWTAspike(
             input_size=25,
             output_size=5,
-            hid_num=8,
-            hid_size=8,
+            hid_num=hid_num,
+            hid_size=hid_size,
             spk_response_window='uni',
             spk_full_time=42,
             spk_resp_time=response_window,
@@ -69,79 +155,67 @@ def build_model_from_prefix(prefix, device):
     return model
 
 
+def set_all_seeds(seed, device):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if device.type == 'cuda':
+        torch.cuda.manual_seed_all(seed)
+
+
 def collect_episode_metrics(env):
     return {
-        'return': env.episode_return,
-        'length': env.step_num,
-        'collision': 1.0 if env.collision_count > 0 else 0.0,
+        'return': float(env.episode_return),
+        'length': float(env.step_num),
+        'collision': float(env.collision_count > 0),
+        'success': float(env.episode_success()),
+        'lane_change': float(env.lane_change_count),
     }
 
 
 def summarize_metrics(metric_list):
-    return {
-        'return_mean': float(np.mean([item['return'] for item in metric_list])),
-        'return_std': float(np.std([item['return'] for item in metric_list])),
-        'length_mean': float(np.mean([item['length'] for item in metric_list])),
-        'length_std': float(np.std([item['length'] for item in metric_list])),
-        'collision_mean': float(np.mean([item['collision'] for item in metric_list])),
-        'collision_std': float(np.std([item['collision'] for item in metric_list])),
-    }
+    summary = {}
+    for key in ['return', 'length', 'collision', 'success', 'lane_change']:
+        values = np.asarray([item[key] for item in metric_list], dtype=np.float32)
+        summary[f'{key}_mean'] = float(np.mean(values))
+        summary[f'{key}_std'] = float(np.std(values))
+    return summary
 
 
-def run_action_failure_eval(model, env, failure_rate, episodes):
+def onehot_action(action_index, action_num, device):
+    return torch.nn.functional.one_hot(
+        torch.tensor([int(action_index)], device=device),
+        num_classes=action_num,
+    ).float()
+
+
+def evaluate_model(prefix, args, device, failure_rate=0.0, input_noise=0.0, weight_noise=0.0):
+    env = env_lane.GymLane(
+        dev=device,
+        road_scenario=args.road_scenario,
+        traffic_level=args.traffic_level,
+    )
     metrics = []
-    with torch.no_grad():
-        for _ in range(episodes):
-            env.init_test(record_video=False)
-            observation = env.get_test_observation()
+    for episode_idx in range(args.episodes):
+        episode_seed = args.seed + episode_idx
+        model = build_model_from_prefix(prefix, device)
+        if weight_noise > 0 and hasattr(model, 'add_noise_abs'):
+            model.add_noise_abs('gaussian', weight_noise)
+        with torch.no_grad():
+            env.init_test(record_video=False, seed=episode_seed)
             while True:
+                observation = env.get_test_observation(
+                    noise_type='gaussian' if input_noise > 0 else 'none',
+                    noise_param=input_noise,
+                )
                 model_output, _ = model(observation)
                 action_index = int(torch.argmax(model_output, dim=1).item())
-                if np.random.rand() < failure_rate:
-                    action_index = np.random.randint(0, env.action_num)
-                action_onehot = torch.nn.functional.one_hot(torch.tensor([action_index]), num_classes=env.action_num).float()
-                _, _, _ = env.make_action(action_onehot)
+                if failure_rate > 0 and np.random.rand() < failure_rate:
+                    action_index = int(np.random.randint(0, env.action_num))
+                env.make_action(onehot_action(action_index, env.action_num, device))
                 if env.done_signal:
                     break
-                observation = env.get_test_observation()
-            metrics.append(collect_episode_metrics(env))
-    return summarize_metrics(metrics)
-
-
-def run_input_noise_eval(model, env, noise_level, episodes):
-    metrics = []
-    with torch.no_grad():
-        for _ in range(episodes):
-            env.init_test(record_video=False)
-            while True:
-                observation = env.get_test_observation(noise_type='gaussian', noise_param=noise_level)
-                model_output, _ = model(observation)
-                action_index = torch.argmax(model_output, dim=1)
-                action_onehot = torch.nn.functional.one_hot(action_index, num_classes=env.action_num).float()
-                _, _, _ = env.make_action(action_onehot)
-                if env.done_signal:
-                    break
-            metrics.append(collect_episode_metrics(env))
-    return summarize_metrics(metrics)
-
-
-def run_weight_noise_eval(prefix, device, env, noise_level, episodes):
-    metrics = []
-    for _ in range(episodes):
-        model = build_model_from_prefix(prefix, device)
-        model.add_noise_abs('gaussian', noise_level)
-        with torch.no_grad():
-            env.init_test(record_video=False)
-            observation = env.get_test_observation()
-            while True:
-                model_output, _ = model(observation)
-                action_index = torch.argmax(model_output, dim=1)
-                action_onehot = torch.nn.functional.one_hot(action_index, num_classes=env.action_num).float()
-                _, _, _ = env.make_action(action_onehot)
-                if env.done_signal:
-                    break
-                observation = env.get_test_observation()
         metrics.append(collect_episode_metrics(env))
+    env.close()
     return summarize_metrics(metrics)
 
 
@@ -150,40 +224,105 @@ def print_summary(title, value, summary):
         f'{title:<14} {value:>6.3f} | '
         f'return {summary["return_mean"]:>7.3f} +/- {summary["return_std"]:>6.3f} | '
         f'length {summary["length_mean"]:>7.3f} +/- {summary["length_std"]:>6.3f} | '
-        f'collision {summary["collision_mean"]:>6.3f} +/- {summary["collision_std"]:>6.3f}'
+        f'collision {summary["collision_mean"]:>6.3f} | success {summary["success_mean"]:>6.3f}'
     )
+
+
+def ensure_output_dir(output_root):
+    os.makedirs(output_root, exist_ok=True)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    run_dir = os.path.join(output_root, f'robustness_{timestamp}')
+    os.makedirs(run_dir, exist_ok=True)
+    return run_dir
+
+
+def write_csv(path, rows):
+    if not rows:
+        return
+    fieldnames = list(rows[0].keys())
+    with open(path, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def main():
     args = parse_args()
     device = torch.device(args.device)
-    checkpoints = args.checkpoints if args.checkpoints else auto_detect_checkpoints(args.max_models)
-    env = env_lane.GymLane(dev=device)
+    prefixes = resolve_prefixes(args)
+    run_dir = ensure_output_dir(args.output_dir)
+
+    clean_rows = []
+    failure_rows = []
+    noise_rows = []
+    weight_rows = []
 
     print('Robustness evaluation start')
-    print('Checkpoints:')
-    for checkpoint in checkpoints:
-        print('  -', checkpoint)
+    print(f'Scenario: {args.road_scenario} / {args.traffic_level}')
+    for model_name, prefix in prefixes.items():
+        print(f'  - {model_name}: {prefix}')
 
-    for checkpoint in checkpoints:
+    for model_name, prefix in prefixes.items():
         print('\n======================================')
-        print('Model:', checkpoint)
-        model = build_model_from_prefix(checkpoint, device)
+        print('Model:', model_name, prefix)
+
+        clean_summary = evaluate_model(prefix, args, device)
+        clean_rows.append({
+            'model': model_name,
+            'scenario': args.road_scenario,
+            'traffic_level': args.traffic_level,
+            'checkpoint': os.path.basename(prefix),
+            **clean_summary,
+        })
+        print_summary('clean_eval', 0.0, clean_summary)
 
         print('\n[Action Failure]')
         for failure_rate in args.failure_rates:
-            summary = run_action_failure_eval(model, env, failure_rate, args.episodes)
+            set_all_seeds(args.seed + int(failure_rate * 1000), device)
+            summary = evaluate_model(prefix, args, device, failure_rate=failure_rate)
             print_summary('failure_rate', failure_rate, summary)
+            failure_rows.append({
+                'model': model_name,
+                'scenario': args.road_scenario,
+                'traffic_level': args.traffic_level,
+                'failure_rate': failure_rate,
+                'checkpoint': os.path.basename(prefix),
+                **summary,
+            })
 
         print('\n[Input Gaussian Noise]')
         for noise_level in args.input_noise_levels:
-            summary = run_input_noise_eval(model, env, noise_level, args.episodes)
+            set_all_seeds(args.seed + int(noise_level * 1000) + 1000, device)
+            summary = evaluate_model(prefix, args, device, input_noise=noise_level)
             print_summary('input_noise', noise_level, summary)
+            noise_rows.append({
+                'model': model_name,
+                'scenario': args.road_scenario,
+                'traffic_level': args.traffic_level,
+                'input_noise': noise_level,
+                'checkpoint': os.path.basename(prefix),
+                **summary,
+            })
 
         print('\n[Weight Gaussian Noise]')
         for noise_level in args.weight_noise_levels:
-            summary = run_weight_noise_eval(checkpoint, device, env, noise_level, args.episodes)
+            set_all_seeds(args.seed + int(noise_level * 1000) + 2000, device)
+            summary = evaluate_model(prefix, args, device, weight_noise=noise_level)
             print_summary('weight_noise', noise_level, summary)
+            weight_rows.append({
+                'model': model_name,
+                'scenario': args.road_scenario,
+                'traffic_level': args.traffic_level,
+                'weight_noise': noise_level,
+                'checkpoint': os.path.basename(prefix),
+                **summary,
+            })
+
+    write_csv(os.path.join(run_dir, 'clean_eval.csv'), clean_rows)
+    write_csv(os.path.join(run_dir, 'action_failure_eval.csv'), failure_rows)
+    write_csv(os.path.join(run_dir, 'input_noise_eval.csv'), noise_rows)
+    write_csv(os.path.join(run_dir, 'weight_noise_eval.csv'), weight_rows)
+    print('\nSaved robustness tables to:', run_dir)
 
 
 if __name__ == '__main__':
