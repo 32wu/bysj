@@ -2185,27 +2185,7 @@ class GymLane:
         lane_change_action = action_index in self.lane_change_action_ids
         scenario_completed = self._scenario_completed_now(info)
 
-        highway_clear_road_bonus = 0.0
-        highway_cruise_bonus = 0.0
-        highway_overtake_bonus = 0.0
-        highway_overtake_completion_bonus = 0.0
-        highway_safe_follow_bonus = 0.0
-        highway_post_overtake_stability_bonus = 0.0
-        highway_return_after_overtake_bonus = 0.0
-        highway_blocking_penalty = 0.0
-        highway_missed_overtake_penalty = 0.0
-        highway_unnecessary_lane_change_penalty = 0.0
-        highway_ineffective_lane_change_penalty = 0.0
-        highway_aborted_overtake_penalty = 0.0
-        highway_tailgating_penalty = 0.0
-        highway_under_cruise_penalty = 0.0
-        highway_unnecessary_slow_penalty = 0.0
-        highway_blocked_accelerate_penalty = 0.0
-        highway_risky_lane_change_penalty = 0.0
-        highway_momentum_bonus = 0.0
-        highway_safe_gap_bonus = 0.0
-        dense_post_overtake_hold_steps = 0
-        post_overtake_settle_window = 0
+        highway_shaped_reward = None
 
         if self.road_scenario == 'merge':
             lane_change_penalty_scale = 0.08
@@ -2240,9 +2220,24 @@ class GymLane:
             crash_penalty = crashed * 50.0
             completion_bonus_value = 50.0
         else:
+            # Highway: unified 11-term reward formula
+            # R = w_survival*s1 + w_progress*s2 + w_speed*s3 + w_gap*s4 + w_overtake*s5
+            #   - w_crash*s6 - w_offroad*s7 - w_lane*s8 - w_zigzag*s9 - w_risky*s10 - w_stop*s11
+            W_SURVIVAL = 0.05
+            W_PROGRESS = 0.008
+            W_SPEED = 0.50
+            W_GAP = 0.04
+            W_OVERTAKE = 1.50
+            W_CRASH = 10.0
+            W_OFFROAD = 2.00
+            W_LANE = 0.003
+            W_ZIGZAG = 0.06
+            W_RISKY = 0.30
+            W_STOP = 0.40
+
             success_speed = self._minimum_success_speed()
-            reward_profile = self._get_highway_reward_profile()
             assist_profile = self._get_highway_assist_profile()
+            reward_profile = self._get_highway_reward_profile()
             reward_speed_range = self.env.unwrapped.config.get(
                 'reward_speed_range',
                 HIGHWAY_REWARD_SPEED_RANGE.get(self.traffic_level, HIGHWAY_REWARD_SPEED_RANGE['standard']),
@@ -2253,36 +2248,14 @@ class GymLane:
             highway_context = self._highway_lane_context()
             front_gap = highway_context.get('current_front_gap')
             overtake_events = int(info.get('highway_overtake_events', 0))
-            cruise_speed = self._target_highway_cruise_speed()
             thresholds = self._get_highway_lane_context_thresholds()
-
-            lane_change_penalty_scale = float(reward_profile['lane_change_penalty_scale'])
-            repeated_lane_change_scale = float(reward_profile['repeated_lane_change_scale'])
-            zigzag_penalty_scale = float(reward_profile['zigzag_penalty_scale'])
-            steady_action_bonus_scale = 0.0
-            survival_bonus_scale = float(reward_profile['survival_bonus_scale'])
-            speed_bonus_scale = float(reward_profile['speed_bonus_scale'])
-            lane_bonus_scale = float(reward_profile['lane_bonus_scale'])
-            raw_reward_scale = float(reward_profile['raw_reward_scale'])
-            merging_speed_penalty_scale = 0.0
-            offroad_penalty_scale = float(reward_profile['offroad_penalty_scale'])
-            low_speed_threshold = max(float(success_speed), speed_floor - 1.0)
-            low_speed_penalty_scale = float(reward_profile['low_speed_penalty_scale'])
-            stop_penalty = (
-                float(reward_profile['stop_penalty_scale'])
-                if (self.step_num > 6 and ego_speed_value < 2.5)
-                else 0.0
-            )
-            crash_penalty = crashed * float(reward_profile['crash_penalty_scale'])
-            completion_bonus_value = 0.0
-
             speed_ratio = float(np.clip((ego_speed_value - speed_floor) / speed_span, 0.0, 1.0))
+
             tactical_plan = (pre_step_highway_meta or {}).get('tactical_plan')
             if tactical_plan is None:
                 tactical_plan = self._derive_highway_tactical_plan(pre_step_highway_meta)
             pre_context = (pre_step_highway_meta or {}).get('context', {})
             pre_lane_id = (pre_step_highway_meta or {}).get('lane_id')
-            context = pre_context
             post_lane_index = getattr(self._get_ego_vehicle(), 'lane_index', None)
             post_lane_id = int(post_lane_index[2]) if post_lane_index is not None and len(post_lane_index) >= 3 else pre_lane_id
             lane_changed = (
@@ -2306,7 +2279,7 @@ class GymLane:
             if pre_front_speed is not None and post_front_speed is not None:
                 front_speed_gain = float(post_front_speed - pre_front_speed)
             elif pre_front_speed is not None and post_front_speed is None:
-                front_speed_gain = max(0.0, float(cruise_speed - pre_front_speed))
+                front_speed_gain = max(0.0, float(self._target_highway_cruise_speed() - pre_front_speed))
 
             post_front_gap_reference = thresholds['left_front_clear'] if action_index == self.left_lane_action_id else thresholds['right_front_clear']
             dense_beneficial_post_gap = max(
@@ -2347,131 +2320,123 @@ class GymLane:
             post_overtake_settle_window = int(
                 assist_profile.get('post_overtake_settle_steps', HIGHWAY_POST_OVERTAKE_SETTLE_STEPS)
             )
-            if ego_speed_value >= success_speed:
-                highway_cruise_bonus = float(reward_profile['cruise_bonus_scale']) * speed_ratio
-            if front_gap is None or front_gap >= thresholds['clear_road_gap'] * 0.8:
-                highway_clear_road_bonus = float(reward_profile['clear_road_bonus_scale']) * speed_ratio
-           # 【修改】：将追尾惩罚的警戒线从 10.0 米拉长到 25.0 米，并加重惩罚力度
-            tailgate_dist = 25.0
-            if front_gap is not None and front_gap < tailgate_dist and ego_speed_value >= max(18.0, success_speed - 1.0):
-                highway_tailgating_penalty = 2.0 * float(reward_profile['blocked_penalty_scale']) * float(
-                    np.clip((tailgate_dist - front_gap) / tailgate_dist, 0.0, 1.0)
-                )
-            # 【方案B/D】动态安全距离奖励：前方间距充足时给额外奖励，激励智能体主动保持安全距离
-            # dense场景阈值降至22m（车流密集无法保持40m），standard/light保持40m
-            highway_safe_gap_bonus = 0.0
+
+            # Update dense post-overtake state counters
+            dense_post_overtake_hold_steps = 0
+            if self.traffic_level == 'dense':
+                if lane_changed and (beneficial_lane_change or dense_progress_lane_change):
+                    settle_steps = post_overtake_settle_window if action_index == self.left_lane_action_id else max(2, post_overtake_settle_window // 2)
+                    self.highway_post_overtake_settle_steps = max(self.highway_post_overtake_settle_steps, int(settle_steps))
+                if overtake_events > 0:
+                    self.highway_recent_overtake_completion_steps = max(self.highway_recent_overtake_completion_steps, post_overtake_settle_window)
+                    self.highway_post_overtake_settle_steps = max(self.highway_post_overtake_settle_steps, post_overtake_settle_window)
+                dense_post_overtake_hold_steps = max(int(self.highway_post_overtake_settle_steps), int(self.highway_recent_overtake_completion_steps))
+
+            # s1: survival
+            survival_signal = 0.0 if crashed else 1.0
+
+            # s2: step progress
+            step_progress_signal = 0.0
+            if not crashed:
+                step_progress = float(self.step_num) / max(1.0, float(self.max_step_num))
+                step_progress_signal = step_progress ** 1.5
+
+            # s3: speed (normalized)
+            speed_signal = speed_ratio
+
+            # s4: safe gap bonus when front gap is adequate
+            safe_gap_signal = 0.0
             safe_gap_threshold = 22.0 if self.traffic_level == 'dense' else 40.0
             if front_gap is None:
-                highway_safe_gap_bonus = 0.02 * max(0.3, speed_ratio)
+                safe_gap_signal = max(0.3, speed_ratio)
             elif front_gap >= safe_gap_threshold:
                 gap_factor = float(np.clip((front_gap - safe_gap_threshold) / safe_gap_threshold + 1.0, 1.0, 2.0))
-                highway_safe_gap_bonus = 0.02 * max(0.3, speed_ratio) * gap_factor
+                safe_gap_signal = max(0.3, speed_ratio) * gap_factor
+
+            # s5: effective overtake (completed overtakes + beneficial lane change partial credit)
+            effective_overtake_signal = float(overtake_events)
             if lane_changed and beneficial_lane_change:
                 improvement_score = 0.5
                 improvement_score += 0.35 * float(np.clip(gap_gain / max(1.0, thresholds['blocked_front_gap']), 0.0, 1.0))
                 improvement_score += 0.15 * float(np.clip(front_speed_gain / 4.0, 0.0, 1.0))
-                highway_safe_follow_bonus = float(reward_profile['beneficial_lane_change_bonus_scale']) * improvement_score
-            elif lane_changed:
-                if dense_progress_lane_change:
-                    highway_safe_follow_bonus = float(reward_profile.get('progress_lane_change_bonus_scale', 0.35)) * float(reward_profile['beneficial_lane_change_bonus_scale']) * max(0.45, speed_ratio)
-                else:
-                    highway_ineffective_lane_change_penalty = float(reward_profile['ineffective_lane_change_penalty_scale'])
+                effective_overtake_signal += 0.4 * improvement_score
+            elif lane_changed and dense_progress_lane_change:
+                effective_overtake_signal += 0.35 * 0.4 * max(0.45, speed_ratio)
 
+            # s8: lane change cost (base + cooldown + dense settle penalty)
+            lane_change_cost_signal = 0.0
+            if lane_change_action:
+                lane_change_cost_signal = 1.0
+                if self.steps_since_lane_change < 6:
+                    lane_change_cost_signal += float(6 - self.steps_since_lane_change)
+            if (
+                self.traffic_level == 'dense' and
+                lane_change_action and
+                dense_post_overtake_hold_steps > 0 and
+                tactical_plan.get('reason') not in ['critical_left_escape', 'critical_right_escape']
+            ):
+                settle_ratio = float(np.clip(dense_post_overtake_hold_steps / max(1.0, float(post_overtake_settle_window)), 0.0, 1.0))
+                lane_change_cost_signal += 7.5 * settle_ratio
+
+            # s9: zigzag (opposite consecutive lane changes)
+            zigzag_signal = 1.0 if (
+                self.previous_action_index in self.lane_change_action_ids and
+                lane_change_action and
+                self.previous_action_index != action_index
+            ) else 0.0
+
+            # s10: risky lane change (dense only: cutting in too close)
+            risky_signal = 0.0
             if self.traffic_level == 'dense' and lane_changed and post_front_gap is not None and not post_gap_allows_progress:
                 risky_gap_ratio = float(np.clip(
-                    (dense_progress_post_gap - float(post_front_gap)) / max(1.0, dense_progress_post_gap),
-                    0.0,
-                    1.0,
+                    (dense_progress_post_gap - float(post_front_gap)) / max(1.0, dense_progress_post_gap), 0.0, 1.0
                 ))
                 risky_closing_ratio = 0.0
                 if post_front_speed is not None:
                     risky_closing_ratio = float(np.clip((ego_speed_value - float(post_front_speed)) / 6.0, 0.0, 1.0))
-                highway_risky_lane_change_penalty = float(reward_profile.get('risky_lane_change_penalty_scale', 0.0)) * (0.65 * risky_gap_ratio + 0.35 * risky_closing_ratio)
-            if tactical_plan.get('blocked', False) and not lane_changed:
-                blocking_reference_gap = float(pre_front_gap) if pre_front_gap is not None else 0.0
-                blocked_gap_pressure = float(
-                    np.clip((thresholds['blocked_front_gap'] - blocking_reference_gap) / max(1.0, thresholds['blocked_front_gap']), 0.0, 1.0)
-                )
-                highway_blocking_penalty = float(reward_profile['blocked_penalty_scale']) * blocked_gap_pressure
-                if action_index == self.faster_action_id:
-                    highway_blocked_accelerate_penalty = float(reward_profile.get('blocked_accelerate_penalty_scale', 0.0)) * blocked_gap_pressure
-                if tactical_plan.get('desired_action') in [self.left_lane_action_id, self.right_lane_action_id]:
-                    highway_missed_overtake_penalty = float(reward_profile['missed_lane_change_penalty_scale']) * float(
-                        np.clip(tactical_plan.get('best_lane_gain', 0.0) / 0.40, 0.0, 1.0)
-                    )
-            if lane_changed and action_index == self.right_lane_action_id and not tactical_plan.get('blocked', False):
-                highway_return_after_overtake_bonus = float(reward_profile['keep_right_return_bonus_scale']) * max(0.5, speed_ratio)
-            clear_road_for_speed = front_gap is None or front_gap >= thresholds['clear_road_gap'] * 0.75
-            if clear_road_for_speed and ego_speed_value < (cruise_speed - float(assist_profile['accelerate_speed_margin'])):
-                highway_under_cruise_penalty = float(reward_profile['under_cruise_penalty_scale']) * float(
-                    np.clip((cruise_speed - ego_speed_value) / max(1.0, cruise_speed), 0.0, 1.0)
-                )
-            if action_index == self.slower_action_id and clear_road_for_speed:
-                highway_unnecessary_slow_penalty = 0.5 * float(reward_profile['under_cruise_penalty_scale'])
-            if ego_speed_value >= max(success_speed, cruise_speed - 2.0):
-                highway_momentum_bonus = float(reward_profile['momentum_bonus_scale']) * speed_ratio
-            highway_overtake_bonus = float(reward_profile['overtake_bonus_scale']) * float(overtake_events)
-            if self.traffic_level == 'dense':
-                if lane_changed and (beneficial_lane_change or dense_progress_lane_change):
-                    settle_steps = post_overtake_settle_window if action_index == self.left_lane_action_id else max(2, post_overtake_settle_window // 2)
-                    self.highway_post_overtake_settle_steps = max(
-                        self.highway_post_overtake_settle_steps,
-                        int(settle_steps),
-                    )
-                if overtake_events > 0:
-                    self.highway_recent_overtake_completion_steps = max(
-                        self.highway_recent_overtake_completion_steps,
-                        post_overtake_settle_window,
-                    )
-                    self.highway_post_overtake_settle_steps = max(
-                        self.highway_post_overtake_settle_steps,
-                        post_overtake_settle_window,
-                    )
-                dense_post_overtake_hold_steps = max(
-                    int(self.highway_post_overtake_settle_steps),
-                    int(self.highway_recent_overtake_completion_steps),
-                )
-                if (
-                    dense_post_overtake_hold_steps > 0 and
-                    not lane_change_action and
-                    not tactical_plan.get('blocked', False) and
-                    (front_gap is None or front_gap >= thresholds['blocked_front_gap'] * 0.85)
-                ):
-                    settle_ratio = float(np.clip(
-                        dense_post_overtake_hold_steps / max(1.0, float(post_overtake_settle_window)),
-                        0.0,
-                        1.0,
-                    ))
-                    highway_post_overtake_stability_bonus = float(
-                        reward_profile.get('post_overtake_stability_scale', 0.18)
-                    ) * float(
-                        reward_profile['beneficial_lane_change_bonus_scale']
-                    ) * max(0.45, speed_ratio) * settle_ratio
+                risky_signal = 0.65 * risky_gap_ratio + 0.35 * risky_closing_ratio
 
-        lane_change_penalty = lane_change_penalty_scale if lane_change_action else 0.0
+            # s11: stop or low speed
+            low_speed_threshold_hw = max(float(success_speed), speed_floor - 1.0)
+            stop_or_low_speed_signal = 0.0
+            if self.step_num > 6 and ego_speed_value < 2.5:
+                stop_or_low_speed_signal += 1.0
+            if self.step_num > 2 and ego_speed_value < low_speed_threshold_hw:
+                stop_or_low_speed_signal += (low_speed_threshold_hw - ego_speed_value) / max(1.0, low_speed_threshold_hw)
+
+            highway_shaped_reward = (
+                W_SURVIVAL * survival_signal
+                + W_PROGRESS * step_progress_signal
+                + W_SPEED * speed_signal
+                + W_GAP * safe_gap_signal
+                + W_OVERTAKE * effective_overtake_signal
+                - W_CRASH * crashed
+                - W_OFFROAD * (1.0 - on_road_reward)
+                - W_LANE * lane_change_cost_signal
+                - W_ZIGZAG * zigzag_signal
+                - W_RISKY * risky_signal
+                - W_STOP * stop_or_low_speed_signal
+            )
+            info['reward_breakdown'] = {
+                'survival': float(W_SURVIVAL * survival_signal),
+                'step_progress': float(W_PROGRESS * step_progress_signal),
+                'speed': float(W_SPEED * speed_signal),
+                'safe_gap': float(W_GAP * safe_gap_signal),
+                'effective_overtake': float(W_OVERTAKE * effective_overtake_signal),
+                'crash_penalty': float(W_CRASH * crashed),
+                'offroad_penalty': float(W_OFFROAD * (1.0 - on_road_reward)),
+                'lane_change_cost': float(W_LANE * lane_change_cost_signal),
+                'zigzag_penalty': float(W_ZIGZAG * zigzag_signal),
+                'risky_lane_change_penalty': float(W_RISKY * risky_signal),
+                'stop_or_low_speed_penalty': float(W_STOP * stop_or_low_speed_signal),
+            }
+
+        # --- Non-highway (merge/roundabout) shared computations ---
+        lane_change_penalty = 0.0
         repeated_lane_change_penalty = 0.0
-        if lane_change_action and self.steps_since_lane_change < 6:
-            repeated_lane_change_penalty = repeated_lane_change_scale * (6 - self.steps_since_lane_change) / 6.0
-        if (
-            self.road_scenario == 'highway' and
-            self.traffic_level == 'dense' and
-            lane_change_action and
-            dense_post_overtake_hold_steps > 0 and
-            tactical_plan.get('reason') not in ['critical_left_escape', 'critical_right_escape']
-        ):
-            settle_ratio = float(np.clip(
-                dense_post_overtake_hold_steps / max(1.0, float(max(1, post_overtake_settle_window))),
-                0.0,
-                1.0,
-            ))
-            repeated_lane_change_penalty += 0.75 * repeated_lane_change_scale * settle_ratio
-        zigzag_penalty = zigzag_penalty_scale if (
-            self.previous_action_index in self.lane_change_action_ids and
-            lane_change_action and
-            self.previous_action_index != action_index
-        ) else 0.0
-        steady_action_bonus = steady_action_bonus_scale if not lane_change_action else 0.0
-        survival_bonus = survival_bonus_scale if not crashed else 0.0
+        zigzag_penalty = 0.0
+        steady_action_bonus = 0.0
+        survival_bonus = 0.0
         merge_mainline_bonus = 0.0
         merge_progress_bonus = 0.0
         merge_window_bonus = 0.0
@@ -2479,147 +2444,122 @@ class GymLane:
         merge_wait_penalty = 0.0
         merge_deadline_penalty = 0.0
         merge_gap_penalty = 0.0
-
-        if self.road_scenario == 'merge' and self.merge_mainline_step_count > 0 and not crashed:
-            speed_factor = min(1.0, max(0.0, (ego_speed_value - MERGE_MAINLINE_MIN_SPEED) / 10.0))
-            merge_mainline_bonus = 1.50 * (min(self.merge_mainline_step_count, MERGE_STABLE_MAINLINE_STEPS) / MERGE_STABLE_MAINLINE_STEPS) * speed_factor
-
-        if self.road_scenario == 'merge':
-            ego_vehicle = self._get_ego_vehicle()
-            lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
-            lane_pair = self._lane_pair_from_index(lane_index)
-            on_merge_lane = tuple(lane_index[:3]) == ('b', 'c', 2) if lane_index is not None and len(lane_index) >= 3 else False
-            on_mainline = self._merge_on_mainline(lane_index)
-            route_progress = self._merge_route_progress(ego_vehicle, lane_index)
-
-            if on_mainline:
-                merge_progress_bonus = 0.80 * route_progress
-            elif on_merge_lane or lane_pair in MERGE_RAMP_LANE_PAIRS:
-                merge_progress_bonus = 0.0
-                survival_bonus = 0.0
-
-            gap_profile = self._merge_gap_profile(ego_vehicle, lane_index)
-
-            if on_merge_lane or lane_pair in MERGE_RAMP_LANE_PAIRS:
-                merge_wait_penalty = 1.00
-
-                if on_merge_lane:
-                    merge_window_bonus = 0.55 * gap_profile['gap_score']
-                    if gap_profile['safe_window'] and action_index != self.left_lane_action_id:
-                        merge_wait_penalty += 4.00
-                    merge_commit_bonus = 15.0 if (gap_profile['safe_window'] and action_index == self.left_lane_action_id) else 0.0
-
-            elif on_mainline:
-                merge_window_bonus = 0.10 * gap_profile['gap_score']
-
-            obstacle_distance = self._merge_obstacle_distance(ego_vehicle, lane_index)
-            if on_merge_lane and obstacle_distance is not None:
-                merge_deadline_penalty = 4.00 * max(0.0, (120.0 - obstacle_distance) / 120.0)
-
         low_speed_penalty = 0.0
-        if self.step_num > 2 and ego_speed_value < low_speed_threshold:
-            low_speed_penalty = low_speed_penalty_scale * (low_speed_threshold - ego_speed_value) / max(1.0, low_speed_threshold)
-        merging_speed_penalty = merging_speed_penalty_scale * max(0.0, merging_speed_reward)
-        completion_bonus = completion_bonus_value if (scenario_completed and not crashed and not self.scenario_completion_awarded) else 0.0
-
-        # 【方案A/D】存活步数递增奖励：step越大奖励越高，激励智能体尽量存活更长时间
-        # dense场景下系数加倍（0.008），以抵消高密度碰撞风险对存活激励的削弱
+        merging_speed_penalty = 0.0
+        completion_bonus = 0.0
         step_survival_bonus = 0.0
-        if not crashed:
-            step_progress = float(self.step_num) / max(1.0, float(self.max_step_num))
-            _ssb_scale = 0.008 if (self.road_scenario == 'highway' and self.traffic_level == 'dense') else 0.004
-            step_survival_bonus = _ssb_scale * (step_progress ** 1.5)
 
-        shaped_reward = (
-            survival_bonus
-            + step_survival_bonus
-            + steady_action_bonus
-            + merge_mainline_bonus
-            + merge_progress_bonus
-            + merge_window_bonus
-            + merge_commit_bonus
-            + highway_clear_road_bonus
-            + highway_cruise_bonus
-            + highway_safe_gap_bonus
-            + highway_overtake_bonus
-            + highway_overtake_completion_bonus
-            + highway_safe_follow_bonus
-            + highway_post_overtake_stability_bonus
-            + highway_return_after_overtake_bonus
-            + highway_momentum_bonus
-            + speed_bonus_scale * speed_reward
-            + lane_bonus_scale * lane_reward
-            + raw_reward_scale * float(raw_reward)
-            + completion_bonus
-            - offroad_penalty_scale * (1.0 - on_road_reward)
-            - lane_change_penalty
-            - repeated_lane_change_penalty
-            - zigzag_penalty
-            - merging_speed_penalty
-            - low_speed_penalty
-            - stop_penalty
-            - merge_wait_penalty
-            - merge_deadline_penalty
-            - merge_gap_penalty
-            - highway_blocking_penalty
-            - highway_missed_overtake_penalty
-            - highway_unnecessary_lane_change_penalty
-            - highway_ineffective_lane_change_penalty
-            - highway_aborted_overtake_penalty
-            - highway_tailgating_penalty
-            - highway_under_cruise_penalty
-            - highway_unnecessary_slow_penalty
-            - highway_blocked_accelerate_penalty
-            - highway_risky_lane_change_penalty
-            - crash_penalty
-        )
+        if highway_shaped_reward is None:
+            lane_change_penalty = lane_change_penalty_scale if lane_change_action else 0.0
+            if lane_change_action and self.steps_since_lane_change < 6:
+                repeated_lane_change_penalty = repeated_lane_change_scale * (6 - self.steps_since_lane_change) / 6.0
+            zigzag_penalty = zigzag_penalty_scale if (
+                self.previous_action_index in self.lane_change_action_ids and
+                lane_change_action and
+                self.previous_action_index != action_index
+            ) else 0.0
+            steady_action_bonus = steady_action_bonus_scale if not lane_change_action else 0.0
+            survival_bonus = survival_bonus_scale if not crashed else 0.0
+
+            if self.road_scenario == 'merge' and self.merge_mainline_step_count > 0 and not crashed:
+                speed_factor = min(1.0, max(0.0, (ego_speed_value - MERGE_MAINLINE_MIN_SPEED) / 10.0))
+                merge_mainline_bonus = 1.50 * (min(self.merge_mainline_step_count, MERGE_STABLE_MAINLINE_STEPS) / MERGE_STABLE_MAINLINE_STEPS) * speed_factor
+
+            if self.road_scenario == 'merge':
+                ego_vehicle = self._get_ego_vehicle()
+                lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
+                lane_pair = self._lane_pair_from_index(lane_index)
+                on_merge_lane = tuple(lane_index[:3]) == ('b', 'c', 2) if lane_index is not None and len(lane_index) >= 3 else False
+                on_mainline = self._merge_on_mainline(lane_index)
+                route_progress = self._merge_route_progress(ego_vehicle, lane_index)
+
+                if on_mainline:
+                    merge_progress_bonus = 0.80 * route_progress
+                elif on_merge_lane or lane_pair in MERGE_RAMP_LANE_PAIRS:
+                    merge_progress_bonus = 0.0
+                    survival_bonus = 0.0
+
+                gap_profile = self._merge_gap_profile(ego_vehicle, lane_index)
+
+                if on_merge_lane or lane_pair in MERGE_RAMP_LANE_PAIRS:
+                    merge_wait_penalty = 1.00
+                    if on_merge_lane:
+                        merge_window_bonus = 0.55 * gap_profile['gap_score']
+                        if gap_profile['safe_window'] and action_index != self.left_lane_action_id:
+                            merge_wait_penalty += 4.00
+                        merge_commit_bonus = 15.0 if (gap_profile['safe_window'] and action_index == self.left_lane_action_id) else 0.0
+                elif on_mainline:
+                    merge_window_bonus = 0.10 * gap_profile['gap_score']
+
+                obstacle_distance = self._merge_obstacle_distance(ego_vehicle, lane_index)
+                if on_merge_lane and obstacle_distance is not None:
+                    merge_deadline_penalty = 4.00 * max(0.0, (120.0 - obstacle_distance) / 120.0)
+
+            if self.step_num > 2 and ego_speed_value < low_speed_threshold:
+                low_speed_penalty = low_speed_penalty_scale * (low_speed_threshold - ego_speed_value) / max(1.0, low_speed_threshold)
+            merging_speed_penalty = merging_speed_penalty_scale * max(0.0, merging_speed_reward)
+            completion_bonus = completion_bonus_value if (scenario_completed and not crashed and not self.scenario_completion_awarded) else 0.0
+
+            if not crashed:
+                step_progress = float(self.step_num) / max(1.0, float(self.max_step_num))
+                step_survival_bonus = 0.004 * (step_progress ** 1.5)
+
+        if highway_shaped_reward is not None:
+            shaped_reward = highway_shaped_reward
+        else:
+            shaped_reward = (
+                survival_bonus
+                + step_survival_bonus
+                + steady_action_bonus
+                + merge_mainline_bonus
+                + merge_progress_bonus
+                + merge_window_bonus
+                + merge_commit_bonus
+                + speed_bonus_scale * speed_reward
+                + lane_bonus_scale * lane_reward
+                + raw_reward_scale * float(raw_reward)
+                + completion_bonus
+                - offroad_penalty_scale * (1.0 - on_road_reward)
+                - lane_change_penalty
+                - repeated_lane_change_penalty
+                - zigzag_penalty
+                - merging_speed_penalty
+                - low_speed_penalty
+                - stop_penalty
+                - merge_wait_penalty
+                - merge_deadline_penalty
+                - merge_gap_penalty
+                - crash_penalty
+            )
 
         info['raw_reward'] = float(raw_reward)
         info['shaped_reward'] = float(shaped_reward)
         info['scenario_completed'] = bool(scenario_completed)
-        info['reward_breakdown'] = {
-            'survival_bonus': float(survival_bonus),
-            'step_survival_bonus': float(step_survival_bonus),
-            'steady_action_bonus': float(steady_action_bonus),
-            'merge_mainline_bonus': float(merge_mainline_bonus),
-            'merge_progress_bonus': float(merge_progress_bonus),
-            'merge_window_bonus': float(merge_window_bonus),
-            'merge_commit_bonus': float(merge_commit_bonus),
-            'merge_wait_penalty': float(merge_wait_penalty),
-            'highway_clear_road_bonus': float(highway_clear_road_bonus),
-            'highway_cruise_bonus': float(highway_cruise_bonus),
-            'highway_overtake_bonus': float(highway_overtake_bonus),
-            'highway_overtake_completion_bonus': float(highway_overtake_completion_bonus),
-            'highway_safe_follow_bonus': float(highway_safe_follow_bonus),
-            'highway_safe_gap_bonus': float(highway_safe_gap_bonus),
-            'highway_post_overtake_stability_bonus': float(highway_post_overtake_stability_bonus),
-            'highway_return_after_overtake_bonus': float(highway_return_after_overtake_bonus),
-            'highway_momentum_bonus': float(highway_momentum_bonus),
-            'speed_bonus': float(speed_bonus_scale * speed_reward),
-            'lane_bonus': float(lane_bonus_scale * lane_reward),
-            'base_reward_bonus': float(raw_reward_scale * float(raw_reward)),
-            'lane_change_penalty': float(lane_change_penalty),
-            'repeated_lane_change_penalty': float(repeated_lane_change_penalty),
-            'zigzag_penalty': float(zigzag_penalty),
-            'merging_speed_penalty': float(merging_speed_penalty),
-            'low_speed_penalty': float(low_speed_penalty),
-            'stop_penalty': float(stop_penalty),
-            'merge_deadline_penalty': float(merge_deadline_penalty),
-            'merge_gap_penalty': float(merge_gap_penalty),
-            'highway_blocking_penalty': float(highway_blocking_penalty),
-            'highway_missed_overtake_penalty': float(highway_missed_overtake_penalty),
-            'highway_unnecessary_lane_change_penalty': float(highway_unnecessary_lane_change_penalty),
-            'highway_ineffective_lane_change_penalty': float(highway_ineffective_lane_change_penalty),
-            'highway_aborted_overtake_penalty': float(highway_aborted_overtake_penalty),
-            'highway_tailgating_penalty': float(highway_tailgating_penalty),
-            'highway_under_cruise_penalty': float(highway_under_cruise_penalty),
-            'highway_unnecessary_slow_penalty': float(highway_unnecessary_slow_penalty),
-            'highway_blocked_accelerate_penalty': float(highway_blocked_accelerate_penalty),
-            'highway_risky_lane_change_penalty': float(highway_risky_lane_change_penalty),
-            'offroad_penalty': float(offroad_penalty_scale * (1.0 - on_road_reward)),
-            'crash_penalty': float(crash_penalty),
-            'completion_bonus': float(completion_bonus),
-        }
+        if highway_shaped_reward is None:
+            info['reward_breakdown'] = {
+                'survival_bonus': float(survival_bonus),
+                'step_survival_bonus': float(step_survival_bonus),
+                'steady_action_bonus': float(steady_action_bonus),
+                'merge_mainline_bonus': float(merge_mainline_bonus),
+                'merge_progress_bonus': float(merge_progress_bonus),
+                'merge_window_bonus': float(merge_window_bonus),
+                'merge_commit_bonus': float(merge_commit_bonus),
+                'merge_wait_penalty': float(merge_wait_penalty),
+                'speed_bonus': float(speed_bonus_scale * speed_reward),
+                'lane_bonus': float(lane_bonus_scale * lane_reward),
+                'base_reward_bonus': float(raw_reward_scale * float(raw_reward)),
+                'lane_change_penalty': float(lane_change_penalty),
+                'repeated_lane_change_penalty': float(repeated_lane_change_penalty),
+                'zigzag_penalty': float(zigzag_penalty),
+                'merging_speed_penalty': float(merging_speed_penalty),
+                'low_speed_penalty': float(low_speed_penalty),
+                'stop_penalty': float(stop_penalty),
+                'merge_deadline_penalty': float(merge_deadline_penalty),
+                'merge_gap_penalty': float(merge_gap_penalty),
+                'offroad_penalty': float(offroad_penalty_scale * (1.0 - on_road_reward)),
+                'crash_penalty': float(crash_penalty),
+                'completion_bonus': float(completion_bonus),
+            }
         return float(shaped_reward)
 
     def episode_mean_speed(self):
