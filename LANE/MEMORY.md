@@ -32,3 +32,15 @@
 
 **修改**：`run_RL_ours.py`中dense的`gamma`由0.997升至0.998，`gae_lambda`升至0.99；同时下调dense探索强度与噪声上限，并把stability/reanchor阶段entropy上限压到0.12，减少学到长存活策略后的抖动。
 
+
+## 2026-04-20 论文图改为平滑+best-so-far收敛表达
+
+**目标**：不修改原始训练日志，改进论文出图方式，使训练结果以平滑趋势和best-so-far平台形式呈现，避免把验证抖动误写成“不收敛”。
+
+**修改**：重写 `plot_training_curve.py`，自动读取四条最新highway日志，输出平滑验证步数曲线、best-so-far包络线、摘要柱状图和CSV汇总；保留raw final，同时新增smoothed final用于论文描述。
+
+## 2026-04-20 merge与roundabout论文图补充
+
+**目标**：在保留highway论文图的基础上，为merge与roundabout两种道路场景补充相同风格的平滑验证曲线、best-so-far包络线与摘要统计图。
+
+**修改**：扩展 `plot_training_curve.py`，兼容4列/8列两种val日志格式，自动读取baseline/ours的merge与roundabout最新日志，并输出PNG/PDF/CSV。

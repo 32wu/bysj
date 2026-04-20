@@ -1,0 +1,7 @@
+model,scenario,traffic_level,weight_noise,checkpoint,return_mean,return_std,length_mean,length_std,collision_mean,collision_std,success_mean,success_std,lane_change_mean,lane_change_std
+baseline,highway,standard,0.0,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best,148.08351135253906,0.0,65.0,0.0,1.0,0.0,0.0,0.0,14.0,0.0
+baseline,highway,standard,0.05,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best,148.08351135253906,0.0,65.0,0.0,1.0,0.0,0.0,0.0,14.0,0.0
+baseline,highway,standard,0.1,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best,148.08351135253906,0.0,65.0,0.0,1.0,0.0,0.0,0.0,14.0,0.0
+optimized,highway,standard,0.0,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000400_0.28_0.99800_4_0.1200_ro768_mb192_lam0.99_rs0.90_gc0.40_adaptive_roadhighway_tfstandard_seed37_best,147.23155212402344,0.0,65.0,0.0,1.0,0.0,0.0,0.0,14.0,0.0
+optimized,highway,standard,0.05,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000400_0.28_0.99800_4_0.1200_ro768_mb192_lam0.99_rs0.90_gc0.40_adaptive_roadhighway_tfstandard_seed37_best,148.08351135253906,0.0,65.0,0.0,1.0,0.0,0.0,0.0,14.0,0.0
+optimized,highway,standard,0.1,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000400_0.28_0.99800_4_0.1200_ro768_mb192_lam0.99_rs0.90_gc0.40_adaptive_roadhighway_tfstandard_seed37_best,146.79293823242188,0.0,61.0,0.0,1.0,0.0,0.0,0.0,14.0,0.0

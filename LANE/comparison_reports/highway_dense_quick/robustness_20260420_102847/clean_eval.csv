@@ -1,0 +1,3 @@
+model,scenario,traffic_level,checkpoint,return_mean,return_std,length_mean,length_std,collision_mean,collision_std,success_mean,success_std,lane_change_mean,lane_change_std
+baseline,highway,dense,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000600_0.35_0.99800_4_0.1500_roadhighway_tfdense_rep42_best,32.4398193359375,0.0,24.0,0.0,1.0,0.0,0.0,0.0,2.0,0.0
+optimized,highway,dense,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000320_0.18_0.99800_4_0.1200_ro896_mb224_lam0.99_rs0.90_gc0.40_adaptive_roadhighway_tfdense_te8_seed42_best,282.0770568847656,0.0,200.0,0.0,0.0,0.0,1.0,0.0,28.0,0.0
