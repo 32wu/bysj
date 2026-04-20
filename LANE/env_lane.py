@@ -2220,43 +2220,34 @@ class GymLane:
             crash_penalty = crashed * 50.0
             completion_bonus_value = 50.0
         else:
-            # Highway: unified 11-term reward formula
-            # R = w_survival*s1 + w_progress*s2 + w_speed*s3 + w_gap*s4 + w_overtake*s5
-            #   - w_crash*s6 - w_offroad*s7 - w_lane*s8 - w_zigzag*s9 - w_risky*s10 - w_stop*s11
-            W_SURVIVAL = 0.05
-            W_PROGRESS = 0.008
-            W_SPEED = 0.50
-            W_GAP = 0.04
-            W_OVERTAKE = 1.50
-            W_CRASH = 10.0
-            W_OFFROAD = 2.00
-            W_LANE = 0.003
-            W_ZIGZAG = 0.06
-            W_RISKY = 0.30
-            W_STOP = 0.40
+            # Highway: PDF-based 5-term reward formula (论文2.2章)
+            # Rtotal = cv*Rv + cc*Rc + cl*Rl + cd*Rd + ce*Re
+            # Rv: 速度奖励, Rc: 碰撞奖励, Rl: 车道保持奖励, Rd: 变道奖励, Re: 动作稳定性奖励
 
-            success_speed = self._minimum_success_speed()
-            assist_profile = self._get_highway_assist_profile()
-            reward_profile = self._get_highway_reward_profile()
+            # 权重系数 (参考PDF表2.3，根据traffic_level调整)
+            if self.traffic_level == 'dense':
+                cv, cc, cl, cd, ce = 0.5, 5.0, 0.1, 0.5, 2.0
+            elif self.traffic_level == 'light':
+                cv, cc, cl, cd, ce = 0.6, 5.0, 0.08, 0.4, 1.5
+            else:  # standard
+                cv, cc, cl, cd, ce = 0.5, 5.0, 0.1, 0.5, 2.0
+
+            # 速度参数设置 (PDF 2.2.3节)
             reward_speed_range = self.env.unwrapped.config.get(
                 'reward_speed_range',
                 HIGHWAY_REWARD_SPEED_RANGE.get(self.traffic_level, HIGHWAY_REWARD_SPEED_RANGE['standard']),
             )
-            speed_floor = float(reward_speed_range[0])
-            speed_ceiling = float(reward_speed_range[1])
-            speed_span = max(1.0, speed_ceiling - speed_floor)
-            highway_context = self._highway_lane_context()
-            front_gap = highway_context.get('current_front_gap')
-            overtake_events = int(info.get('highway_overtake_events', 0))
-            thresholds = self._get_highway_lane_context_thresholds()
-            speed_ratio = float(np.clip((ego_speed_value - speed_floor) / speed_span, 0.0, 1.0))
+            vmin = float(reward_speed_range[0])
+            vmax = float(reward_speed_range[1])
+            vtarget = float(HIGHWAY_DESIRED_CRUISE_SPEED.get(self.traffic_level, 29.0))
+            v = ego_speed_value
 
-            tactical_plan = (pre_step_highway_meta or {}).get('tactical_plan')
-            if tactical_plan is None:
-                tactical_plan = self._derive_highway_tactical_plan(pre_step_highway_meta)
+            # 获取车道和变道信息
+            highway_context = self._highway_lane_context()
+            ego_vehicle = self._get_ego_vehicle()
             pre_context = (pre_step_highway_meta or {}).get('context', {})
             pre_lane_id = (pre_step_highway_meta or {}).get('lane_id')
-            post_lane_index = getattr(self._get_ego_vehicle(), 'lane_index', None)
+            post_lane_index = getattr(ego_vehicle, 'lane_index', None)
             post_lane_id = int(post_lane_index[2]) if post_lane_index is not None and len(post_lane_index) >= 3 else pre_lane_id
             lane_changed = (
                 action_index in self.lane_change_action_ids and
@@ -2264,171 +2255,77 @@ class GymLane:
                 post_lane_id is not None and
                 int(post_lane_id) != int(pre_lane_id)
             )
-            pre_front_gap = pre_context.get('current_front_gap')
-            pre_front_speed = pre_context.get('current_front_speed')
-            post_front_gap = highway_context.get('current_front_gap')
-            post_front_speed = highway_context.get('current_front_speed')
-            gap_gain = 0.0
-            if pre_front_gap is None:
-                gap_gain = 0.0 if post_front_gap is None else float(post_front_gap)
-            elif post_front_gap is None:
-                gap_gain = float(thresholds['clear_road_gap'])
+
+            # ========== 1. 速度奖励 Rv (PDF公式2.13) ==========
+            vtolerance = max(vtarget - vmin, vmax - vtarget)
+            if v <= vmin or v >= vmax:
+                Rv = -2.0
             else:
-                gap_gain = float(post_front_gap - pre_front_gap)
-            front_speed_gain = 0.0
-            if pre_front_speed is not None and post_front_speed is not None:
-                front_speed_gain = float(post_front_speed - pre_front_speed)
-            elif pre_front_speed is not None and post_front_speed is None:
-                front_speed_gain = max(0.0, float(self._target_highway_cruise_speed() - pre_front_speed))
+                Rv = 1.0 - abs(v - vtarget) / vtolerance
 
-            post_front_gap_reference = thresholds['left_front_clear'] if action_index == self.left_lane_action_id else thresholds['right_front_clear']
-            dense_beneficial_post_gap = max(
-                float(post_front_gap_reference),
-                float(thresholds['blocked_front_gap']) * float(reward_profile.get('beneficial_post_gap_ratio', 0.40)),
-            )
-            dense_progress_post_gap = max(
-                float(post_front_gap_reference) * 0.92,
-                float(thresholds['blocked_front_gap']) * float(reward_profile.get('safe_progress_post_gap_ratio', 0.32)),
-            )
-            post_gap_is_safe = post_front_gap is None or float(post_front_gap) >= dense_beneficial_post_gap
-            post_gap_allows_progress = post_front_gap is None or float(post_front_gap) >= dense_progress_post_gap
+            # ========== 2. 碰撞奖励 Rc (PDF公式2.14) ==========
+            Rc = -5.0 if crashed else 0.0
 
-            beneficial_lane_change = lane_changed and (
-                post_gap_is_safe and
-                (
-                    gap_gain >= HIGHWAY_MIN_EFFECTIVE_FRONT_GAP_GAIN or
-                    front_speed_gain >= HIGHWAY_MIN_EFFECTIVE_FRONT_SPEED_GAIN or
-                    (pre_front_gap is not None and post_front_gap is None)
-                )
-            )
-            dense_progress_lane_change = (
-                self.traffic_level == 'dense' and
-                lane_changed and
-                tactical_plan.get('blocked', False) and
-                post_gap_allows_progress and
-                (
-                    post_front_gap is None or
-                    pre_front_gap is None or
-                    float(post_front_gap) >= float(pre_front_gap) - 1.0 or
-                    (
-                        post_front_speed is not None and
-                        pre_front_speed is not None and
-                        float(post_front_speed) >= float(pre_front_speed) - 0.3
-                    )
-                )
-            )
-            post_overtake_settle_window = int(
-                assist_profile.get('post_overtake_settle_steps', HIGHWAY_POST_OVERTAKE_SETTLE_STEPS)
-            )
+            # ========== 3. 车道保持奖励 Rl (PDF公式2.15) ==========
+            Rl = 0.0
+            if ego_vehicle is not None and hasattr(ego_vehicle, 'lane') and ego_vehicle.lane is not None:
+                try:
+                    lane_center_y = ego_vehicle.lane.position(ego_vehicle.position[0], 0)[1]
+                    lateral_deviation = abs(ego_vehicle.position[1] - lane_center_y)
+                    k, d = 0.5, 3.5  # k*d为偏差阈值
+                    Rl = 1.0 if lateral_deviation <= k * d else 0.0
+                except:
+                    Rl = 0.0
 
-            # Update dense post-overtake state counters
-            dense_post_overtake_hold_steps = 0
-            if self.traffic_level == 'dense':
-                if lane_changed and (beneficial_lane_change or dense_progress_lane_change):
-                    settle_steps = post_overtake_settle_window if action_index == self.left_lane_action_id else max(2, post_overtake_settle_window // 2)
-                    self.highway_post_overtake_settle_steps = max(self.highway_post_overtake_settle_steps, int(settle_steps))
-                if overtake_events > 0:
-                    self.highway_recent_overtake_completion_steps = max(self.highway_recent_overtake_completion_steps, post_overtake_settle_window)
-                    self.highway_post_overtake_settle_steps = max(self.highway_post_overtake_settle_steps, post_overtake_settle_window)
-                dense_post_overtake_hold_steps = max(int(self.highway_post_overtake_settle_steps), int(self.highway_recent_overtake_completion_steps))
+            # ========== 4. 变道奖励 Rd (PDF公式2.16) ==========
+            # RC: 合理变道 +1.0, UC: 不合理变道 -0.5, NC: 无变道 0.0
+            Rd = 0.0
+            if lane_changed:
+                # 判断合理变道的两个条件 (PDF 2.2.3节)
+                # 1) 当前速度低于目标速度
+                # 2) 相邻车道车辆平均速度至少比自车高10个单位
+                condition1 = v < vtarget
 
-            # s1: survival
-            survival_signal = 0.0 if crashed else 1.0
+                # 计算相邻车道平均速度
+                current_front_speed = highway_context.get('current_front_speed')
+                pre_front_speed = pre_context.get('current_front_speed')
+                adjacent_lane_avg_speed = None
+                if current_front_speed is not None:
+                    adjacent_lane_avg_speed = float(current_front_speed)
+                elif pre_front_speed is not None:
+                    adjacent_lane_avg_speed = float(pre_front_speed)
 
-            # s2: step progress
-            step_progress_signal = 0.0
-            if not crashed:
-                step_progress = float(self.step_num) / max(1.0, float(self.max_step_num))
-                step_progress_signal = step_progress ** 1.5
+                condition2 = False
+                if adjacent_lane_avg_speed is not None:
+                    condition2 = adjacent_lane_avg_speed >= v + 10.0
 
-            # s3: speed (normalized)
-            speed_signal = speed_ratio
+                # 判断是否为合理变道
+                if condition1 and condition2:
+                    Rd = 1.0  # 合理变道
+                else:
+                    Rd = -0.5  # 不合理变道
+            else:
+                Rd = 0.0  # 无变道
 
-            # s4: safe gap bonus when front gap is adequate
-            safe_gap_signal = 0.0
-            safe_gap_threshold = 22.0 if self.traffic_level == 'dense' else 40.0
-            if front_gap is None:
-                safe_gap_signal = max(0.3, speed_ratio)
-            elif front_gap >= safe_gap_threshold:
-                gap_factor = float(np.clip((front_gap - safe_gap_threshold) / safe_gap_threshold + 1.0, 1.0, 2.0))
-                safe_gap_signal = max(0.3, speed_ratio) * gap_factor
+            # ========== 5. 动作稳定性奖励 Re (PDF公式2.17) ==========
+            # 当动作变化时给予负奖励，随时间指数衰减
+            lambda_decay = 0.05  # PDF建议的衰减系数
+            if self.previous_action_index is not None and action_index != self.previous_action_index:
+                Re = -np.exp(-lambda_decay * self.step_num)
+            else:
+                Re = 0.0
 
-            # s5: effective overtake (completed overtakes + beneficial lane change partial credit)
-            effective_overtake_signal = float(overtake_events)
-            if lane_changed and beneficial_lane_change:
-                improvement_score = 0.5
-                improvement_score += 0.35 * float(np.clip(gap_gain / max(1.0, thresholds['blocked_front_gap']), 0.0, 1.0))
-                improvement_score += 0.15 * float(np.clip(front_speed_gain / 4.0, 0.0, 1.0))
-                effective_overtake_signal += 0.4 * improvement_score
-            elif lane_changed and dense_progress_lane_change:
-                effective_overtake_signal += 0.35 * 0.4 * max(0.45, speed_ratio)
+            # ========== 总奖励计算 (PDF公式2.12) ==========
+            highway_shaped_reward = cv * Rv + cc * Rc + cl * Rl + cd * Rd + ce * Re
 
-            # s8: lane change cost (base + cooldown + dense settle penalty)
-            lane_change_cost_signal = 0.0
-            if lane_change_action:
-                lane_change_cost_signal = 1.0
-                if self.steps_since_lane_change < 6:
-                    lane_change_cost_signal += float(6 - self.steps_since_lane_change)
-            if (
-                self.traffic_level == 'dense' and
-                lane_change_action and
-                dense_post_overtake_hold_steps > 0 and
-                tactical_plan.get('reason') not in ['critical_left_escape', 'critical_right_escape']
-            ):
-                settle_ratio = float(np.clip(dense_post_overtake_hold_steps / max(1.0, float(post_overtake_settle_window)), 0.0, 1.0))
-                lane_change_cost_signal += 7.5 * settle_ratio
-
-            # s9: zigzag (opposite consecutive lane changes)
-            zigzag_signal = 1.0 if (
-                self.previous_action_index in self.lane_change_action_ids and
-                lane_change_action and
-                self.previous_action_index != action_index
-            ) else 0.0
-
-            # s10: risky lane change (dense only: cutting in too close)
-            risky_signal = 0.0
-            if self.traffic_level == 'dense' and lane_changed and post_front_gap is not None and not post_gap_allows_progress:
-                risky_gap_ratio = float(np.clip(
-                    (dense_progress_post_gap - float(post_front_gap)) / max(1.0, dense_progress_post_gap), 0.0, 1.0
-                ))
-                risky_closing_ratio = 0.0
-                if post_front_speed is not None:
-                    risky_closing_ratio = float(np.clip((ego_speed_value - float(post_front_speed)) / 6.0, 0.0, 1.0))
-                risky_signal = 0.65 * risky_gap_ratio + 0.35 * risky_closing_ratio
-
-            # s11: stop or low speed
-            low_speed_threshold_hw = max(float(success_speed), speed_floor - 1.0)
-            stop_or_low_speed_signal = 0.0
-            if self.step_num > 6 and ego_speed_value < 2.5:
-                stop_or_low_speed_signal += 1.0
-            if self.step_num > 2 and ego_speed_value < low_speed_threshold_hw:
-                stop_or_low_speed_signal += (low_speed_threshold_hw - ego_speed_value) / max(1.0, low_speed_threshold_hw)
-
-            highway_shaped_reward = (
-                W_SURVIVAL * survival_signal
-                + W_PROGRESS * step_progress_signal
-                + W_SPEED * speed_signal
-                + W_GAP * safe_gap_signal
-                + W_OVERTAKE * effective_overtake_signal
-                - W_CRASH * crashed
-                - W_OFFROAD * (1.0 - on_road_reward)
-                - W_LANE * lane_change_cost_signal
-                - W_ZIGZAG * zigzag_signal
-                - W_RISKY * risky_signal
-                - W_STOP * stop_or_low_speed_signal
-            )
+            # 记录奖励分解信息
             info['reward_breakdown'] = {
-                'survival': float(W_SURVIVAL * survival_signal),
-                'step_progress': float(W_PROGRESS * step_progress_signal),
-                'speed': float(W_SPEED * speed_signal),
-                'safe_gap': float(W_GAP * safe_gap_signal),
-                'effective_overtake': float(W_OVERTAKE * effective_overtake_signal),
-                'crash_penalty': float(W_CRASH * crashed),
-                'offroad_penalty': float(W_OFFROAD * (1.0 - on_road_reward)),
-                'lane_change_cost': float(W_LANE * lane_change_cost_signal),
-                'zigzag_penalty': float(W_ZIGZAG * zigzag_signal),
-                'risky_lane_change_penalty': float(W_RISKY * risky_signal),
-                'stop_or_low_speed_penalty': float(W_STOP * stop_or_low_speed_signal),
+                'speed_reward_Rv': float(cv * Rv),
+                'collision_reward_Rc': float(cc * Rc),
+                'lane_keeping_reward_Rl': float(cl * Rl),
+                'lane_change_reward_Rd': float(cd * Rd),
+                'action_stability_reward_Re': float(ce * Re),
+                'total': float(highway_shaped_reward),
             }
 
         # --- Non-highway (merge/roundabout) shared computations ---
