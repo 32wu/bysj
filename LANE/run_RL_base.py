@@ -11,6 +11,7 @@ import random
 
 import memory_lib
 import checkpoint_utils
+from ppo_stability import STABLE_HIGHWAY_STANDARD_PPO, scheduled_entropy, should_restore_best_checkpoint
 
 
 def get_arguments():
@@ -53,10 +54,26 @@ def get_arguments():
     parser.add_argument('--snn_num_steps', type=int, default=15)
     parser.add_argument('--road_scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
     parser.add_argument('--traffic_level', type=str, default='standard', choices=['light', 'standard', 'dense'])
+    parser.add_argument('--highway_reward_stage', type=str, default='c_success', choices=['baseline', 'a_timeout', 'b_progress_speed', 'c_success'])
     parser.add_argument('--gae_lambda', type=float, default=0.95)
+    parser.add_argument('--adv_norm', type=int, default=1, choices=[0, 1])
+    parser.add_argument('--reward_scale', type=float, default=1.0)
+    parser.add_argument('--grad_clip', type=float, default=1.0)
+    parser.add_argument('--critic_lr', type=float, default=0.0)
+    parser.add_argument('--entropy_min', type=float, default=0.001)
+    parser.add_argument('--entropy_decay', type=float, default=1.0)
+    parser.add_argument('--entropy_warmup_scale', type=float, default=1.0)
+    parser.add_argument('--entropy_warmup_episodes', type=int, default=0)
     parser.add_argument('--skip_post_tests', default=False, action='store_true')
     # ---------------------------------------------------
     return parser.parse_args()
+
+
+HIGHWAY_STANDARD_BASE_PROFILE = dict(STABLE_HIGHWAY_STANDARD_PPO)
+BASE_PROFILE_OPTIONAL_EXPLORATION_KEYS = {
+    'entropy_warmup_scale',
+    'entropy_warmup_episodes',
+}
 
 
 def reload_log_file(filename):
@@ -140,9 +157,13 @@ class TimeMonitor:
 
 
 def apply_lane_baseline_profile(args):
-    if args.task != 'gymip':
-        return []
     adjustments = []
+
+    def set_exact(attr_name, target_value):
+        current_value = getattr(args, attr_name)
+        if current_value != target_value:
+            setattr(args, attr_name, target_value)
+            adjustments.append(f'{attr_name}->{target_value}')
 
     def clamp_min(attr_name, target_value):
         current_value = getattr(args, attr_name)
@@ -158,27 +179,32 @@ def apply_lane_baseline_profile(args):
 
     if args.road_scenario == 'highway':
         traffic_level = getattr(args, 'traffic_level', 'standard')
+        if traffic_level == 'standard':
+            for attr_name, target_value in HIGHWAY_STANDARD_BASE_PROFILE.items():
+                if attr_name in BASE_PROFILE_OPTIONAL_EXPLORATION_KEYS:
+                    continue
+                set_exact(attr_name, target_value)
+            clamp_max('train_num', 2000)
+            return adjustments
         lr_cap = {
-            'light': 0.0008,
-            'standard': 0.0007,
-            'dense': 0.0006,
+            'light': 3.0e-4,
+            'standard': 2.5e-4,
+            'dense': 2.0e-4,
         }
         gamma_floor = {
-            'light': 0.992,
-            # 【方案C-base】standard/dense场景对齐ours的长视野折扣，使base也重视长期存活
+            'light': 0.995,
             'standard': 0.998,
             'dense': 0.998,
         }
         gae_lambda_floor = {
-            'light': 0.97,
-            # 【方案C-base】standard/dense提升GAE lambda，让优势估计更精确反映长期影响
-            'standard': 0.990,
-            'dense': 0.990,
+            'light': 0.95,
+            'standard': 0.95,
+            'dense': 0.95,
         }
-        entropy_floor = {
-            'light': 0.25,
-            'standard': 0.30,
-            'dense': 0.35,
+        entropy_cap = {
+            'light': 0.03,
+            'standard': 0.02,
+            'dense': 0.02,
         }
         train_num_floor = {
             'light': 2400,
@@ -186,9 +212,15 @@ def apply_lane_baseline_profile(args):
         clamp_max('lr', lr_cap.get(traffic_level, 0.0007))
         clamp_min('gamma', gamma_floor.get(traffic_level, 0.994))
         clamp_min('gae_lambda', gae_lambda_floor.get(traffic_level, 0.97))
-        clamp_min('entropy', entropy_floor.get(traffic_level, 0.30))
+        clamp_max('entropy', entropy_cap.get(traffic_level, 0.02))
         clamp_max('PPO_epochs', 4)
-        clamp_max('eps_clip', 0.15)
+        clamp_max('eps_clip', 0.20)
+        clamp_max('reward_scale', 0.80)
+        clamp_max('grad_clip', 0.50)
+        clamp_max('entropy_min', 0.005)
+        if args.entropy_decay >= 1.0:
+            args.entropy_decay = STABLE_HIGHWAY_STANDARD_PPO['entropy_decay']
+            adjustments.append(f'entropy_decay->{args.entropy_decay}')
         if traffic_level in ['standard', 'dense']:
             clamp_max('train_num', 2000)
         elif args.train_num < train_num_floor.get(traffic_level, 3200):
@@ -200,21 +232,21 @@ def apply_lane_baseline_profile(args):
 
 
 def select_lane_vehicle_count(args, train_epi_i):
-    if args.task != 'gymip' or getattr(args, 'road_scenario', None) != 'highway':
+    if getattr(args, 'road_scenario', None) != 'highway':
         return None
     traffic_target = {
-        'light': 40,
-        'standard': 60,
+        'light': 28,
+        'standard': 10,
         'dense': 84,
     }
     traffic_start = {
-        'light': 28,
-        'standard': 36,
+        'light': 16,
+        'standard': 10,
         'dense': 46,
     }
     curriculum_span = {
-        'light': 160,
-        'standard': 320,
+        'light': 120,
+        'standard': 1,
         'dense': 480,
     }
     traffic_level = getattr(args, 'traffic_level', 'standard')
@@ -225,7 +257,7 @@ def select_lane_vehicle_count(args, train_epi_i):
     return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
 
 
-def evaluate_lane_policy(env, model, episode_num):
+def evaluate_lane_policy(env, model, episode_num, vehicles_count=None):
     metrics = {
         'mean_return': 0.0,
         'mean_length': 0.0,
@@ -233,6 +265,14 @@ def evaluate_lane_policy(env, model, episode_num):
         'collision_rate': 0.0,
         'mean_lane_change': 0.0,
         'success_rate': 0.0,
+        'timeout_rate': 0.0,
+        'offroad_rate': 0.0,
+        'low_speed_abort_rate': 0.0,
+        'scenario_complete_low_speed_rate': 0.0,
+        'other_terminal_rate': 0.0,
+        'mean_progress': 0.0,
+        'mean_final_progress': 0.0,
+        'termination_reason_distribution': '',
     }
     returns = []
     lengths = []
@@ -240,9 +280,16 @@ def evaluate_lane_policy(env, model, episode_num):
     collisions = []
     lane_changes = []
     successes = []
+    timeouts = []
+    offroads = []
+    low_speed_aborts = []
+    scenario_complete_low_speed = []
+    other_terminals = []
+    final_progresses = []
+    termination_reason_counter = {}
     with torch.no_grad():
         for _ in range(episode_num):
-            env.init_val()
+            env.init_val(vehicles_count=vehicles_count)
             observation = env.get_val_observation()
             for _step_i in range(env.max_step_num):
                 model_output, _ = model(observation)
@@ -258,23 +305,94 @@ def evaluate_lane_policy(env, model, episode_num):
             collisions.append(1.0 if env.collision_count > 0 else 0.0)
             lane_changes.append(env.lane_change_count)
             successes.append(env.episode_success())
+            episode_summary = env.get_episode_summary()
+            timeouts.append(float(episode_summary['timeout_rate']))
+            offroads.append(float(episode_summary['offroad_rate']))
+            low_speed_aborts.append(float(episode_summary['low_speed_abort_rate']))
+            scenario_complete_low_speed.append(float(episode_summary['scenario_complete_low_speed_rate']))
+            other_terminals.append(float(episode_summary['other_terminal_rate']))
+            final_progresses.append(float(episode_summary['final_progress']))
+            termination_reason = episode_summary['termination_reason']
+            termination_reason_counter[termination_reason] = termination_reason_counter.get(termination_reason, 0) + 1
     metrics['mean_return'] = float(np.mean(returns))
     metrics['mean_length'] = float(np.mean(lengths))
     metrics['mean_speed'] = float(np.mean(speeds))
     metrics['collision_rate'] = float(np.mean(collisions))
     metrics['mean_lane_change'] = float(np.mean(lane_changes))
     metrics['success_rate'] = float(np.mean(successes))
+    metrics['timeout_rate'] = float(np.mean(timeouts))
+    metrics['offroad_rate'] = float(np.mean(offroads))
+    metrics['low_speed_abort_rate'] = float(np.mean(low_speed_aborts))
+    metrics['scenario_complete_low_speed_rate'] = float(np.mean(scenario_complete_low_speed))
+    metrics['other_terminal_rate'] = float(np.mean(other_terminals))
+    metrics['mean_progress'] = float(np.mean(final_progresses))
+    metrics['mean_final_progress'] = float(np.mean(final_progresses))
+    reason_parts = []
+    for reason_name in sorted(termination_reason_counter.keys()):
+        reason_parts.append(f'{reason_name}:{termination_reason_counter[reason_name]}/{episode_num}')
+    metrics['termination_reason_distribution'] = '|'.join(reason_parts)
     return metrics
 
 
+def format_validation_metrics(metrics, episode_index):
+    base_record = (
+        '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+            episode_index,
+            metrics['mean_return'],
+            metrics['collision_rate'],
+            metrics['mean_length'],
+            metrics['mean_lane_change'],
+            metrics['success_rate'],
+            metrics['mean_speed'],
+        )
+    )
+    extra_record = (
+        ', timeout %6.4f, progress %6.4f, offroad %6.4f, low_speed_abort %6.4f, '
+        'complete_low_speed %6.4f, other_terminal %6.4f, term %s'
+    ) % (
+        metrics.get('timeout_rate', 0.0),
+        metrics.get('mean_final_progress', metrics.get('mean_progress', 0.0)),
+        metrics.get('offroad_rate', 0.0),
+        metrics.get('low_speed_abort_rate', 0.0),
+        metrics.get('scenario_complete_low_speed_rate', 0.0),
+        metrics.get('other_terminal_rate', 0.0),
+        metrics.get('termination_reason_distribution', ''),
+    )
+    return base_record + extra_record
+
+
+def format_train_episode_metrics(train_epi_i, env, episode_vehicle_count, entropy_value):
+    episode_summary = env.get_episode_summary()
+    base_record = (
+        '%d, %8.6f, %4d, %3d, %6.4f' % (
+            train_epi_i,
+            env.episode_return,
+            env.step_num,
+            -1 if episode_vehicle_count is None else int(episode_vehicle_count),
+            entropy_value,
+        )
+    )
+    extra_record = (
+        ', success %4.2f, collision %4.2f, timeout %4.2f, progress %5.3f, speed %6.3f, term %s'
+    ) % (
+        float(episode_summary.get('success_rate', 0.0)),
+        float(episode_summary.get('collision_rate', 0.0)),
+        float(episode_summary.get('timeout_rate', 0.0)),
+        float(episode_summary.get('final_progress', episode_summary.get('route_progress', 0.0))),
+        float(episode_summary.get('mean_speed', 0.0)),
+        episode_summary.get('termination_reason', 'unknown'),
+    )
+    return base_record + extra_record
+
+
 def lane_validation_quality(metrics):
-    excessive_lane_changes = max(0.0, float(metrics['mean_lane_change']) - 4.0)
+    excessive_lane_changes = max(0.0, float(metrics['mean_lane_change']) - 1.5)
     return (
         float(metrics['mean_return'])
-        + 0.45 * float(metrics.get('mean_length', 0.0))
+        + 0.55 * float(metrics.get('mean_length', 0.0))
         + 1.5 * float(metrics['mean_speed'])
         - 30.0 * float(metrics['collision_rate'])
-        - 2.5 * excessive_lane_changes
+        - 4.0 * excessive_lane_changes
     )
 
 
@@ -291,6 +409,50 @@ def align_action_to_env_execution(model_output, sampled_action_onehot, step_info
     ).float()
     executed_action_logprob = torch.distributions.OneHotCategorical(model_output).log_prob(executed_action_onehot)
     return executed_action_onehot, executed_action_logprob
+
+
+def set_model_learning_rates(model, model_c, actor_lr, critic_lr=None):
+    actor_lr = float(actor_lr)
+    critic_lr = float(actor_lr if critic_lr is None else critic_lr)
+    if hasattr(model, 'optimizer_learning_rate'):
+        model.optimizer_learning_rate = actor_lr
+    if hasattr(model, 'optimizer') and model.optimizer is not None:
+        for param_group in model.optimizer.param_groups:
+            param_group['lr'] = actor_lr
+    if hasattr(model_c, 'set_learning_rate'):
+        model_c.set_learning_rate(critic_lr)
+    return actor_lr, critic_lr
+
+
+def maybe_update_entropy(model, entropy_value):
+    if hasattr(model, 'update_entropy'):
+        model.update_entropy(entropy_value)
+
+
+def select_entropy_value(args, train_epi_i):
+    return scheduled_entropy(
+        initial_entropy=args.entropy,
+        entropy_min=args.entropy_min,
+        entropy_decay=args.entropy_decay,
+        episode_index=train_epi_i,
+        entropy_warmup_scale=getattr(args, 'entropy_warmup_scale', 1.0),
+        entropy_warmup_episodes=getattr(args, 'entropy_warmup_episodes', 0),
+    )
+
+
+def compute_gae(rewards, dones, state_values, next_state_values, gamma, gae_lambda, reward_scale, adv_norm):
+    scaled_rewards = rewards * reward_scale
+    advantages = torch.zeros_like(scaled_rewards)
+    gae = torch.zeros(1, device=rewards.device, dtype=torch.float32)
+    for index in reversed(range(rewards.shape[0])):
+        mask = 1.0 - dones[index]
+        delta = scaled_rewards[index] + gamma * next_state_values[index] * mask - state_values[index]
+        gae = delta + gamma * gae_lambda * mask * gae
+        advantages[index] = gae
+    returns = advantages + state_values
+    if adv_norm:
+        advantages = (advantages - advantages.mean()) / (advantages.std(unbiased=False) + 1e-8)
+    return advantages.detach(), returns.detach()
 
 
 def is_better_lane_checkpoint(val_metrics, best_return, best_collision, best_length, best_success, best_speed, best_lane_change):
@@ -348,44 +510,37 @@ if __name__ == "__main__":
         model_str = 'error'
         print('\033[91mError in arguments\033[0m')
     # Pre-defined Parameters
-    if args.task in ['gymip']:
-        args.hidden_num, args.hid_group_num, args.hid_group_size = 64, 8, 8
-        if args.alg == 'ppo':
-            args.train_num = 2000 if args.train_num == 20000 else args.train_num
-        else:
-            args.train_num = 5000 if args.train_num == 20000 else args.train_num
-    if args.task in ['mnist']:
-        args.hidden_num, args.hid_group_num, args.hid_group_size = 200, 20, 10
-        args.train_num = 10000
-    if args.task in ['vizdoom']:
-        args.hidden_num, args.hid_group_num, args.hid_group_size = 500, 50, 10
-        if args.alg == 'ppo':
-            args.train_num = 2000 if args.train_num == 20000 else args.train_num
-        else:
-            args.train_num = 5000 if args.train_num == 20000 else args.train_num
+    args.hidden_num, args.hid_group_num, args.hid_group_size = 64, 8, 8
+    if args.alg == 'ppo':
+        args.train_num = 2000 if args.train_num == 20000 else args.train_num
+    else:
+        args.train_num = 5000 if args.train_num == 20000 else args.train_num
     baseline_profile_adjustments = apply_lane_baseline_profile(args)
+    if args.critic_lr <= 0:
+        args.critic_lr = args.lr
+    if args.entropy_decay <= 0:
+        args.entropy_decay = 1.0
     run_kind = 'baseline'
-    EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s_rep%02d' % (
+    reward_stage_suffix = ''
+    if args.road_scenario == 'highway':
+        reward_stage_suffix = '_hrs%s' % args.highway_reward_stage
+    entropy_warmup_suffix = ''
+    if args.entropy_warmup_scale > 1.0 + 1e-8 and args.entropy_warmup_episodes > 0:
+        entropy_warmup_suffix = '_ew%4.2fe%d' % (args.entropy_warmup_scale, args.entropy_warmup_episodes)
+    EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s%s%s_rep%02d' % (
             args.alg, args.task, args.model, model_str, args.optimizer,
             args.lr, args.entropy, args.gamma,
             args.PPO_epochs, args.eps_clip,
-            args.road_scenario, args.traffic_level, args.rep)
+            args.road_scenario, args.traffic_level, reward_stage_suffix, entropy_warmup_suffix, args.rep)
     active_model_dir, active_log_dir = checkpoint_utils.activate_scenario_output_dirs(
             run_kind=run_kind, road_scenario=args.road_scenario, traffic_level=args.traffic_level, create=True)
     # Task specified variables
-    if args.task in ['gymip',]:
-        if args.road_scenario == 'highway' and args.alg == 'ppo':
-            val_freq, val_num, test_num = 25, 5, 10
-            train_frequency = 32
-        else:
-            val_freq, val_num, test_num = 100, 10, 10
-            train_frequency = 10
-    elif args.task in ['vizdoom']:
+    if args.road_scenario == 'highway' and args.alg == 'ppo':
+        val_freq, val_num, test_num = 25, 3, 10
+        train_frequency = 32
+    else:
         val_freq, val_num, test_num = 100, 10, 10
-        train_frequency = 30
-    elif args.task in ['mnist', 'cifar10']:
-        val_freq, val_num, test_num = 100, 1, 1
-        train_frequency = 5
+        train_frequency = 10
     # Device
     if args.cuda < 0:
         torch_device = torch.device('cpu')
@@ -397,26 +552,15 @@ if __name__ == "__main__":
         os.environ['CUDA_VISIBLE_DEVICES'] = '%1d' % args.cuda
         torch_device = torch.device('cuda:0')
     # Environment Setup
-    if args.task == 'mnist':
-        import env_mnist
-        env = env_mnist.MnistDataset(dev=torch_device)
-        input_dimension, output_dimension = env.state_dim, env.action_num
-        mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
-    elif args.task == 'gymip':      # 名字继续用 gymip 骗过系统，但里面已经是小车了！
-        import env_lane
-        env = env_lane.GymLane(dev=torch_device, road_scenario=args.road_scenario, traffic_level=args.traffic_level)  # 删掉了多余的 xml 参数
-        input_dimension, output_dimension = env.state_dimension, env.action_num
-        mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
-    elif args.task == 'vizdoom':    # ViZDoom Health Gathering
-        import env_vizdoom
-        env = env_vizdoom.DoomHealthGathering(dev=torch_device)
-        input_dimension, output_dimension = env.state_dimension, env.action_num
-        mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension,
-                                      memory_size=2000, batch_size=100, dev=torch_device)
-    else:
-        input_dimension, output_dimension = None, None
-        env, mem = None, None
-        print('Error in model name.')
+    import env_lane
+    env = env_lane.GymLane(
+        dev=torch_device,
+        road_scenario=args.road_scenario,
+        traffic_level=args.traffic_level,
+        highway_reward_stage=args.highway_reward_stage,
+    )
+    input_dimension, output_dimension = env.state_dimension, env.action_num
+    mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
     # Model Setup
     if args.model == 'mlp3soft':
         import model_mlp
@@ -467,12 +611,18 @@ if __name__ == "__main__":
                 snn_num_steps = args.snn_num_steps,
                 entropy_ratio=args.entropy, device=torch_device)
     import model_critic
-    if args.task in ['gymip', 'gymdip']:
-        model_c = model_critic.Critic(input_size=input_dimension, output_size=output_dimension,
-                                      dev=torch_device, small=True)
-    else:
-        model_c = model_critic.Critic(input_size=input_dimension, output_size=output_dimension,
-                                      dev=torch_device)
+    model_c = model_critic.Critic(
+        input_size=input_dimension,
+        output_size=output_dimension,
+        dev=torch_device,
+        small=True,
+        optimizer_learning_rate=args.critic_lr,
+    )
+    if hasattr(model, 'set_grad_clip'):
+        model.set_grad_clip(args.grad_clip)
+    if hasattr(model_c, 'set_grad_clip'):
+        model_c.set_grad_clip(args.grad_clip)
+    set_model_learning_rates(model, model_c, args.lr, args.critic_lr)
     # Storage Folders
     checkpoint_utils.get_model_root(create=True, run_kind=run_kind)
     checkpoint_utils.get_log_root(create=True, run_kind=run_kind)
@@ -523,13 +673,15 @@ if __name__ == "__main__":
             model.load_model_ann(EXP_NAME + '_best')
     # Time Monitor
     calculation_time_monitor = TimeMonitor()
-    use_short_horizon_replay = bool(args.task == 'gymip' and args.road_scenario == 'highway' and args.alg == 'ppo')
+    use_short_horizon_replay = bool(args.road_scenario == 'highway' and args.alg == 'ppo')
     # >>>>  Main Loop
     mem.reset()         # memory buffer is shared across episodes
     train_step_num_total = 0
     for train_epi_i in range((last_train_epi_num + 1), args.train_num):
         if args.model == 'ann2snn':
             break
+        entropy_value = select_entropy_value(args, train_epi_i)
+        maybe_update_entropy(model, entropy_value)
         episode_vehicle_count = select_lane_vehicle_count(args, train_epi_i)
         env.init_train(vehicles_count=episode_vehicle_count)
         observation = env.get_train_observation()
@@ -570,21 +722,26 @@ if __name__ == "__main__":
                 else:
                     s1, s2, model_output_1, a_1, a_logprob_1, r, done = mem.get_batch()
                 batch_size = s1.shape[0]
-                model_output_2, model_other_output_2 = model(s2)
-                s1_value = model_c(s1)
-                s2_value = model_c(s2)
-                a1_prob = model_output_1
-                a2_prob = model_output_2
-                s1_value_ave = torch.sum(a1_prob * s1_value, dim=1).detach()
-                s2_value_ave = torch.sum(a2_prob * s2_value, dim=1).detach()
-                # Update Critic
-                state_value_target = s1_value.clone().detach()
-                a1_index = torch.argmax(a_1, dim=1)     # onehot to index
-                state_value_target[torch.arange(batch_size), a1_index] = \
-                    r + (args.gamma * s2_value_ave) * (1 - done)
-                model_c.learn(s1_value, state_value_target)
-                # Update Agent
-                advantage = (s1_value[torch.arange(batch_size), a1_index] - s1_value_ave).detach()
+                with torch.no_grad():
+                    s1_value = model_c(s1)
+                    s2_value = model_c(s2)
+                    next_action_prob = model(s2)[0]
+                    state_values = torch.sum(model_output_1 * s1_value, dim=1)
+                    next_state_values = torch.sum(next_action_prob * s2_value, dim=1)
+                    advantage, returns = compute_gae(
+                        r,
+                        done,
+                        state_values,
+                        next_state_values,
+                        args.gamma,
+                        args.gae_lambda,
+                        args.reward_scale,
+                        bool(args.adv_norm),
+                    )
+                    state_value_target = s1_value.detach().clone()
+                    a1_index = torch.argmax(a_1, dim=1)
+                    state_value_target[torch.arange(batch_size), a1_index] = returns
+                model_c.learn(model_c(s1), state_value_target)
                 if args.alg == 'ppo':
                     old_logprob = torch.clone(a_logprob_1)
                     for _ in range(args.PPO_epochs):
@@ -645,102 +802,72 @@ if __name__ == "__main__":
         log_text(
             File,
             'train',
-            '%d, %8.6f, %4d, %3d' % (
+            format_train_episode_metrics(
                 train_epi_i,
-                env.episode_return,
-                env.step_num,
-                -1 if episode_vehicle_count is None else int(episode_vehicle_count),
+                env,
+                episode_vehicle_count,
+                entropy_value,
             ),
             onscreen=False,
         )
         # Validation
         if train_epi_i % val_freq == (val_freq - 1):
-            if args.task == 'gymip':
-                val_metrics = evaluate_lane_policy(env, model, val_num)
-                better_model = is_better_lane_checkpoint(
+            val_vehicle_count = None
+            if args.road_scenario == 'highway':
+                val_vehicle_count = select_lane_vehicle_count(args, train_epi_i)
+            val_metrics = evaluate_lane_policy(env, model, val_num, vehicles_count=val_vehicle_count)
+            better_model = is_better_lane_checkpoint(
+                val_metrics,
+                last_val_best,
+                last_val_best_collision,
+                last_val_best_length,
+                last_val_best_success,
+                last_val_best_speed,
+                last_val_best_lane_change,
+            )
+            if better_model:
+                model.save_model(EXP_NAME + '_best')
+                model_c.save_model(EXP_NAME + 'critic' + '_best')
+                last_val_best = val_metrics['mean_return']
+                last_val_best_collision = val_metrics['collision_rate']
+                last_val_best_length = val_metrics['mean_length']
+                last_val_best_success = val_metrics['success_rate']
+                last_val_best_speed = val_metrics['mean_speed']
+                last_val_best_lane_change = val_metrics['mean_lane_change']
+                log_text(
+                    File,
+                    'val_save',
+                    format_validation_metrics(val_metrics, train_epi_i),
+                )
+            log_text(
+                File,
+                'val',
+                format_validation_metrics(val_metrics, train_epi_i),
+            )
+            if (
+                not better_model and
+                should_restore_best_checkpoint(
                     val_metrics,
-                    last_val_best,
-                    last_val_best_collision,
                     last_val_best_length,
-                    last_val_best_success,
-                    last_val_best_speed,
-                    last_val_best_lane_change,
+                    last_val_best_collision,
                 )
-                if better_model:
-                    model.save_model(EXP_NAME + '_best')
-                    model_c.save_model(EXP_NAME + 'critic' + '_best')
-                    last_val_best = val_metrics['mean_return']
-                    last_val_best_collision = val_metrics['collision_rate']
-                    last_val_best_length = val_metrics['mean_length']
-                    last_val_best_success = val_metrics['success_rate']
-                    last_val_best_speed = val_metrics['mean_speed']
-                    last_val_best_lane_change = val_metrics['mean_lane_change']
+            ):
+                best_actor_suffix = '_best_w_1' if args.model in ['rwtaprob', 'rwtaspk'] else '_best_1'
+                best_actor_file = checkpoint_utils.resolve_checkpoint_file(EXP_NAME + best_actor_suffix)
+                best_critic_file = checkpoint_utils.resolve_checkpoint_file(EXP_NAME + 'critic_best_1')
+                if os.path.exists(best_actor_file) and os.path.exists(best_critic_file):
+                    model.load_model(EXP_NAME + '_best')
+                    model_c.load_model(EXP_NAME + 'critic_best')
                     log_text(
                         File,
-                        'val_save',
-                        '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                        'val_restore',
+                        '%d, best_length %8.4f, current_length %8.4f, collision %6.4f' % (
                             train_epi_i,
-                            val_metrics['mean_return'],
-                            val_metrics['collision_rate'],
+                            last_val_best_length,
                             val_metrics['mean_length'],
-                            val_metrics['mean_lane_change'],
-                            val_metrics['success_rate'],
-                            val_metrics['mean_speed'],
+                            val_metrics['collision_rate'],
                         ),
                     )
-                log_text(
-                    File,
-                    'val',
-                    '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
-                        train_epi_i,
-                        val_metrics['mean_return'],
-                        val_metrics['collision_rate'],
-                        val_metrics['mean_length'],
-                        val_metrics['mean_lane_change'],
-                        val_metrics['success_rate'],
-                        val_metrics['mean_speed'],
-                    ),
-                )
-            else:
-                val_preformance_list = []
-                val_step_num_list = []
-                for val_epi_i in range(val_num):
-                    env.init_val()
-                    observation = env.get_val_observation()
-                    for val_step_i in range(env.max_step_num):
-                        model_output, model_other_output = model(observation)
-                        action_chosen_index = torch.argmax(model_output, dim=1)
-                        action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                        observation_next, reward, _, _, step_record_val = env.make_action(action_chosen_onehot)
-                        if env.done_signal == True:
-                            break
-                        observation = observation_next
-                    val_preformance_list.append(step_record_val[2])
-                    val_step_num_list.append(env.step_num)
-                val_performance_mean = sum(val_preformance_list) / len(val_preformance_list)
-                val_step_num_mean = sum(val_step_num_list) / len(val_step_num_list)
-                if last_val_best <= val_performance_mean:
-                    model.save_model(EXP_NAME + '_best')
-                    model_c.save_model(EXP_NAME + 'critic' + '_best')
-                    log_text(
-                        File,
-                        'val_save',
-                        '%d,   %8.6f,   %8.4f' % (
-                            train_epi_i,
-                            val_performance_mean,
-                            val_step_num_mean,
-                        ),
-                    )
-                    last_val_best = val_performance_mean
-                log_text(
-                    File,
-                    'val',
-                    '%d,   %8.6f,   %8.4f' % (
-                        train_epi_i,
-                        val_performance_mean,
-                        val_step_num_mean,
-                    ),
-                )
 
 
     # ANN2SNN Implementation
@@ -786,10 +913,7 @@ if __name__ == "__main__":
     # >>>> Test Adversarial
     import model_adversarial
     ad_mem_size = 1000
-    if args.task in ['mnist', 'cifar10']:
-        ad_train_epi_num = 1000
-    else:               # 'vizdoom', 'gymip'
-        ad_train_epi_num = 100
+    ad_train_epi_num = 100
     ad_mem_s = torch.zeros([ad_mem_size, input_dimension]).to(torch_device)
     ad_mem_a = torch.zeros([ad_mem_size, output_dimension]).to(torch_device)
     ad_model = model_adversarial.Adversarial(input_dimension, output_dimension)
@@ -930,37 +1054,6 @@ if __name__ == "__main__":
             log_text(File, 'i_noise', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
             File.flush()
 
-    # >>>> Test GYMIP / GYMDIP Env
-    if args.task in ['gymip', 'gymdip']:
-        model.load_model(EXP_NAME + '_best')
-        noise_type_list = ['length', 'thick', 'union']
-        if args.task == 'gymdip':
-            noise_type_list = ['thick']
-        for noise_type in noise_type_list:
-            if noise_type == 'length':
-                noise_param_list = np.arange(0.16, 4.88, 0.08)
-            elif noise_type == 'thick':
-                noise_param_list = np.arange(0.01, 0.305, 0.005)
-            else:
-                noise_param_list = np.arange(0.02, 0.305, 0.005)
-            for noise_param in noise_param_list:
-                test_preformance_list = []
-                for test_epi_i in range(test_num):
-                    env.init_test(variation_type=noise_type, variation_param=noise_param)
-                    for test_step_i in range(env.max_step_num):
-                        observation = env.get_test_observation()
-                        model_output, model_other_output = model(observation)
-                        action_chosen_index = torch.argmax(model_output, dim=1)
-                        action_chosen_onehot = torch.nn.functional.one_hot(action_chosen_index, num_classes=env.action_num)
-                        _, _, _, _, test_other_step_record = env.make_action(action_chosen_onehot)
-
-                        if env.done_signal == True:
-                            break
-                    test_preformance_list.append(test_other_step_record[2])
-                test_performance_mean = sum(test_preformance_list) / len(test_preformance_list)
-                log_text(File, 'e_gymip', '%s,  %8.6f,   %8.6f' % (noise_type, noise_param, test_performance_mean))
-                File.flush()
-
     # >>>> Test RWTA Connection Knock Out
     if args.model in ['rwtaprob', 'rwtaspk']:
         noise_type_list = ['hh', 'sh', 'sa', 'ha', 'all']
@@ -1000,7 +1093,3 @@ if __name__ == "__main__":
     log_text(File, 'checkpoint_cleanup', checkpoint_utils.summarize_checkpoint_cleanup(cleanup_summary), onscreen=False)
     File.flush()
     File.close()
-
-
-
-

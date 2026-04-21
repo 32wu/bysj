@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -20,57 +21,57 @@ SCENARIO_SPECS = [
     {
         'run_kind': 'baseline',
         'scenario_dir': 'highway_standard',
-        'label': 'Baseline',
-        'scenario_name': 'Highway Standard',
+        'label': '基线方法',
+        'scenario_name': '高速公路标准场景',
         'style': {'color': '#4C78A8', 'marker': 'o'},
     },
     {
         'run_kind': 'ours',
         'scenario_dir': 'highway_standard',
-        'label': 'Ours',
-        'scenario_name': 'Highway Standard',
+        'label': '本文方法',
+        'scenario_name': '高速公路标准场景',
         'style': {'color': '#E45756', 'marker': 's'},
     },
     {
         'run_kind': 'baseline',
         'scenario_dir': 'highway_dense',
-        'label': 'Baseline',
-        'scenario_name': 'Highway Dense',
+        'label': '基线方法',
+        'scenario_name': '高速公路高密度场景',
         'style': {'color': '#4C78A8', 'marker': 'o'},
     },
     {
         'run_kind': 'ours',
         'scenario_dir': 'highway_dense',
-        'label': 'Ours',
-        'scenario_name': 'Highway Dense',
+        'label': '本文方法',
+        'scenario_name': '高速公路高密度场景',
         'style': {'color': '#E45756', 'marker': 's'},
     },
     {
         'run_kind': 'baseline',
         'scenario_dir': 'merge',
-        'label': 'Baseline',
-        'scenario_name': 'Merge',
+        'label': '基线方法',
+        'scenario_name': '汇入场景',
         'style': {'color': '#4C78A8', 'marker': 'o'},
     },
     {
         'run_kind': 'ours',
         'scenario_dir': 'merge',
-        'label': 'Ours',
-        'scenario_name': 'Merge',
+        'label': '本文方法',
+        'scenario_name': '汇入场景',
         'style': {'color': '#E45756', 'marker': 's'},
     },
     {
         'run_kind': 'baseline',
         'scenario_dir': 'roundabout',
-        'label': 'Baseline',
-        'scenario_name': 'Roundabout',
+        'label': '基线方法',
+        'scenario_name': '环岛场景',
         'style': {'color': '#4C78A8', 'marker': 'o'},
     },
     {
         'run_kind': 'ours',
         'scenario_dir': 'roundabout',
-        'label': 'Ours',
-        'scenario_name': 'Roundabout',
+        'label': '本文方法',
+        'scenario_name': '环岛场景',
         'style': {'color': '#E45756', 'marker': 's'},
     },
 ]
@@ -117,11 +118,21 @@ class RunData:
 
 
 def configure_plot_style() -> None:
+    font_candidates = [
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc',
+        '/usr/share/fonts/opentype/noto/NotoSerifCJK-Bold.ttc',
+    ]
+    for font_path in font_candidates:
+        path_obj = Path(font_path)
+        if path_obj.exists():
+            font_manager.fontManager.addfont(str(path_obj))
     plt.style.use('seaborn-v0_8-whitegrid')
     plt.rcParams.update(
         {
             'font.family': 'sans-serif',
-            'font.sans-serif': ['SimHei', 'Noto Sans CJK SC', 'Microsoft YaHei', 'WenQuanYi Zen Hei', 'DejaVu Sans'],
+            'font.sans-serif': ['Noto Sans CJK JP', 'Noto Serif CJK JP', 'SimHei', 'Microsoft YaHei', 'WenQuanYi Zen Hei', 'DejaVu Sans'],
             'axes.unicode_minus': False,
             'figure.dpi': 300,
             'savefig.dpi': 300,
@@ -166,7 +177,12 @@ def find_latest_log(run_kind: str, scenario_dir: str) -> Path:
     candidates = sorted(log_dir.glob('*.txt'), key=lambda item: item.stat().st_mtime, reverse=True)
     if not candidates:
         raise FileNotFoundError(f'No log files found in: {log_dir}')
-    return candidates[0]
+    for candidate in candidates:
+        with candidate.open('r', encoding='utf-8') as file_obj:
+            for raw_line in file_obj:
+                if raw_line.strip().startswith('val,'):
+                    return candidate
+    raise ValueError(f'No validated log files found in: {log_dir}')
 
 
 def parse_val_records(log_path: Path) -> List[ValRecord]:
@@ -206,9 +222,11 @@ def parse_val_records(log_path: Path) -> List[ValRecord]:
     return records
 
 
-def load_default_runs() -> List[RunData]:
+def load_default_runs(selected_scenario: str = None) -> List[RunData]:
     runs: List[RunData] = []
     for spec in SCENARIO_SPECS:
+        if selected_scenario is not None and spec['scenario_dir'] != selected_scenario:
+            continue
         log_path = find_latest_log(spec['run_kind'], spec['scenario_dir'])
         runs.append(
             RunData(
@@ -265,7 +283,7 @@ def plot_scenario_reward_curve(scenario_runs: List[RunData], output_dir: Path, t
             marker=run.style['marker'],
             markersize=4.0,
             alpha=0.98,
-            label=f'{run.label} smoothed reward',
+            label=f'{run.label} 平滑回报',
         )
         axes[0].scatter(
             [best_record.episode],
@@ -291,23 +309,23 @@ def plot_scenario_reward_curve(scenario_runs: List[RunData], output_dir: Path, t
             color=run.style['color'],
             linewidth=2.7,
             alpha=0.98,
-            label=f'{run.label} best-so-far reward',
+            label=f'{run.label} 最优回报包络',
         )
         axes[1].axvline(best_record.episode, color=run.style['color'], linestyle='--', linewidth=1.1, alpha=0.55)
 
-    axes[0].set_title(f'{scenario_name}: Validation Reward Curve')
-    axes[0].set_xlabel('Training Episodes')
-    axes[0].set_ylabel('Validation Mean Reward')
+    axes[0].set_title(f'{scenario_name}：验证回报曲线')
+    axes[0].set_xlabel('训练轮次')
+    axes[0].set_ylabel('验证平均回报')
     axes[0].legend(frameon=True)
     axes[0].set_ylim(min(0.0, min(ymax_raw) * 1.15), max(20.0, safe_max(ymax_raw, lower_bound=20.0) * 1.18))
 
-    axes[1].set_title(f'{scenario_name}: Best-so-far Reward Envelope')
-    axes[1].set_xlabel('Training Episodes')
-    axes[1].set_ylabel('Best Validation Reward')
+    axes[1].set_title(f'{scenario_name}：历史最优回报包络')
+    axes[1].set_xlabel('训练轮次')
+    axes[1].set_ylabel('历史最优验证回报')
     axes[1].legend(frameon=True)
     axes[1].set_ylim(min(0.0, min(ymax_best) * 1.15), max(20.0, safe_max(ymax_best, lower_bound=20.0) * 1.18))
 
-    stem = f'training_reward_compare_{scenario_runs[0].scenario_dir}_{timestamp}'
+    stem = f'training_reward_compare_{scenario_runs[0].scenario_dir}_at_{timestamp}'
     png_path = output_dir / f'{stem}.png'
     pdf_path = output_dir / f'{stem}.pdf'
     fig.savefig(png_path, bbox_inches='tight')
@@ -355,28 +373,28 @@ def write_scenario_summary_csv(scenario_runs: List[RunData], output_dir: Path, t
 
 
 def print_scenario_summary(scenario_runs: List[RunData], output_dir: Path) -> None:
-    print(f"\nScenario: {scenario_runs[0].scenario_dir}")
+    print(f"\n场景: {scenario_runs[0].scenario_dir}")
     for run in scenario_runs:
         print(f"  {run.label:8s} | {run.log_path.name}")
         print(
             '    '
-            f'best_return ep={run.best_return.episode}, reward={run.best_return.mean_return:.1f}, '
-            f'best_steps_at_best_return={run.best_return.mean_steps:.1f}; '
-            f'final raw reward={run.final.mean_return:.1f}, '
-            f'smoothed_final_reward={moving_average(run.metric_values("mean_return"))[-1]:.1f}'
+            f'最优回报轮次={run.best_return.episode}, 回报={run.best_return.mean_return:.1f}, '
+            f'最优回报对应步长={run.best_return.mean_steps:.1f}; '
+            f'最终原始回报={run.final.mean_return:.1f}, '
+            f'最终平滑回报={moving_average(run.metric_values("mean_return"))[-1]:.1f}'
         )
-    print(f'  output_dir: {output_dir}')
+    print(f'  输出目录: {output_dir}')
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='Generate thesis-ready reward figures from the latest training logs.')
-    parser.add_argument('--output-dir', type=Path, default=DEFAULT_OUTPUT_DIR, help='Directory to store generated thesis figures.')
+    parser = argparse.ArgumentParser(description='根据最新训练日志生成论文绘图。')
+    parser.add_argument('--output-dir', type=Path, default=DEFAULT_OUTPUT_DIR, help='生成图表的输出目录。')
     parser.add_argument(
         '--scenario',
         type=str,
         default=None,
         choices=['highway_standard', 'highway_dense', 'merge', 'roundabout'],
-        help='Generate figures only for the selected scenario.',
+        help='仅为指定场景生成图表。',
     )
     return parser.parse_args()
 
@@ -386,7 +404,7 @@ def main() -> None:
     output_dir = args.output_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     configure_plot_style()
-    runs = load_default_runs()
+    runs = load_default_runs(selected_scenario=args.scenario)
     timestamp = create_timestamp()
 
     scenario_dirs = []
@@ -403,8 +421,8 @@ def main() -> None:
         csv_path = write_scenario_summary_csv(scenario_runs, run_output_dir, timestamp)
         print_scenario_summary(scenario_runs, run_output_dir)
         for figure_path in figure_paths:
-            print(f'Generated figure: {figure_path}')
-        print(f'Generated summary csv: {csv_path}')
+            print(f'已生成图像: {figure_path}')
+        print(f'已生成汇总 CSV: {csv_path}')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,68 @@
+init,     2026-04-22 00:40:50.672651
+arguments,Namespace(PPO_epochs=4, adv_norm=1, alg='ppo', critic_lr=0.00015, cuda=0, curriculum_clean_ratio=1.0, curriculum_entropy_decay=0.97, curriculum_mode='adaptive', curriculum_noise_step=0.0, curriculum_patience=1, entropy=0.015, entropy_decay=0.999, entropy_min=0.001, entropy_warmup_episodes=50, entropy_warmup_scale=1.1, eps_clip=0.2, eval_checkpoint='best', eval_episodes=30, eval_only=False, final_eval_episodes=30, gae_lambda=0.95, gamma=0.998, grad_clip=0.5, gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hid_group_num=8, hid_group_size=8, hidden_num=64, highway_reward_stage='c_success', ignore_checkpoint=True, lane_profile='auto', lr=0.0001, max_noise=0.0, mini_batch_size=128, model='rwtaspk', monitor_time=False, optimizer='rmsprop', rep=11, response_window=40, reward_scale=0.8, road_scenario='highway', rollout_steps=512, rwta_del_connection='none', seed=11, snn_num_steps=15, task='gymip', thread=-1, traffic_level='standard', train_envs=4, train_num=1000, val_episodes=20, val_interval_timesteps=3000, warm_start_kind='none', warm_start_prefix='ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000200_0.02_0.99800_4_0.2000_ro512_mb128_lam0.95_rs0.80_gc0.50_adaptive_roadhighway_tfstandard_hrsc_success_ew1.15e120_te4_seed11_best')
+seed,     11
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/logs
+profile,  lane auto-stabilize: lr->0.0001, critic_lr->0.00015, entropy->0.015, entropy_min->0.001, entropy_decay->0.999, curriculum_mode->adaptive, max_noise->0.0, curriculum_clean_ratio->1.0, curriculum_noise_step->0.0, curriculum_patience->1, curriculum_entropy_decay->0.97
+warm_start,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000200_0.02_0.99800_4_0.2000_ro512_mb128_lam0.95_rs0.80_gc0.50_adaptive_roadhighway_tfstandard_hrsc_success_ew1.15e120_te4_seed11_best
+warm_critic,ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000200_0.02_0.99800_4_0.2000_ro512_mb128_lam0.95_rs0.80_gc0.50_adaptive_roadhighway_tfstandard_hrsc_success_ew1.15e120_te4_seed11critic_best
+parallel, train_envs 4
+train,    1, 480, 608.292338,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.908, term success
+train_t,  1, 480, 608.292338,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.908, term success
+train,    2, 480, 484.317286,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 27.116, term success
+train_t,  2, 480, 484.317286,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 27.116, term success
+train,    3, 480, 612.819265,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.951, term success
+train_t,  3, 480, 612.819265,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.951, term success
+train,    4, 480, 644.111955,  120, 0.00,    3, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.243, term success
+train_t,  4, 480, 644.111955,  120, 0.00,    3, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.243, term success
+update,   8,    1,  512, 71.480690, -0.000001
+train,    6, 568, 58.258896,   22, 1.00,    1, 0.000, 0.000, 0.016, 10, success 0.00, timeout 0.00, progress 0.183, speed 28.121, term collision
+train_t,  6, 568, 58.258896,   22, 1.00,    1, 0.000, 0.000, 0.016, 10, success 0.00, timeout 0.00, progress 0.183, speed 28.121, term collision
+train,    5, 960, 640.346122,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.077, term success
+train_t,  5, 960, 640.346122,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.077, term success
+train,    7, 960, 641.995646,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train_t,  7, 960, 641.995646,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train,    8, 960, 645.687770,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.190, term success
+train_t,  8, 960, 645.687770,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.190, term success
+update,   12,    2,  512, 73.758392, 0.000000
+train,    9, 1048, 645.426939,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train_t,  9, 1048, 645.426939,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train,    10, 1440, 651.907296,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train_t,  10, 1440, 651.907296,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train,    11, 1440, 631.169268,  120, 0.00,    3, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.190, term success
+train_t,  11, 1440, 631.169268,  120, 0.00,    3, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.190, term success
+train,    12, 1440, 595.483772,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.066, term success
+train_t,  12, 1440, 595.483772,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.066, term success
+train,    13, 1528, 605.520317,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.533, term success
+train_t,  13, 1528, 605.520317,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.533, term success
+update,   17,    3,  512, 76.010010, 0.000000
+train,    14, 1920, 650.933133,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train_t,  14, 1920, 650.933133,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train,    15, 1920, 628.470959,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.101, term success
+train_t,  15, 1920, 628.470959,  120, 0.00,    5, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.101, term success
+train,    16, 1920, 640.835043,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.278, term success
+train_t,  16, 1920, 640.835043,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.278, term success
+train,    17, 2008, 465.149262,  120, 0.00,   11, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 26.731, term success
+train_t,  17, 2008, 465.149262,  120, 0.00,   11, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 26.731, term success
+update,   21,    4,  512, 72.751846, 0.000000
+train,    18, 2400, 597.595706,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 27.075, term success
+train_t,  18, 2400, 597.595706,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 27.075, term success
+train,    19, 2400, 639.682881,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.993, term success
+train_t,  19, 2400, 639.682881,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.993, term success
+train,    20, 2400, 637.871002,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.406, term success
+train_t,  20, 2400, 637.871002,  120, 0.00,    7, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.406, term success
+train,    21, 2488, 635.922990,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.244, term success
+train_t,  21, 2488, 635.922990,  120, 0.00,    9, 0.000, 0.000, 0.016, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.244, term success
+update,   25,    5,  512, 75.336258, 0.000000
+train,    22, 2880, 637.101876,  120, 0.00,    5, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.987, term success
+train_t,  22, 2880, 637.101876,  120, 0.00,    5, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.987, term success
+train,    23, 2880, 461.816498,  120, 0.00,    7, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 27.893, term success
+train_t,  23, 2880, 461.816498,  120, 0.00,    7, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 27.893, term success
+train,    24, 2880, 632.346260,  120, 0.00,    9, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.217, term success
+train_t,  24, 2880, 632.346260,  120, 0.00,    9, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.217, term success
+train,    27, 2948, 46.747315,   17, 1.00,    1, 0.000, 0.000, 0.015, 10, success 0.00, timeout 0.00, progress 0.142, speed 29.072, term collision
+train_t,  27, 2948, 46.747315,   17, 1.00,    1, 0.000, 0.000, 0.015, 10, success 0.00, timeout 0.00, progress 0.142, speed 29.072, term collision
+train,    25, 2968, 642.708520,  120, 0.00,    3, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.185, term success
+train_t,  25, 2968, 642.708520,  120, 0.00,    3, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 29.185, term success
+update,   30,    6,  512, 74.081070, -0.000000
+train,    26, 3360, 631.228451,  120, 0.00,    5, 0.000, 0.000, 0.015, 10, success 1.00, timeout 0.00, progress 1.000, speed 28.243, term success

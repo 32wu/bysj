@@ -26,6 +26,7 @@ import numpy as np
 import torch
 
 import checkpoint_utils
+from ppo_stability import STABLE_HIGHWAY_STANDARD_PPO, scheduled_entropy
 
 
 def get_arguments():
@@ -41,10 +42,16 @@ def get_arguments():
     parser.add_argument('--thread', type=int, default=-1)
     parser.add_argument('--train_num', type=int, default=500)
     parser.add_argument('--train_envs', type=int, default=4)
+    parser.add_argument('--val_interval_timesteps', type=int, default=0)
+    parser.add_argument('--val_episodes', type=int, default=20)
+    parser.add_argument('--eval_episodes', type=int, default=30)
+    parser.add_argument('--final_eval_episodes', type=int, default=30)
     parser.add_argument('--rep', type=int, default=11)
     parser.add_argument('--seed', type=int, default=-1)
     parser.add_argument('--ignore_checkpoint', default=False, action='store_true')
     parser.add_argument('--monitor_time', default=False, action='store_true')
+    parser.add_argument('--eval_only', default=False, action='store_true')
+    parser.add_argument('--eval_checkpoint', type=str, default='best', choices=['best', 'current'])
 
     parser.add_argument('--task', type=str, default='gymip', choices=['gymip'])
     parser.add_argument('--model', type=str, default='rwtaprob', choices=['mlp3soft', 'mlp3relu', 'rwtaprob', 'rwtaspk', 'snnbptt', 'ann2snn'])
@@ -63,16 +70,21 @@ def get_arguments():
     parser.add_argument('--adv_norm', type=int, default=1, choices=[0, 1])
     parser.add_argument('--reward_scale', type=float, default=1.0)
     parser.add_argument('--grad_clip', type=float, default=1.0)
+    parser.add_argument('--critic_lr', type=float, default=0.0)
     parser.add_argument('--curriculum_mode', type=str, default='fixed', choices=['fixed', 'adaptive'])
     parser.add_argument('--curriculum_clean_ratio', type=float, default=0.7)
     parser.add_argument('--max_noise', type=float, default=0.15)
     parser.add_argument('--entropy_min', type=float, default=0.1)
+    parser.add_argument('--entropy_decay', type=float, default=1.0)
+    parser.add_argument('--entropy_warmup_scale', type=float, default=1.10)
+    parser.add_argument('--entropy_warmup_episodes', type=int, default=50)
     parser.add_argument('--curriculum_patience', type=int, default=2)
     parser.add_argument('--curriculum_noise_step', type=float, default=0.03)
     parser.add_argument('--curriculum_entropy_decay', type=float, default=0.9)
     parser.add_argument('--lane_profile', type=str, default='auto', choices=['auto', 'legacy'])
     parser.add_argument('--road_scenario', type=str, default='highway', choices=['highway', 'merge', 'roundabout'])
     parser.add_argument('--traffic_level', type=str, default='standard', choices=['light', 'standard', 'dense'])
+    parser.add_argument('--highway_reward_stage', type=str, default='c_success', choices=['baseline', 'a_timeout', 'b_progress_speed', 'c_success'])
     parser.add_argument('--warm_start_kind', type=str, default='none', choices=['none', 'baseline', 'ours', 'any'])
     parser.add_argument('--warm_start_prefix', type=str, default='')
     return parser.parse_args()
@@ -86,26 +98,50 @@ def reload_log_file(filename):
     val_best_success = 0.0
     val_best_speed = 0.0
     val_best_lane_change = 0.0
+    total_env_steps = 0
     with open(filename) as file:
         for line in file:
-            str_list = [item for item in re.sub(',', ' ', line).split()]
-            if not str_list:
+            line = line.strip()
+            if not line:
                 continue
-            if str_list[0] == 'train':
-                train_epi_num = int(str_list[1])
-            if str_list[0] == 'val_save':
-                val_best_return = float(str_list[2])
-                if len(str_list) > 3:
-                    val_best_collision = float(str_list[3])
-                if len(str_list) > 4:
-                    val_best_length = float(str_list[4])
-                if len(str_list) > 6:
-                    val_best_success = float(str_list[6])
-                if len(str_list) > 5:
-                    val_best_lane_change = float(str_list[5])
-                if len(str_list) > 7:
-                    val_best_speed = float(str_list[7])
-    return train_epi_num, val_best_return, val_best_collision, val_best_length, val_best_success, val_best_speed, val_best_lane_change
+            parts = [item.strip() for item in line.split(',')]
+            if not parts:
+                continue
+            tag = parts[0]
+            if tag == 'train' and len(parts) > 1:
+                train_epi_num = max(train_epi_num, int(parts[1]))
+            elif tag == 'train_t' and len(parts) > 2:
+                train_epi_num = max(train_epi_num, int(parts[1]))
+                total_env_steps = max(total_env_steps, int(parts[2]))
+            elif tag == 'summary' and len(parts) > 2 and parts[1] == 'total_env_steps':
+                total_env_steps = max(total_env_steps, int(parts[2]))
+            elif tag in ['val_save', 'val_save_t']:
+                numeric_offset = 2
+                if tag == 'val_save_t' and len(parts) > 3:
+                    total_env_steps = max(total_env_steps, int(parts[2]))
+                    numeric_offset = 3
+                if len(parts) > numeric_offset:
+                    val_best_return = float(parts[numeric_offset])
+                if len(parts) > numeric_offset + 1:
+                    val_best_collision = float(parts[numeric_offset + 1])
+                if len(parts) > numeric_offset + 2:
+                    val_best_length = float(parts[numeric_offset + 2])
+                if len(parts) > numeric_offset + 4:
+                    val_best_success = float(parts[numeric_offset + 4])
+                if len(parts) > numeric_offset + 3:
+                    val_best_lane_change = float(parts[numeric_offset + 3])
+                if len(parts) > numeric_offset + 5:
+                    val_best_speed = float(parts[numeric_offset + 5])
+    return (
+        train_epi_num,
+        val_best_return,
+        val_best_collision,
+        val_best_length,
+        val_best_success,
+        val_best_speed,
+        val_best_lane_change,
+        total_env_steps,
+    )
 
 
 def log_text(file_handle, type_str, record_text, onscreen=True):
@@ -117,6 +153,18 @@ def log_text(file_handle, type_str, record_text, onscreen=True):
         log_text_flush_time = time.time()
         file_handle.flush()
         os.fsync(file_handle.fileno())
+
+
+def resolve_validation_schedule(args):
+    if int(getattr(args, 'val_interval_timesteps', 0)) > 0:
+        return int(args.val_interval_timesteps), max(1, int(args.val_episodes))
+    if args.road_scenario == 'merge':
+        return 1500, max(1, int(args.val_episodes))
+    if args.road_scenario == 'roundabout':
+        return 2250, max(1, int(args.val_episodes))
+    if args.road_scenario == 'highway' and getattr(args, 'traffic_level', 'standard') == 'dense':
+        return 4500, max(1, int(args.val_episodes))
+    return 3000, max(1, int(args.val_episodes))
 
 
 class TimeMonitor:
@@ -221,10 +269,15 @@ def apply_lane_batch_observation_noise(observation_batch, noise_levels):
     return torch.clamp(observation_batch + torch.randn_like(observation_batch) * noise_tensor, 0.0, 1.0)
 
 
-def lane_parallel_worker(connection, road_scenario, traffic_level):
+def lane_parallel_worker(connection, road_scenario, traffic_level, highway_reward_stage):
     import env_lane
     worker_device = torch.device('cpu')
-    env = env_lane.GymLane(dev=worker_device, road_scenario=road_scenario, traffic_level=traffic_level)
+    env = env_lane.GymLane(
+        dev=worker_device,
+        road_scenario=road_scenario,
+        traffic_level=traffic_level,
+        highway_reward_stage=highway_reward_stage,
+    )
     try:
         while True:
             message = connection.recv()
@@ -246,12 +299,13 @@ def lane_parallel_worker(connection, road_scenario, traffic_level):
                 observation = next_state.squeeze(0).cpu().numpy().astype(np.float32, copy=True)
                 episode_summary = None
                 if done:
-                    episode_summary = {
+                    episode_summary = env.get_episode_summary()
+                    episode_summary.update({
                         'episode_return': float(env.episode_return),
                         'step_num': int(env.step_num),
                         'collision_flag': float(env.collision_count > 0),
                         'lane_change_count': int(env.lane_change_count),
-                    }
+                    })
                 connection.send({
                     'observation': observation,
                     'reward': float(reward.item()),
@@ -271,7 +325,7 @@ def lane_parallel_worker(connection, road_scenario, traffic_level):
 
 
 class ParallelLaneCollector:
-    def __init__(self, num_envs, road_scenario, traffic_level):
+    def __init__(self, num_envs, road_scenario, traffic_level, highway_reward_stage):
         self.num_envs = max(1, int(num_envs))
         self.ctx = mp.get_context('spawn')
         self.parents = []
@@ -280,7 +334,7 @@ class ParallelLaneCollector:
             parent_conn, child_conn = self.ctx.Pipe()
             process = self.ctx.Process(
                 target=lane_parallel_worker,
-                args=(child_conn, road_scenario, traffic_level),
+                args=(child_conn, road_scenario, traffic_level, highway_reward_stage),
             )
             process.daemon = True
             process.start()
@@ -354,9 +408,72 @@ def maybe_save_current_models(model, model_c, exp_name, model_current_save_time)
     return model_current_save_time
 
 
+def set_model_learning_rates(model, model_c, actor_lr, critic_lr=None):
+    actor_lr = float(actor_lr)
+    critic_lr = float(actor_lr if critic_lr is None else critic_lr)
+    if hasattr(model, 'optimizer_learning_rate'):
+        model.optimizer_learning_rate = actor_lr
+    if hasattr(model, 'optimizer') and model.optimizer is not None:
+        for param_group in model.optimizer.param_groups:
+            param_group['lr'] = actor_lr
+    critic_optimizer = getattr(model_c, 'optimizer', None)
+    if critic_optimizer is not None:
+        for param_group in critic_optimizer.param_groups:
+            param_group['lr'] = critic_lr
+    return actor_lr, critic_lr
+
+
+def apply_curriculum_optimizer_state(model, model_c, curriculum_state, args):
+    actor_lr = float(curriculum_state.get('actor_lr', args.lr))
+    critic_lr = float(curriculum_state.get('critic_lr', actor_lr))
+    return set_model_learning_rates(model, model_c, actor_lr, critic_lr)
+
+
+def seed_curriculum_from_resume(args, curriculum_state, best_length, best_collision, best_success):
+    if getattr(args, 'road_scenario', None) != 'highway':
+        return None
+    if getattr(args, 'traffic_level', 'standard') != 'standard':
+        return None
+
+    best_length = float(best_length)
+    best_collision = float(best_collision)
+    best_success = float(best_success)
+    if best_length < 70.0 and best_collision > 0.45 and best_success <= 0.0:
+        return None
+
+    old_entropy = float(curriculum_state.get('entropy', args.entropy))
+    old_actor_lr = float(curriculum_state.get('actor_lr', args.lr))
+    old_critic_lr = float(curriculum_state.get('critic_lr', args.critic_lr))
+
+    curriculum_state['best_mean_length'] = max(curriculum_state.get('best_mean_length', 0.0), best_length)
+    curriculum_state['best_collision'] = min(curriculum_state.get('best_collision', 1.0), best_collision)
+    curriculum_state['stability_phase'] = True
+    curriculum_state['reanchor_pending'] = False
+    curriculum_state['noise_cap'] = 0.0
+    curriculum_state['improvement_streak'] = 0
+    curriculum_state['entropy'] = max(args.entropy_min, min(old_entropy, 0.03))
+    curriculum_state['actor_lr'] = max(6.0e-5, min(old_actor_lr, args.lr * 0.45))
+    curriculum_state['critic_lr'] = max(8.0e-5, min(old_critic_lr, args.critic_lr * 0.65))
+
+    return (
+        'resume_stability best_length %.4f, best_collision %.4f, '
+        'entropy %.4f -> %.4f, actor_lr %.6f -> %.6f, critic_lr %.6f -> %.6f'
+    ) % (
+        best_length,
+        best_collision,
+        old_entropy,
+        curriculum_state['entropy'],
+        old_actor_lr,
+        curriculum_state['actor_lr'],
+        old_critic_lr,
+        curriculum_state['critic_lr'],
+    )
+
+
 def run_validation_cycle(
     file_handle,
     train_epi_i,
+    total_env_steps,
     env,
     model,
     model_c,
@@ -373,7 +490,21 @@ def run_validation_cycle(
     last_val_best_lane_change,
     model_current_save_time,
 ):
-    val_metrics = evaluate_policy(env, model, val_num, mode='val')
+    val_vehicle_count = None
+    if args.road_scenario == 'highway':
+        val_vehicle_count = select_lane_vehicle_count(
+            args,
+            train_epi_i,
+            curriculum_state=curriculum_state,
+            allow_stage_mix=False,
+        )
+    val_metrics = evaluate_policy(
+        env,
+        model,
+        val_num,
+        mode='val',
+        vehicles_count=val_vehicle_count,
+    )
     dense_train_val_metrics = None
     if args.road_scenario == 'highway' and args.traffic_level == 'dense':
         dense_train_vehicle_count = select_lane_vehicle_count(
@@ -411,40 +542,33 @@ def run_validation_cycle(
         log_text(
             file_handle,
             'val_save',
-            '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
-                train_epi_i,
-                val_metrics['mean_return'],
-                val_metrics['collision_rate'],
-                val_metrics['mean_length'],
-                val_metrics['mean_lane_change'],
-                val_metrics['success_rate'],
-                val_metrics['mean_speed'],
-            ),
+            format_validation_metrics(val_metrics, train_epi_i),
+        )
+        log_text(
+            file_handle,
+            'val_save_t',
+            format_validation_metrics(val_metrics, train_epi_i, total_env_steps=total_env_steps),
+            onscreen=False,
         )
     log_text(
         file_handle,
         'val',
-        '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
-            train_epi_i,
-            val_metrics['mean_return'],
-            val_metrics['collision_rate'],
-            val_metrics['mean_length'],
-            val_metrics['mean_lane_change'],
-            val_metrics['success_rate'],
-            val_metrics['mean_speed'],
-        ),
+        format_validation_metrics(val_metrics, train_epi_i),
+    )
+    log_text(
+        file_handle,
+        'val_t',
+        format_validation_metrics(val_metrics, train_epi_i, total_env_steps=total_env_steps),
+        onscreen=False,
     )
     if dense_train_val_metrics is not None:
         log_text(
             file_handle,
             'traffic_val',
-            '%d, %2d, %6.4f, %8.4f, %6.4f, %8.4f' % (
+            '%d, %2d, %s' % (
                 train_epi_i,
                 dense_train_vehicle_count,
-                dense_train_val_metrics['collision_rate'],
-                dense_train_val_metrics['mean_length'],
-                dense_train_val_metrics['success_rate'],
-                dense_train_val_metrics['mean_speed'],
+                format_validation_metrics(dense_train_val_metrics, train_epi_i),
             ),
             onscreen=False,
         )
@@ -475,9 +599,10 @@ def run_validation_cycle(
     curriculum_message = update_curriculum(args, curriculum_state, curriculum_signal, val_metrics=val_metrics)
     if curriculum_message is not None:
         log_text(file_handle, 'curriculum', curriculum_message)
+    apply_curriculum_optimizer_state(model, model_c, curriculum_state, args)
     if (
         args.road_scenario == 'highway' and
-        args.traffic_level == 'dense' and
+        args.traffic_level in ['standard', 'dense'] and
         curriculum_state.get('reanchor_pending', False)
     ):
         best_actor_file = checkpoint_utils.resolve_checkpoint_file(exp_name + '_best_w_1')
@@ -491,7 +616,13 @@ def run_validation_cycle(
             rollout.reset()
             curriculum_state['reanchor_pending'] = False
             curriculum_state['noise_cap'] = 0.0
-            curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.12))
+            if args.traffic_level == 'standard':
+                curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.03))
+                curriculum_state['actor_lr'] = max(6.0e-5, min(curriculum_state.get('actor_lr', args.lr), args.lr * 0.45))
+                curriculum_state['critic_lr'] = max(8.0e-5, min(curriculum_state.get('critic_lr', args.critic_lr), args.critic_lr * 0.65))
+            else:
+                curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.12))
+            apply_curriculum_optimizer_state(model, model_c, curriculum_state, args)
             log_text(
                 file_handle,
                 'reanchor',
@@ -525,12 +656,25 @@ def build_experiment_name(args, model_str, seed):
     train_env_suffix = ''
     if int(getattr(args, 'train_envs', 1)) > 1:
         train_env_suffix = f'_te{int(args.train_envs)}'
+    reward_stage_suffix = ''
+    if getattr(args, 'road_scenario', None) == 'highway':
+        reward_stage_suffix = f'_hrs{getattr(args, "highway_reward_stage", "c_success")}'
+    entropy_warmup_suffix = ''
+    if (
+        float(getattr(args, 'entropy_warmup_scale', 1.0)) > 1.0 + 1e-8 and
+        int(getattr(args, 'entropy_warmup_episodes', 0)) > 0
+    ):
+        entropy_warmup_suffix = (
+            f'_ew{float(args.entropy_warmup_scale):.2f}'
+            f'e{int(args.entropy_warmup_episodes)}'
+        )
     return (
         f'{args.alg}_{args.task}_{args.model}_{model_str}_{args.optimizer}_'
         f'{args.lr:.6f}_{args.entropy:.2f}_{args.gamma:.5f}_{args.PPO_epochs}_{args.eps_clip:.4f}_'
         f'ro{args.rollout_steps}_mb{args.mini_batch_size}_lam{args.gae_lambda:.2f}_'
         f'rs{args.reward_scale:.2f}_gc{args.grad_clip:.2f}_{args.curriculum_mode}_'
-        f'road{args.road_scenario}_tf{args.traffic_level}{train_env_suffix}_seed{seed:02d}'
+        f'road{args.road_scenario}_tf{args.traffic_level}{reward_stage_suffix}{entropy_warmup_suffix}'
+        f'{train_env_suffix}_seed{seed:02d}'
     )
 
 
@@ -568,19 +712,17 @@ def maybe_load_warm_start(args, model, model_c):
 
 
 HIGHWAY_STANDARD_PROFILE = {
-    'lr': 2e-4,
-    'gamma': 0.995,
-    'entropy': 0.05,
-    'entropy_min': 0.01,
-    'PPO_epochs': 3,
-    'eps_clip': 0.10,
+    **STABLE_HIGHWAY_STANDARD_PPO,
     'train_envs': 4,
-    'rollout_steps': 2048,
-    'mini_batch_size': 256,
-    'gae_lambda': 0.95,
-    'grad_clip': 0.5,
-    'curriculum_mode': 'fixed',
-    'max_noise': 0.04,
+    'rollout_steps': 512,
+    'mini_batch_size': 128,
+    'curriculum_mode': 'adaptive',
+    'max_noise': 0.0,
+}
+
+PROFILE_OPTIONAL_EXPLORATION_KEYS = {
+    'entropy_warmup_scale',
+    'entropy_warmup_episodes',
 }
 
 
@@ -612,27 +754,25 @@ def apply_lane_stability_profile(args):
         # Keep the standard-highway profile explicit so it is not re-overridden
         # by multiple clamp passes below.
         for attr_name, target_value in HIGHWAY_STANDARD_PROFILE.items():
+            if attr_name in PROFILE_OPTIONAL_EXPLORATION_KEYS:
+                continue
             set_exact(attr_name, target_value)
         clamp_max('train_num', 2000)
         clamp_max('reward_scale', 0.90)
-        clamp_min('curriculum_clean_ratio', 0.90)
-        clamp_max('curriculum_noise_step', 0.008)
-        if args.curriculum_patience < 3:
-            args.curriculum_patience = 3
-            adjustments.append('curriculum_patience->3')
-        if args.curriculum_entropy_decay < 0.94:
-            args.curriculum_entropy_decay = 0.94
-            adjustments.append('curriculum_entropy_decay->0.94')
+        set_exact('curriculum_clean_ratio', 1.0)
+        set_exact('curriculum_noise_step', 0.0)
+        set_exact('curriculum_patience', 1)
+        set_exact('curriculum_entropy_decay', 0.97)
         return adjustments
 
-    clamp_max('lr', 0.0005)
+    clamp_max('lr', 3.0e-4)
     clamp_min('gamma', 0.995)
-    clamp_max('entropy', 2.0)
+    clamp_max('entropy', 0.03)
     clamp_max('PPO_epochs', 4)
-    clamp_max('eps_clip', 0.15)
+    clamp_max('eps_clip', 0.20)
     clamp_min('rollout_steps', 512)
     clamp_min('mini_batch_size', 128)
-    clamp_min('gae_lambda', 0.97)
+    clamp_min('gae_lambda', 0.95)
     clamp_max('grad_clip', 0.5)
     clamp_min('curriculum_clean_ratio', 0.8)
     clamp_max('max_noise', 0.08)
@@ -640,25 +780,20 @@ def apply_lane_stability_profile(args):
 
     if args.road_scenario == 'highway':
         lr_cap = {
-            'light': 0.00045,
-            'dense': 0.00035,
+            'light': 2.5e-4,
+            'dense': 2.0e-4,
         }
         gamma_floor = {
             'light': 0.996,
-            # 【方案C-dense】dense场景同样提升到0.998，强化高拥堵下的长期存活价值
             'dense': 0.998,
         }
-        entropy_floor = {
-            'light': 0.22,
-            'dense': 0.18,
-        }
         entropy_cap = {
-            'light': 0.90,
-            'dense': 0.30,
+            'light': 0.025,
+            'dense': 0.020,
         }
-        entropy_min_floor = {
-            'light': 0.08,
-            'dense': 0.05,
+        entropy_min_cap = {
+            'light': 0.005,
+            'dense': 0.004,
         }
         rollout_floor = {
             'light': 640,
@@ -685,38 +820,37 @@ def apply_lane_stability_profile(args):
         }
 
         if traffic_level == 'dense':
-            clamp_max('lr', 0.00032)
+            clamp_max('lr', 2.0e-4)
         else:
-            clamp_max('lr', lr_cap.get(traffic_level, 0.00040))
+            clamp_max('lr', lr_cap.get(traffic_level, 2.5e-4))
         clamp_min('gamma', gamma_floor.get(traffic_level, 0.996))
-        clamp_min('entropy', entropy_floor.get(traffic_level, 0.28))
-        clamp_max('entropy', entropy_cap.get(traffic_level, 0.75))
-        clamp_min('entropy_min', entropy_min_floor.get(traffic_level, 0.10))
+        clamp_max('entropy', entropy_cap.get(traffic_level, 0.02))
+        clamp_max('entropy_min', entropy_min_cap.get(traffic_level, 0.005))
         clamp_max('PPO_epochs', 4)
-        clamp_max('eps_clip', 0.12)
+        clamp_max('eps_clip', 0.20)
         clamp_min('rollout_steps', rollout_floor.get(traffic_level, 768))
         clamp_min('mini_batch_size', mini_batch_floor.get(traffic_level, 192))
         if traffic_level == 'dense':
-            clamp_min('gae_lambda', 0.95)  # 【方案C-dense】dense场景同步提升GAE lambda，增强长期优势估计
+            clamp_min('gae_lambda', 0.95)
         else:
-            clamp_min('gae_lambda', 0.98)
-        clamp_max('reward_scale', 0.90)
-        clamp_max('grad_clip', 0.40)
+            clamp_min('gae_lambda', 0.95)
+        clamp_max('reward_scale', 0.80)
+        clamp_max('grad_clip', 0.50)
         clamp_min('curriculum_clean_ratio', clean_ratio_floor.get(traffic_level, 0.90))
         clamp_max('max_noise', max_noise_cap.get(traffic_level, 0.04))
         clamp_max('curriculum_noise_step', noise_step_cap.get(traffic_level, 0.008))
         if args.curriculum_patience < 3:
             args.curriculum_patience = 3
             adjustments.append('curriculum_patience->3')
-        if args.curriculum_entropy_decay < 0.94:
-            args.curriculum_entropy_decay = 0.94
-            adjustments.append('curriculum_entropy_decay->0.94')
+        if args.curriculum_entropy_decay < 0.97:
+            args.curriculum_entropy_decay = 0.97
+            adjustments.append('curriculum_entropy_decay->0.97')
         if traffic_level == 'dense' and args.curriculum_patience < 4:
             args.curriculum_patience = 4
             adjustments.append('curriculum_patience->4')
-        if traffic_level == 'dense' and args.curriculum_entropy_decay < 0.95:
-            args.curriculum_entropy_decay = 0.95
-            adjustments.append('curriculum_entropy_decay->0.95')
+        if traffic_level == 'dense' and args.curriculum_entropy_decay < 0.98:
+            args.curriculum_entropy_decay = 0.98
+            adjustments.append('curriculum_entropy_decay->0.98')
         if traffic_level == 'dense':
             clamp_max('train_num', 2000)
         elif args.train_num < train_num_floor.get(traffic_level, 3600):
@@ -728,7 +862,7 @@ def apply_lane_stability_profile(args):
 
     if args.road_scenario == 'merge':
         clamp_max('train_num', 2000)
-        clamp_max('entropy', 0.8)
+        clamp_max('entropy', 0.05)
         clamp_max('entropy_min', 0.05)
         clamp_min('curriculum_clean_ratio', 1.0)
         clamp_max('max_noise', 0.0)
@@ -787,18 +921,18 @@ def select_lane_vehicle_count(args, train_epi_i, curriculum_state=None, allow_st
         return 40
     if getattr(args, 'road_scenario', None) == 'highway':
         traffic_target = {
-            'light': 40,
-            'standard': 48,
+            'light': 28,
+            'standard': 10,
             'dense': 72,
         }
         traffic_start = {
-            'light': 28,
-            'standard': 32,
+            'light': 16,
+            'standard': 10,
             'dense': 48,
         }
         curriculum_span = {
-            'light': 160,
-            'standard': 280,
+            'light': 120,
+            'standard': 1,
             'dense': 520,
         }
         traffic_level = getattr(args, 'traffic_level', 'standard')
@@ -832,12 +966,29 @@ def select_lane_vehicle_count(args, train_epi_i, curriculum_state=None, allow_st
 
 
 def init_curriculum(args):
+    initial_curriculum_entropy = scheduled_entropy(
+        initial_entropy=args.entropy,
+        entropy_min=args.entropy_min,
+        entropy_decay=args.entropy_decay,
+        episode_index=0,
+        entropy_warmup_scale=getattr(args, 'entropy_warmup_scale', 1.0),
+        entropy_warmup_episodes=getattr(args, 'entropy_warmup_episodes', 0),
+    )
     curriculum_state = {
         'noise_cap': 0.0,
-        'entropy': args.entropy,
+        'entropy': initial_curriculum_entropy,
         'best_val_return': -10000.0,
         'improvement_streak': 0,
+        'actor_lr': args.lr,
+        'critic_lr': args.critic_lr,
     }
+    if getattr(args, 'road_scenario', None) == 'highway' and getattr(args, 'traffic_level', 'standard') == 'standard':
+        curriculum_state.update({
+            'best_mean_length': 0.0,
+            'best_collision': 1.0,
+            'stability_phase': False,
+            'reanchor_pending': False,
+        })
     if getattr(args, 'road_scenario', None) == 'highway' and getattr(args, 'traffic_level', 'standard') == 'dense':
         curriculum_state.update({
             'best_mean_length': 0.0,
@@ -856,13 +1007,29 @@ def init_curriculum(args):
 
 
 def select_curriculum_settings(args, curriculum_state, train_epi_i):
+    scheduled_entropy_value = scheduled_entropy(
+        initial_entropy=args.entropy,
+        entropy_min=args.entropy_min,
+        entropy_decay=args.entropy_decay,
+        episode_index=train_epi_i,
+        entropy_warmup_scale=getattr(args, 'entropy_warmup_scale', 1.0),
+        entropy_warmup_episodes=getattr(args, 'entropy_warmup_episodes', 0),
+    )
     if args.curriculum_mode == 'fixed':
         progress = train_epi_i / max(1, args.train_num - 1)
         noise_cap = min(args.max_noise, args.max_noise * progress)
-        entropy_value = max(args.entropy_min, args.entropy * (0.998 ** train_epi_i))
+        entropy_value = scheduled_entropy_value
     else:
         noise_cap = curriculum_state['noise_cap']
-        entropy_value = curriculum_state['entropy']
+        entropy_value = scheduled_entropy(
+            initial_entropy=args.entropy,
+            entropy_min=args.entropy_min,
+            entropy_decay=args.entropy_decay,
+            episode_index=train_epi_i,
+            adaptive_entropy=curriculum_state['entropy'],
+            entropy_warmup_scale=getattr(args, 'entropy_warmup_scale', 1.0),
+            entropy_warmup_episodes=getattr(args, 'entropy_warmup_episodes', 0),
+        )
     use_noise = noise_cap > 0 and random.random() > args.curriculum_clean_ratio
     episode_noise = noise_cap if use_noise else 0.0
     return entropy_value, episode_noise, noise_cap
@@ -1033,10 +1200,103 @@ def update_curriculum(args, curriculum_state, val_return, val_metrics=None):
     if args.curriculum_mode != 'adaptive':
         return None
 
+    standard_highway = (
+        getattr(args, 'road_scenario', None) == 'highway' and
+        getattr(args, 'traffic_level', 'standard') == 'standard'
+    )
     dense_highway = (
         getattr(args, 'road_scenario', None) == 'highway' and
         getattr(args, 'traffic_level', 'standard') == 'dense'
     )
+    if standard_highway and val_metrics is not None:
+        mean_length = float(val_metrics.get('mean_length', 0.0))
+        collision_rate = float(val_metrics.get('collision_rate', 1.0))
+        success_rate = float(val_metrics.get('success_rate', 0.0))
+        current_entropy = float(curriculum_state.get('entropy', args.entropy))
+        current_actor_lr = float(curriculum_state.get('actor_lr', args.lr))
+        current_critic_lr = float(curriculum_state.get('critic_lr', args.critic_lr))
+        curriculum_state['best_mean_length'] = max(curriculum_state.get('best_mean_length', 0.0), mean_length)
+        curriculum_state['best_collision'] = min(curriculum_state.get('best_collision', 1.0), collision_rate)
+
+        if (
+            not curriculum_state.get('stability_phase', False) and
+            (
+                mean_length >= 70.0 or
+                collision_rate <= 0.45 or
+                success_rate >= 0.05
+            )
+        ):
+            curriculum_state['stability_phase'] = True
+            curriculum_state['noise_cap'] = 0.0
+            curriculum_state['entropy'] = max(args.entropy_min, min(current_entropy, 0.035))
+            curriculum_state['actor_lr'] = max(7.5e-5, min(current_actor_lr, args.lr * 0.55))
+            curriculum_state['critic_lr'] = max(1.0e-4, min(current_critic_lr, args.critic_lr * 0.75))
+            curriculum_state['improvement_streak'] = 0
+            curriculum_state['reanchor_pending'] = False
+            return (
+                'standard_stability_on length %.4f, collision %.4f, '
+                'entropy %.4f -> %.4f, actor_lr %.6f -> %.6f, critic_lr %.6f -> %.6f'
+            ) % (
+                mean_length,
+                collision_rate,
+                current_entropy,
+                curriculum_state['entropy'],
+                current_actor_lr,
+                curriculum_state['actor_lr'],
+                current_critic_lr,
+                curriculum_state['critic_lr'],
+            )
+
+        if curriculum_state.get('stability_phase', False):
+            old_entropy = float(curriculum_state['entropy'])
+            old_actor_lr = float(curriculum_state['actor_lr'])
+            old_critic_lr = float(curriculum_state['critic_lr'])
+            curriculum_state['noise_cap'] = 0.0
+            healthy = (
+                mean_length >= max(48.0, 0.68 * curriculum_state['best_mean_length']) or
+                collision_rate <= min(0.55, curriculum_state['best_collision'] + 0.18) or
+                success_rate >= 0.05
+            )
+            if healthy:
+                curriculum_state['entropy'] = max(args.entropy_min, curriculum_state['entropy'] * 0.90)
+                curriculum_state['actor_lr'] = max(6.0e-5, curriculum_state['actor_lr'] * 0.92)
+                curriculum_state['critic_lr'] = max(8.0e-5, curriculum_state['critic_lr'] * 0.94)
+            else:
+                curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.03))
+                curriculum_state['actor_lr'] = max(6.0e-5, min(curriculum_state['actor_lr'], args.lr * 0.45))
+                curriculum_state['critic_lr'] = max(8.0e-5, min(curriculum_state['critic_lr'], args.critic_lr * 0.65))
+            collapse = (
+                curriculum_state['best_mean_length'] >= 80.0 and
+                mean_length < max(22.0, 0.42 * curriculum_state['best_mean_length']) and
+                collision_rate >= min(1.0, curriculum_state['best_collision'] + 0.30)
+            )
+            curriculum_state['reanchor_pending'] = bool(collapse)
+            curriculum_state['improvement_streak'] = 0
+            if collapse:
+                return (
+                    'standard_reanchor_pending best_length %.4f current_length %.4f collision %.4f'
+                ) % (
+                    curriculum_state['best_mean_length'],
+                    mean_length,
+                    collision_rate,
+                )
+            if (
+                abs(old_entropy - curriculum_state['entropy']) > 1e-8 or
+                abs(old_actor_lr - curriculum_state['actor_lr']) > 1e-8 or
+                abs(old_critic_lr - curriculum_state['critic_lr']) > 1e-8
+            ):
+                return (
+                    'standard_stability entropy %.4f -> %.4f, actor_lr %.6f -> %.6f, critic_lr %.6f -> %.6f'
+                ) % (
+                    old_entropy,
+                    curriculum_state['entropy'],
+                    old_actor_lr,
+                    curriculum_state['actor_lr'],
+                    old_critic_lr,
+                    curriculum_state['critic_lr'],
+                )
+            return None
+
     if dense_highway and val_metrics is not None:
         mean_length = float(val_metrics.get('mean_length', 0.0))
         collision_rate = float(val_metrics.get('collision_rate', 1.0))
@@ -1156,6 +1416,14 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
         'collision_rate': 0.0,
         'mean_lane_change': 0.0,
         'success_rate': 0.0,
+        'timeout_rate': 0.0,
+        'offroad_rate': 0.0,
+        'low_speed_abort_rate': 0.0,
+        'scenario_complete_low_speed_rate': 0.0,
+        'other_terminal_rate': 0.0,
+        'mean_progress': 0.0,
+        'mean_final_progress': 0.0,
+        'termination_reason_distribution': '',
     }
     returns = []
     lengths = []
@@ -1163,6 +1431,13 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
     collisions = []
     lane_changes = []
     successes = []
+    timeouts = []
+    offroads = []
+    low_speed_aborts = []
+    scenario_complete_low_speed = []
+    other_terminals = []
+    final_progresses = []
+    termination_reason_counter = {}
     with torch.no_grad():
         for _ in range(episode_num):
             if mode == 'val':
@@ -1185,13 +1460,113 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
             collisions.append(1.0 if env.collision_count > 0 else 0.0)
             lane_changes.append(env.lane_change_count)
             successes.append(env.episode_success())
+            episode_summary = env.get_episode_summary()
+            timeouts.append(float(episode_summary['timeout_rate']))
+            offroads.append(float(episode_summary['offroad_rate']))
+            low_speed_aborts.append(float(episode_summary['low_speed_abort_rate']))
+            scenario_complete_low_speed.append(float(episode_summary['scenario_complete_low_speed_rate']))
+            other_terminals.append(float(episode_summary['other_terminal_rate']))
+            final_progresses.append(float(episode_summary['final_progress']))
+            termination_reason = episode_summary['termination_reason']
+            termination_reason_counter[termination_reason] = termination_reason_counter.get(termination_reason, 0) + 1
     metrics['mean_return'] = float(np.mean(returns))
     metrics['mean_length'] = float(np.mean(lengths))
     metrics['mean_speed'] = float(np.mean(speeds))
     metrics['collision_rate'] = float(np.mean(collisions))
     metrics['mean_lane_change'] = float(np.mean(lane_changes))
     metrics['success_rate'] = float(np.mean(successes))
+    metrics['timeout_rate'] = float(np.mean(timeouts))
+    metrics['offroad_rate'] = float(np.mean(offroads))
+    metrics['low_speed_abort_rate'] = float(np.mean(low_speed_aborts))
+    metrics['scenario_complete_low_speed_rate'] = float(np.mean(scenario_complete_low_speed))
+    metrics['other_terminal_rate'] = float(np.mean(other_terminals))
+    metrics['mean_progress'] = float(np.mean(final_progresses))
+    metrics['mean_final_progress'] = float(np.mean(final_progresses))
+    reason_parts = []
+    for reason_name in sorted(termination_reason_counter.keys()):
+        reason_parts.append(f'{reason_name}:{termination_reason_counter[reason_name]}/{episode_num}')
+    metrics['termination_reason_distribution'] = '|'.join(reason_parts)
     return metrics
+
+
+def format_validation_metrics(metrics, episode_index, total_env_steps=None):
+    if total_env_steps is None:
+        base_record = (
+            '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                episode_index,
+                metrics['mean_return'],
+                metrics['collision_rate'],
+                metrics['mean_length'],
+                metrics['mean_lane_change'],
+                metrics['success_rate'],
+                metrics['mean_speed'],
+            )
+        )
+    else:
+        base_record = (
+            '%d, %d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                episode_index,
+                int(total_env_steps),
+                metrics['mean_return'],
+                metrics['collision_rate'],
+                metrics['mean_length'],
+                metrics['mean_lane_change'],
+                metrics['success_rate'],
+                metrics['mean_speed'],
+            )
+        )
+    extra_record = (
+        ', timeout %6.4f, progress %6.4f, offroad %6.4f, low_speed_abort %6.4f, '
+        'complete_low_speed %6.4f, other_terminal %6.4f, term %s'
+    ) % (
+        metrics.get('timeout_rate', 0.0),
+        metrics.get('mean_final_progress', metrics.get('mean_progress', 0.0)),
+        metrics.get('offroad_rate', 0.0),
+        metrics.get('low_speed_abort_rate', 0.0),
+        metrics.get('scenario_complete_low_speed_rate', 0.0),
+        metrics.get('other_terminal_rate', 0.0),
+        metrics.get('termination_reason_distribution', ''),
+    )
+    return base_record + extra_record
+
+
+def format_train_episode_metrics(
+    episode_index,
+    total_env_steps,
+    episode_return,
+    step_num,
+    collision_flag,
+    lane_change_count,
+    episode_noise,
+    noise_cap,
+    entropy_value,
+    episode_vehicle_count,
+    episode_summary,
+):
+    base_record = (
+        '%d, %d, %8.6f, %4d, %4.2f, %4d, %5.3f, %5.3f, %5.3f, %2d' % (
+            episode_index,
+            int(total_env_steps),
+            episode_return,
+            step_num,
+            collision_flag,
+            lane_change_count,
+            episode_noise,
+            noise_cap,
+            entropy_value,
+            episode_vehicle_count,
+        )
+    )
+    extra_record = (
+        ', success %4.2f, timeout %4.2f, progress %5.3f, speed %6.3f, term %s'
+    ) % (
+        float(episode_summary.get('success_rate', 0.0)),
+        float(episode_summary.get('timeout_rate', 0.0)),
+        float(episode_summary.get('final_progress', episode_summary.get('route_progress', 0.0))),
+        float(episode_summary.get('mean_speed', 0.0)),
+        episode_summary.get('termination_reason', 'unknown'),
+    )
+    return base_record + extra_record
 
 
 def lane_validation_quality(metrics, traffic_level='standard'):
@@ -1270,14 +1645,7 @@ def is_better_lane_checkpoint(
 def update_policy(model, model_c, rollout, args, calculation_time_monitor=None):
     if rollout.size() == 0:
         return None
-        # ========================================================
-    # 🌟 终极防线 1：无论前面谁关了梯度，更新前强行开启全局计算图！
-    # ========================================================
     torch.set_grad_enabled(True)
-    
-    # ========================================================
-    # 🌟 终极防线 2：强制唤醒底层 SNN 权重的可导属性（防断链）
-    # ========================================================
     if hasattr(model, 'weight') and not model.weight.requires_grad:
         model.weight.requires_grad = True
     if hasattr(model, 'bias') and not model.bias.requires_grad:
@@ -1386,15 +1754,11 @@ if __name__ == '__main__':
         raise ValueError('Error in arguments')
 
     lane_profile_adjustments = apply_lane_stability_profile(args)
-    if args.task == 'gymip' and args.model == 'rwtaspk' and args.lane_profile == 'auto':
-        if args.road_scenario == 'merge':
-            val_freq, val_num = 10, 10
-        elif args.road_scenario == 'highway' and getattr(args, 'traffic_level', 'standard') == 'dense':
-            val_freq, val_num = 25, 10
-        else:
-            val_freq, val_num = 25, 5
-    else:
-        val_freq, val_num = 100, 10
+    if args.critic_lr <= 0:
+        args.critic_lr = args.lr
+    if args.entropy_decay <= 0:
+        args.entropy_decay = 1.0
+    val_interval_timesteps, val_num = resolve_validation_schedule(args)
 
     if args.cuda < 0:
         torch_device = torch.device('cpu')
@@ -1417,7 +1781,12 @@ if __name__ == '__main__':
 
     if args.task == 'gymip':
         import env_lane
-        env = env_lane.GymLane(dev=torch_device, road_scenario=args.road_scenario, traffic_level=args.traffic_level)
+        env = env_lane.GymLane(
+            dev=torch_device,
+            road_scenario=args.road_scenario,
+            traffic_level=args.traffic_level,
+            highway_reward_stage=args.highway_reward_stage,
+        )
         input_dimension, output_dimension = env.state_dimension, env.action_num
     else:
         raise ValueError('Only gymip/LANE is supported in this runner.')
@@ -1491,11 +1860,18 @@ if __name__ == '__main__':
         raise ValueError('Error in model name.')
 
     import model_critic
-    model_c = model_critic.Critic(input_size=input_dimension, output_size=output_dimension, dev=torch_device, small=True)
+    model_c = model_critic.Critic(
+        input_size=input_dimension,
+        output_size=output_dimension,
+        dev=torch_device,
+        small=True,
+        optimizer_learning_rate=args.critic_lr,
+    )
     if hasattr(model, 'set_grad_clip'):
         model.set_grad_clip(args.grad_clip)
     if hasattr(model_c, 'set_grad_clip'):
         model_c.set_grad_clip(args.grad_clip)
+    set_model_learning_rates(model, model_c, args.lr, args.critic_lr)
 
     checkpoint_utils.get_model_root(create=True, run_kind=run_kind)
     checkpoint_utils.get_log_root(create=True, run_kind=run_kind)
@@ -1503,6 +1879,48 @@ if __name__ == '__main__':
     model_current_save_time = time.time()
     log_text_flush_time = time.time()
     globals()['log_text_flush_time'] = log_text_flush_time
+
+    if args.eval_only:
+        eval_episode_index = max(0, args.train_num - 1)
+        eval_vehicle_count = None
+        if args.road_scenario == 'highway':
+            eval_vehicle_count = select_lane_vehicle_count(
+                args,
+                eval_episode_index,
+                curriculum_state=init_curriculum(args),
+                allow_stage_mix=False,
+            )
+        actor_eval_prefix = None
+        critic_eval_prefix = None
+        if args.warm_start_prefix:
+            actor_eval_prefix = checkpoint_utils.normalize_prefix(args.warm_start_prefix)
+            critic_eval_prefix = actor_prefix_to_critic_prefix(actor_eval_prefix)
+        elif args.eval_checkpoint == 'best':
+            actor_eval_prefix = EXP_NAME + '_best'
+            critic_eval_prefix = EXP_NAME + 'critic_best'
+        else:
+            actor_eval_prefix = EXP_NAME + '_current'
+            critic_eval_prefix = EXP_NAME + 'critic_current'
+        model.load_model(actor_eval_prefix)
+        model_c.load_model(critic_eval_prefix)
+        eval_metrics = evaluate_policy(
+            env,
+            model,
+            max(1, int(args.eval_episodes)),
+            mode='val',
+            vehicles_count=eval_vehicle_count,
+        )
+        eval_log_filename = os.path.join(active_log_dir, 'eval_' + EXP_NAME + '.txt')
+        EvalFile = open(eval_log_filename, 'a')
+        log_text(EvalFile, 'eval_init', str(datetime.datetime.now()))
+        log_text(EvalFile, 'eval_args', str(args), onscreen=False)
+        log_text(EvalFile, 'eval_checkpoint', actor_eval_prefix)
+        log_text(EvalFile, 'eval', format_validation_metrics(eval_metrics, eval_episode_index))
+        log_text(EvalFile, 'eval_t', format_validation_metrics(eval_metrics, eval_episode_index, total_env_steps=0), onscreen=False)
+        log_text(EvalFile, 'finish', str(datetime.datetime.now()))
+        EvalFile.flush()
+        EvalFile.close()
+        raise SystemExit(0)
 
     log_filename = os.path.join(active_log_dir, 'log_' + EXP_NAME + '.txt')
     reload_data = os.path.exists(log_filename)
@@ -1513,14 +1931,37 @@ if __name__ == '__main__':
     if args.ignore_checkpoint:
         reload_data = False
 
-    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed, last_val_best_lane_change = 0, -10000.0, float('inf'), 0.0, 0.0, 0.0, 0.0
+    last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed, last_val_best_lane_change, total_env_steps = 0, -10000.0, float('inf'), 0.0, 0.0, 0.0, 0.0, 0
     warm_start_actor_prefix, warm_start_critic_prefix = None, None
     if reload_data:
-        last_train_epi_num, last_val_best, last_val_best_collision, last_val_best_length, last_val_best_success, last_val_best_speed, last_val_best_lane_change = reload_log_file(log_filename)
+        (
+            last_train_epi_num,
+            last_val_best,
+            last_val_best_collision,
+            last_val_best_length,
+            last_val_best_success,
+            last_val_best_speed,
+            last_val_best_lane_change,
+            total_env_steps,
+        ) = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
-        model.load_model(EXP_NAME + '_current')
-        model_c.load_model(EXP_NAME + 'critic_current')
+        resume_from_best = (
+            args.road_scenario == 'highway' and
+            getattr(args, 'traffic_level', 'standard') == 'standard' and
+            last_val_best_length >= 100.0 and
+            last_val_best_collision <= 0.10 and
+            os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_best_w_1')) and
+            os.path.exists(checkpoint_utils.resolve_checkpoint_file(EXP_NAME + 'critic_best_1'))
+        )
+        if resume_from_best:
+            model.load_model(EXP_NAME + '_best')
+            model_c.load_model(EXP_NAME + 'critic_best')
+            log_text(File, 'resume_model', 'best')
+        else:
+            model.load_model(EXP_NAME + '_current')
+            model_c.load_model(EXP_NAME + 'critic_current')
+            log_text(File, 'resume_model', 'current')
     else:
         File = open(log_filename, 'w')
         log_text(File, 'init', str(datetime.datetime.now()))
@@ -1544,10 +1985,22 @@ if __name__ == '__main__':
 
     calculation_time_monitor = TimeMonitor()
     curriculum_state = init_curriculum(args)
+    if reload_data:
+        resume_curriculum_message = seed_curriculum_from_resume(
+            args,
+            curriculum_state,
+            last_val_best_length,
+            last_val_best_collision,
+            last_val_best_success,
+        )
+        if resume_curriculum_message is not None:
+            log_text(File, 'curriculum', resume_curriculum_message)
+    apply_curriculum_optimizer_state(model, model_c, curriculum_state, args)
     rollout = RolloutBuffer(for_rwta=(args.model in ['rwtaprob', 'rwtaspk']))
     update_count = 0
     final_episode_index = args.train_num - 1
     train_env_count = max(1, int(getattr(args, 'train_envs', 1)))
+    next_validation_timestep = int(((max(0, total_env_steps) // val_interval_timesteps) + 1) * val_interval_timesteps)
 
     if train_env_count <= 1:
         for train_epi_i in range(last_train_epi_num + 1, args.train_num):
@@ -1591,6 +2044,7 @@ if __name__ == '__main__':
                     observation_next = next_state_clean
                 else:
                     observation_next = env._apply_observation_noise(next_state_clean, noise_level=episode_noise)
+                total_env_steps += 1
 
                 if args.model in ['rwtaprob', 'rwtaspk']:
                     rollout.add_transition(
@@ -1621,8 +2075,9 @@ if __name__ == '__main__':
             log_text(
                 File,
                 'train',
-                '%d, %8.6f, %4d, %4.2f, %4d, %5.3f, %5.3f, %5.3f, %2d' % (
+                format_train_episode_metrics(
                     train_epi_i,
+                    total_env_steps,
                     env.episode_return,
                     env.step_num,
                     float(env.collision_count > 0),
@@ -1631,168 +2086,82 @@ if __name__ == '__main__':
                     noise_cap,
                     entropy_value,
                     episode_vehicle_count,
+                    env.get_episode_summary(),
+                ),
+                onscreen=False,
+            )
+            log_text(
+                File,
+                'train_t',
+                format_train_episode_metrics(
+                    train_epi_i,
+                    total_env_steps,
+                    env.episode_return,
+                    env.step_num,
+                    float(env.collision_count > 0),
+                    env.lane_change_count,
+                    episode_noise,
+                    noise_cap,
+                    entropy_value,
+                    episode_vehicle_count,
+                    env.get_episode_summary(),
                 ),
                 onscreen=False,
             )
 
-            if rollout.size() >= args.rollout_steps:
-                update_stats = update_policy(model, model_c, rollout, args, calculation_time_monitor)
-                rollout.reset()
-                update_count += 1
-                log_text(
-                    File,
-                    'update',
-                    '%d, %4d, %4d, %8.6f, %8.6f' % (
-                        train_epi_i,
-                        update_count,
-                        update_stats['rollout_size'],
-                        update_stats['mean_return_target'],
-                        update_stats['mean_advantage'],
-                    ),
-                    onscreen=False,
-                )
-
-            if time.time() - model_current_save_time > 10:
-                model.save_model(EXP_NAME + '_current')
-                model_c.save_model(EXP_NAME + 'critic_current')
-                model_current_save_time = time.time()
-
-            if train_epi_i % val_freq == (val_freq - 1):
-                val_metrics = evaluate_policy(env, model, val_num, mode='val')
-                dense_train_val_metrics = None
-                if args.road_scenario == 'highway' and args.traffic_level == 'dense':
-                    dense_train_vehicle_count = select_lane_vehicle_count(
-                        args,
-                        train_epi_i,
-                        curriculum_state=curriculum_state,
-                        allow_stage_mix=False,
-                    )
-                    dense_train_val_metrics = evaluate_policy(
-                        env,
-                        model,
-                        max(4, min(6, val_num)),
-                        mode='val',
-                        vehicles_count=dense_train_vehicle_count,
-                    )
-                better_model = is_better_lane_checkpoint(
-                    val_metrics,
+            update_count = maybe_apply_rollout_update(
+                File,
+                train_epi_i,
+                model,
+                model_c,
+                rollout,
+                args,
+                calculation_time_monitor,
+                update_count,
+            )
+            model_current_save_time = maybe_save_current_models(
+                model,
+                model_c,
+                EXP_NAME,
+                model_current_save_time,
+            )
+            while total_env_steps >= next_validation_timestep:
+                (
                     last_val_best,
                     last_val_best_collision,
                     last_val_best_length,
                     last_val_best_success,
                     last_val_best_speed,
                     last_val_best_lane_change,
-                    traffic_level=args.traffic_level,
-                )
-                if better_model:
-                    model.save_model(EXP_NAME + '_best')
-                    model_c.save_model(EXP_NAME + 'critic_best')
-                    last_val_best = val_metrics['mean_return']
-                    last_val_best_collision = val_metrics['collision_rate']
-                    last_val_best_length = val_metrics['mean_length']
-                    last_val_best_success = val_metrics['success_rate']
-                    last_val_best_speed = val_metrics['mean_speed']
-                    last_val_best_lane_change = val_metrics['mean_lane_change']
-                    log_text(
-                        File,
-                        'val_save',
-                        '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
-                            train_epi_i,
-                            val_metrics['mean_return'],
-                            val_metrics['collision_rate'],
-                            val_metrics['mean_length'],
-                            val_metrics['mean_lane_change'],
-                            val_metrics['success_rate'],
-                            val_metrics['mean_speed'],
-                        ),
-                    )
-                log_text(
+                    model_current_save_time,
+                ) = run_validation_cycle(
                     File,
-                    'val',
-                    '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
-                        train_epi_i,
-                        val_metrics['mean_return'],
-                        val_metrics['collision_rate'],
-                        val_metrics['mean_length'],
-                        val_metrics['mean_lane_change'],
-                        val_metrics['success_rate'],
-                        val_metrics['mean_speed'],
-                    ),
+                    train_epi_i,
+                    total_env_steps,
+                    env,
+                    model,
+                    model_c,
+                    args,
+                    val_num,
+                    curriculum_state,
+                    EXP_NAME,
+                    rollout,
+                    last_val_best,
+                    last_val_best_collision,
+                    last_val_best_length,
+                    last_val_best_success,
+                    last_val_best_speed,
+                    last_val_best_lane_change,
+                    model_current_save_time,
                 )
-                if dense_train_val_metrics is not None:
-                    log_text(
-                        File,
-                        'traffic_val',
-                        '%d, %2d, %6.4f, %8.4f, %6.4f, %8.4f' % (
-                            train_epi_i,
-                            dense_train_vehicle_count,
-                            dense_train_val_metrics['collision_rate'],
-                            dense_train_val_metrics['mean_length'],
-                            dense_train_val_metrics['success_rate'],
-                            dense_train_val_metrics['mean_speed'],
-                        ),
-                        onscreen=False,
-                    )
-                    traffic_message = update_dense_highway_vehicle_curriculum(
-                        curriculum_state,
-                        dense_train_val_metrics,
-                        full_val_metrics=val_metrics,
-                    )
-                    if traffic_message is not None:
-                        log_text(File, 'traffic_curriculum', traffic_message)
-                if args.road_scenario == 'highway':
-                    curriculum_signal = (
-                        120.0 * val_metrics['success_rate']
-                        - 50.0 * val_metrics['collision_rate']
-                        + val_metrics['mean_speed']
-                        + 0.55 * val_metrics['mean_length']
-                        + 0.05 * val_metrics['mean_return']
-                    )
-                    if args.traffic_level == 'dense':
-                        curriculum_signal += 0.25 * val_metrics['mean_length']
-                else:
-                    curriculum_signal = (
-                        100.0 * val_metrics['success_rate']
-                        - 40.0 * val_metrics['collision_rate']
-                        + val_metrics['mean_speed']
-                        + 0.1 * val_metrics['mean_return']
-                    )
-                curriculum_message = update_curriculum(args, curriculum_state, curriculum_signal, val_metrics=val_metrics)
-                if curriculum_message is not None:
-                    log_text(File, 'curriculum', curriculum_message)
-                if (
-                    args.road_scenario == 'highway' and
-                    args.traffic_level == 'dense' and
-                    curriculum_state.get('reanchor_pending', False)
-                ):
-                    best_actor_file = checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_best_w_1')
-                    best_critic_file = checkpoint_utils.resolve_checkpoint_file(EXP_NAME + 'critic_best_1')
-                    if os.path.exists(best_actor_file) and os.path.exists(best_critic_file):
-                        model.load_model(EXP_NAME + '_best')
-                        model_c.load_model(EXP_NAME + 'critic_best')
-                        model.save_model(EXP_NAME + '_current')
-                        model_c.save_model(EXP_NAME + 'critic_current')
-                        model_current_save_time = time.time()
-                        rollout.reset()
-                        curriculum_state['reanchor_pending'] = False
-                        curriculum_state['noise_cap'] = 0.0
-                        curriculum_state['entropy'] = max(args.entropy_min, min(curriculum_state['entropy'], 0.16))
-                        log_text(
-                            File,
-                            'reanchor',
-                            '%d, best_length %8.4f, current_length %8.4f, collision %6.4f' % (
-                                train_epi_i,
-                                last_val_best_length,
-                                val_metrics['mean_length'],
-                                val_metrics['collision_rate'],
-                            ),
-                        )
+                next_validation_timestep += val_interval_timesteps
     else:
         log_text(File, 'parallel', f'train_envs {train_env_count}')
         train_collector = ParallelLaneCollector(
             num_envs=train_env_count,
             road_scenario=args.road_scenario,
             traffic_level=args.traffic_level,
+            highway_reward_stage=args.highway_reward_stage,
         )
         next_train_episode_index = last_train_epi_num + 1
         last_completed_episode_index = last_train_epi_num
@@ -1859,6 +2228,7 @@ if __name__ == '__main__':
                     slot_index: int(action_index_batch[batch_index].item())
                     for batch_index, slot_index in enumerate(ordered_slot_indices)
                 })
+                total_env_steps += len(ordered_slot_indices)
 
                 completed_episodes = []
                 for batch_index, slot_index in enumerate(ordered_slot_indices):
@@ -1917,8 +2287,9 @@ if __name__ == '__main__':
                         log_text(
                             File,
                             'train',
-                            '%d, %8.6f, %4d, %4.2f, %4d, %5.3f, %5.3f, %5.3f, %2d' % (
+                            format_train_episode_metrics(
                                 train_epi_i,
+                                total_env_steps,
                                 float(episode_summary.get('episode_return', 0.0)),
                                 int(episode_summary.get('step_num', 0)),
                                 float(episode_summary.get('collision_flag', 0.0)),
@@ -1927,6 +2298,25 @@ if __name__ == '__main__':
                                 slot_state['noise_cap'],
                                 slot_state['entropy_value'],
                                 slot_state['episode_vehicle_count'],
+                                episode_summary,
+                            ),
+                            onscreen=False,
+                        )
+                        log_text(
+                            File,
+                            'train_t',
+                            format_train_episode_metrics(
+                                train_epi_i,
+                                total_env_steps,
+                                float(episode_summary.get('episode_return', 0.0)),
+                                int(episode_summary.get('step_num', 0)),
+                                float(episode_summary.get('collision_flag', 0.0)),
+                                int(episode_summary.get('lane_change_count', 0)),
+                                slot_state['episode_noise'],
+                                slot_state['noise_cap'],
+                                slot_state['entropy_value'],
+                                slot_state['episode_vehicle_count'],
+                                episode_summary,
                             ),
                             onscreen=False,
                         )
@@ -1954,35 +2344,36 @@ if __name__ == '__main__':
                     model_current_save_time,
                 )
 
-                for train_epi_i in completed_episodes:
-                    if train_epi_i % val_freq == (val_freq - 1):
-                        (
-                            last_val_best,
-                            last_val_best_collision,
-                            last_val_best_length,
-                            last_val_best_success,
-                            last_val_best_speed,
-                            last_val_best_lane_change,
-                            model_current_save_time,
-                        ) = run_validation_cycle(
-                            File,
-                            train_epi_i,
-                            env,
-                            model,
-                            model_c,
-                            args,
-                            val_num,
-                            curriculum_state,
-                            EXP_NAME,
-                            rollout,
-                            last_val_best,
-                            last_val_best_collision,
-                            last_val_best_length,
-                            last_val_best_success,
-                            last_val_best_speed,
-                            last_val_best_lane_change,
-                            model_current_save_time,
-                        )
+                while completed_episodes and total_env_steps >= next_validation_timestep:
+                    (
+                        last_val_best,
+                        last_val_best_collision,
+                        last_val_best_length,
+                        last_val_best_success,
+                        last_val_best_speed,
+                        last_val_best_lane_change,
+                        model_current_save_time,
+                    ) = run_validation_cycle(
+                        File,
+                        max(completed_episodes),
+                        total_env_steps,
+                        env,
+                        model,
+                        model_c,
+                        args,
+                        val_num,
+                        curriculum_state,
+                        EXP_NAME,
+                        rollout,
+                        last_val_best,
+                        last_val_best_collision,
+                        last_val_best_length,
+                        last_val_best_success,
+                        last_val_best_speed,
+                        last_val_best_lane_change,
+                        model_current_save_time,
+                    )
+                    next_validation_timestep += val_interval_timesteps
         finally:
             train_collector.close()
 
@@ -2004,6 +2395,43 @@ if __name__ == '__main__':
 
     model.save_model(EXP_NAME + '_current')
     model_c.save_model(EXP_NAME + 'critic_current')
+    best_actor_file = checkpoint_utils.resolve_checkpoint_file(EXP_NAME + '_best_w_1')
+    best_critic_file = checkpoint_utils.resolve_checkpoint_file(EXP_NAME + 'critic_best_1')
+    if os.path.exists(best_actor_file) and os.path.exists(best_critic_file):
+        model.load_model(EXP_NAME + '_best')
+        model_c.load_model(EXP_NAME + 'critic_best')
+        final_eval_vehicle_count = None
+        if args.road_scenario == 'highway':
+            final_eval_vehicle_count = select_lane_vehicle_count(
+                args,
+                final_episode_index,
+                curriculum_state=curriculum_state,
+                allow_stage_mix=False,
+            )
+        final_best_metrics = evaluate_policy(
+            env,
+            model,
+            max(1, int(args.final_eval_episodes)),
+            mode='val',
+            vehicles_count=final_eval_vehicle_count,
+        )
+        log_text(File, 'final_best_eval', format_validation_metrics(final_best_metrics, final_episode_index))
+        log_text(
+            File,
+            'final_best_eval_t',
+            format_validation_metrics(final_best_metrics, final_episode_index, total_env_steps=total_env_steps),
+            onscreen=False,
+        )
+    log_text(
+        File,
+        'summary',
+        'total_env_steps,%d,val_interval_timesteps,%d,val_episodes,%d' % (
+            int(total_env_steps),
+            int(val_interval_timesteps),
+            int(val_num),
+        ),
+        onscreen=False,
+    )
     cleanup_summary = checkpoint_utils.cleanup_final_best_checkpoints(
         actor_best_prefix=EXP_NAME + '_best',
         actor_current_prefix=EXP_NAME + '_current',

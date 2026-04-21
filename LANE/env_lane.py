@@ -74,12 +74,12 @@ TRAFFIC_VEHICLE_COUNT = {
 
 HIGHWAY_TRAFFIC_ENV_PROFILE = {
     'light': {
-        'vehicles_density': 0.90,
-        'ego_spacing': 2.4,
+        'vehicles_density': 0.78,
+        'ego_spacing': 2.8,
     },
     'standard': {
-        'vehicles_density': 0.95,
-        'ego_spacing': 2.30,
+        'vehicles_density': 0.60,
+        'ego_spacing': 3.6,
     },
     'dense': {
         'vehicles_density': 1.35,
@@ -88,8 +88,8 @@ HIGHWAY_TRAFFIC_ENV_PROFILE = {
 }
 
 HIGHWAY_LOCAL_CLEAR_ZONE_RADIUS = {
-    'light': 18.0,
-    'standard': 14.0,
+    'light': 22.0,
+    'standard': 30.0,
     'dense': 15.0,
 }
 
@@ -165,25 +165,23 @@ HIGHWAY_OVERTAKE_WINDOW_PROFILE = {
     },
     'standard': {
         'ego_target_speed_bonus': 2.0,
-        'current_clear_rear_gap': 16.0,
-        'current_clear_front_gap': 58.0,
-        'left_clear_rear_gap': 30.0,
-        'left_clear_front_gap': 88.0,
-        'right_clear_rear_gap': 16.0,
-        'right_clear_front_gap': 42.0,
+        'current_clear_rear_gap': 20.0,
+        'current_clear_front_gap': 78.0,
+        'left_clear_rear_gap': 34.0,
+        'left_clear_front_gap': 104.0,
+        'right_clear_rear_gap': 18.0,
+        'right_clear_front_gap': 52.0,
         'current_lane_spawns': [
-            {'offset': 18.0, 'speed_delta': 8.0, 'target_speed_delta': 7.0, 'min_gap': 16.0},
-            {'offset': 38.0, 'speed_delta': 5.4, 'target_speed_delta': 4.4, 'min_gap': 16.0},
-            {'offset': 72.0, 'speed_delta': 2.6, 'target_speed_delta': 2.0, 'min_gap': 18.0},
+            {'offset': 28.0, 'speed_delta': 6.6, 'target_speed_delta': 5.8, 'min_gap': 18.0},
+            {'offset': 60.0, 'speed_delta': 4.0, 'target_speed_delta': 3.4, 'min_gap': 18.0},
+            {'offset': 96.0, 'speed_delta': 1.8, 'target_speed_delta': 1.2, 'min_gap': 20.0},
         ],
         'left_lane_spawns': [
-            {'offset': -34.0, 'speed_delta': 0.5, 'target_speed_delta': -0.2, 'min_gap': 18.0},
-            {'offset': 66.0, 'speed_delta': -0.2, 'target_speed_delta': -0.8, 'min_gap': 18.0},
-            {'offset': 108.0, 'speed_delta': 0.8, 'target_speed_delta': 0.2, 'min_gap': 20.0},
+            {'offset': -42.0, 'speed_delta': 0.4, 'target_speed_delta': -0.2, 'min_gap': 20.0},
+            {'offset': 82.0, 'speed_delta': -0.1, 'target_speed_delta': -0.6, 'min_gap': 20.0},
         ],
         'right_lane_spawns': [
-            {'offset': 24.0, 'speed_delta': 4.8, 'target_speed_delta': 4.0, 'min_gap': 16.0},
-            {'offset': 58.0, 'speed_delta': 3.2, 'target_speed_delta': 2.6, 'min_gap': 16.0},
+            {'offset': 34.0, 'speed_delta': 3.8, 'target_speed_delta': 3.0, 'min_gap': 18.0},
         ],
     },
     'dense': {
@@ -271,86 +269,38 @@ HIGHWAY_TRAINING_SIMULATION_FREQUENCY = {
     'dense': 18,
 }
 
-HIGHWAY_REWARD_PROFILE = {
+HIGHWAY_EFFICIENCY_REWARD_PROFILE = {
     'light': {
-        'lane_change_penalty_scale': 0.004,
-        'repeated_lane_change_scale': 0.025,
-        'zigzag_penalty_scale': 0.06,
-        'survival_bonus_scale': 0.03,
-        'speed_bonus_scale': 0.48,
-        'lane_bonus_scale': 0.04,
-        'raw_reward_scale': 1.28,
-        'offroad_penalty_scale': 2.00,
-        'low_speed_penalty_scale': 0.45,
-        'stop_penalty_scale': 0.35,
-        'crash_penalty_scale': 10.0,
-        'cruise_bonus_scale': 0.22,
-        'clear_road_bonus_scale': 0.18,
-        'overtake_bonus_scale': 1.50,
-        'blocked_penalty_scale': 0.32,
-        'beneficial_lane_change_bonus_scale': 0.45,
-        'missed_lane_change_penalty_scale': 0.22,
-        'ineffective_lane_change_penalty_scale': 0.14,
-        'keep_right_return_bonus_scale': 0.10,
-        'momentum_bonus_scale': 0.12,
-        'under_cruise_penalty_scale': 0.12,
-        'blocked_accelerate_penalty_scale': 0.12,
-        'progress_lane_change_bonus_scale': 0.35,
+        'progress_scale': 0.55,
+        'target_speed_scale': 0.75,
+        'under_speed_penalty_scale': 0.45,
+        'success_bonus': 42.0,
+        'completion_bonus': 5.0,
+        'timeout_penalty': 24.0,
     },
     'standard': {
-        'lane_change_penalty_scale': 0.003,
-        'repeated_lane_change_scale': 0.020,
-        'zigzag_penalty_scale': 0.06,
-        'survival_bonus_scale': 0.03,
-        'speed_bonus_scale': 0.56,
-        'lane_bonus_scale': 0.03,
-        'raw_reward_scale': 1.28,
-        'offroad_penalty_scale': 2.20,
-        'low_speed_penalty_scale': 0.52,
-        'stop_penalty_scale': 0.40,
-        'crash_penalty_scale': 8.5,
-        'cruise_bonus_scale': 0.24,
-        'clear_road_bonus_scale': 0.22,
-        'overtake_bonus_scale': 1.85,
-        'blocked_penalty_scale': 0.45,
-        'beneficial_lane_change_bonus_scale': 0.65,
-        'missed_lane_change_penalty_scale': 0.34,
-        'ineffective_lane_change_penalty_scale': 0.18,
-        'keep_right_return_bonus_scale': 0.14,
-        'momentum_bonus_scale': 0.16,
-        'under_cruise_penalty_scale': 0.16,
-        'blocked_accelerate_penalty_scale': 0.18,
-        'progress_lane_change_bonus_scale': 0.35,
+        'progress_scale': 0.72,
+        'target_speed_scale': 0.95,
+        'under_speed_penalty_scale': 0.60,
+        'success_bonus': 52.0,
+        'completion_bonus': 6.0,
+        'timeout_penalty': 32.0,
     },
     'dense': {
-        'lane_change_penalty_scale': 0.0022,
-        'repeated_lane_change_scale': 0.030,
-        'zigzag_penalty_scale': 0.060,
-        'survival_bonus_scale': 0.10,
-        'speed_bonus_scale': 0.56,
-        'lane_bonus_scale': 0.02,
-        'raw_reward_scale': 1.24,
-        'offroad_penalty_scale': 2.20,
-        'low_speed_penalty_scale': 0.52,
-        'stop_penalty_scale': 0.38,
-        'crash_penalty_scale': 14.0,
-        'cruise_bonus_scale': 0.24,
-        'clear_road_bonus_scale': 0.18,
-        'overtake_bonus_scale': 1.75,
-        'blocked_penalty_scale': 0.48,
-        'beneficial_lane_change_bonus_scale': 0.74,
-        'missed_lane_change_penalty_scale': 0.22,
-        'ineffective_lane_change_penalty_scale': 0.16,
-        'keep_right_return_bonus_scale': 0.05,
-        'momentum_bonus_scale': 0.18,
-        'under_cruise_penalty_scale': 0.16,
-        'blocked_accelerate_penalty_scale': 0.40,
-        'progress_lane_change_bonus_scale': 0.28,
-        'risky_lane_change_penalty_scale': 0.30,
-        'beneficial_post_gap_ratio': 0.44,
-        'safe_progress_post_gap_ratio': 0.34,
-        'post_overtake_stability_scale': 0.40,
+        'progress_scale': 0.64,
+        'target_speed_scale': 0.85,
+        'under_speed_penalty_scale': 0.72,
+        'success_bonus': 46.0,
+        'completion_bonus': 5.5,
+        'timeout_penalty': 28.0,
     },
+}
+
+HIGHWAY_REWARD_STAGE_ORDER = {
+    'baseline': 0,
+    'a_timeout': 1,
+    'b_progress_speed': 2,
+    'c_success': 3,
 }
 
 VIDEO_LAYOUT_SCENARIOS = [
@@ -441,7 +391,13 @@ ROUNDABOUT_MIN_ACTIVE_TRAFFIC = 3
 
 
 class GymLane:
-    def __init__(self, dev=torch.device('cpu'), road_scenario='highway', traffic_level='standard'):
+    def __init__(
+        self,
+        dev=torch.device('cpu'),
+        road_scenario='highway',
+        traffic_level='standard',
+        highway_reward_stage='c_success',
+    ):
         self.state_dimension = 25
         self.action_num = 5
         self.dev = dev
@@ -457,6 +413,11 @@ class GymLane:
         self.scenario_supports_vehicles_count = False
         self.base_env_config = {}
         self.traffic_level = traffic_level if traffic_level in TRAFFIC_VEHICLE_COUNT else 'standard'
+        self.highway_reward_stage = (
+            highway_reward_stage
+            if highway_reward_stage in HIGHWAY_REWARD_STAGE_ORDER
+            else 'c_success'
+        )
         self._ensure_video_root_scaffold()
 
         self.mode = None
@@ -474,6 +435,7 @@ class GymLane:
         self.assist_override_count = 0
         self.last_step_info = {}
         self.lane_change_action_ids = {0, 2}
+        self.idle_action_id = 1
         self.left_lane_action_id = 0
         self.right_lane_action_id = 2
         self.faster_action_id = 3
@@ -613,11 +575,26 @@ class GymLane:
             HIGHWAY_OVERTAKE_WINDOW_PROFILE['standard'],
         )
 
-    def _get_highway_reward_profile(self):
-        return HIGHWAY_REWARD_PROFILE.get(
+    def _get_highway_efficiency_reward_profile(self):
+        return HIGHWAY_EFFICIENCY_REWARD_PROFILE.get(
             self.traffic_level,
-            HIGHWAY_REWARD_PROFILE['standard'],
+            HIGHWAY_EFFICIENCY_REWARD_PROFILE['standard'],
         )
+
+    def _highway_reward_stage_at_least(self, stage_name):
+        current_stage = HIGHWAY_REWARD_STAGE_ORDER.get(self.highway_reward_stage, 0)
+        required_stage = HIGHWAY_REWARD_STAGE_ORDER.get(stage_name, 0)
+        return current_stage >= required_stage
+
+    def _open_env(self, render_mode=None, vehicles_count=None):
+        if self.env is not None:
+            self.env.close()
+        self.env = gym.make(self.env_id, render_mode=render_mode)
+        self._configure_env(vehicles_count=vehicles_count)
+
+    def _finalize_env_reset(self, seed=None):
+        self._refresh_action_metadata()
+        self._reset_episode_trackers(episode_seed=seed)
 
     def _get_highway_assist_profile(self):
         return HIGHWAY_ASSIST_PROFILE.get(
@@ -682,6 +659,7 @@ class GymLane:
         action_type = getattr(self.env.unwrapped, 'action_type', None)
         if action_type is None or not hasattr(action_type, 'actions_indexes'):
             self.lane_change_action_ids = {0, 2}
+            self.idle_action_id = 1
             self.left_lane_action_id = 0
             self.right_lane_action_id = 2
             self.faster_action_id = 3
@@ -689,6 +667,7 @@ class GymLane:
             return
         action_indexes = action_type.actions_indexes
         lane_change_ids = []
+        self.idle_action_id = action_indexes.get('IDLE', 1)
         self.left_lane_action_id = action_indexes.get('LANE_LEFT', 0)
         self.right_lane_action_id = action_indexes.get('LANE_RIGHT', 2)
         self.faster_action_id = action_indexes.get('FASTER', 3)
@@ -2010,6 +1989,8 @@ class GymLane:
         ego_vehicle = self._get_ego_vehicle()
         if ego_vehicle is None:
             return False
+        if self.road_scenario == 'highway':
+            return self._highway_success_ready(info)
         lane_index = getattr(ego_vehicle, 'lane_index', None)
         lane_pair = self._lane_pair_from_index(lane_index)
         if self.road_scenario == 'merge':
@@ -2052,6 +2033,22 @@ class GymLane:
             return 7.0
         return 18.0
 
+    def _highway_success_ready(self, info=None):
+        if self.road_scenario != 'highway':
+            return False
+        if self.collision_count > 0:
+            return False
+        if info is not None:
+            if bool(info.get('crashed', False)) or bool(info.get('offroad', False)):
+                return False
+            on_road_reward = info.get('rewards', {}).get('on_road_reward')
+            if on_road_reward is not None and float(on_road_reward) < 0.5:
+                return False
+        return (
+            self.step_num >= self.target_step_num and
+            self.episode_mean_speed() >= self._minimum_success_speed()
+        )
+
     def _should_abort_low_speed_highway_episode(self, info=None):
         del info
         # Keep HighwayEnv termination close to the official behavior: crash/off-road/time only.
@@ -2067,6 +2064,7 @@ class GymLane:
         self.collision_count = 0
         self.lane_change_count = 0
         self.last_step_info = {}
+        self.episode_termination_reason = 'incomplete'
         self.previous_action_index = None
         self.steps_since_lane_change = 1000
         self.target_step_bonus_awarded = False
@@ -2100,21 +2098,13 @@ class GymLane:
 
     def init_train(self, vehicles_count=None, seed=None):
         self.mode = 'train'
-        if self.env is not None:
-            self.env.close()
-        self.env = gym.make(self.env_id, render_mode=None)
-        self._configure_env(vehicles_count=vehicles_count)
-        self._refresh_action_metadata()
-        self._reset_episode_trackers(episode_seed=seed)
+        self._open_env(render_mode=None, vehicles_count=vehicles_count)
+        self._finalize_env_reset(seed=seed)
 
     def init_val(self, vehicles_count=None, seed=None):
         self.mode = 'val'
-        if self.env is not None:
-            self.env.close()
-        self.env = gym.make(self.env_id, render_mode=None)
-        self._configure_env(vehicles_count=vehicles_count)
-        self._refresh_action_metadata()
-        self._reset_episode_trackers(episode_seed=seed)
+        self._open_env(render_mode=None, vehicles_count=vehicles_count)
+        self._finalize_env_reset(seed=seed)
 
     def init_test(self, variation_type='none', variation_param=0, record_video=False, vehicles_count=None, seed=None, video_tag=None, video_run_kind=None):
         del variation_type, variation_param
@@ -2127,8 +2117,7 @@ class GymLane:
         self.video_name_prefix = None
         self.video_path_hint = None
         render_mode = 'rgb_array' if record_video else None
-        self.env = gym.make(self.env_id, render_mode=render_mode)
-        self._configure_env(vehicles_count=vehicles_count)
+        self._open_env(render_mode=render_mode, vehicles_count=vehicles_count)
         if record_video:
             video_folder, video_name_prefix = self._build_video_recording_target(
                 video_tag=video_tag,
@@ -2140,8 +2129,7 @@ class GymLane:
                 name_prefix=video_name_prefix,
                 episode_trigger=lambda episode_id: True,
             )
-        self._refresh_action_metadata()
-        self._reset_episode_trackers(episode_seed=seed)
+        self._finalize_env_reset(seed=seed)
 
     def get_observation(self):
         if self.state_processed is None and self.state_original is not None:
@@ -2220,19 +2208,16 @@ class GymLane:
             crash_penalty = crashed * 50.0
             completion_bonus_value = 50.0
         else:
-            # Highway: PDF-based 5-term reward formula (论文2.2章)
-            # Rtotal = cv*Rv + cc*Rc + cl*Rl + cd*Rd + ce*Re
-            # Rv: 速度奖励, Rc: 碰撞奖励, Rl: 车道保持奖励, Rd: 变道奖励, Re: 动作稳定性奖励
-
-            # 权重系数 (参考PDF表2.3，根据traffic_level调整)
+            # Highway training is now lane-keeping oriented:
+            # stay centered, keep a stable speed, avoid collisions,
+            # and suppress unnecessary lane changes.
             if self.traffic_level == 'dense':
-                cv, cc, cl, cd, ce = 0.5, 5.0, 0.1, 0.5, 2.0
+                cv, cc, cl, cd, ce, cs = 0.40, 5.0, 1.90, 1.20, 1.20, 2.60
             elif self.traffic_level == 'light':
-                cv, cc, cl, cd, ce = 0.6, 5.0, 0.08, 0.4, 1.5
+                cv, cc, cl, cd, ce, cs = 0.58, 5.0, 1.30, 0.80, 1.00, 2.10
             else:  # standard
-                cv, cc, cl, cd, ce = 0.5, 5.0, 0.1, 0.5, 2.0
+                cv, cc, cl, cd, ce, cs = 0.46, 5.0, 2.00, 1.30, 1.10, 2.40
 
-            # 速度参数设置 (PDF 2.2.3节)
             reward_speed_range = self.env.unwrapped.config.get(
                 'reward_speed_range',
                 HIGHWAY_REWARD_SPEED_RANGE.get(self.traffic_level, HIGHWAY_REWARD_SPEED_RANGE['standard']),
@@ -2242,89 +2227,149 @@ class GymLane:
             vtarget = float(HIGHWAY_DESIRED_CRUISE_SPEED.get(self.traffic_level, 29.0))
             v = ego_speed_value
 
-            # 获取车道和变道信息
-            highway_context = self._highway_lane_context()
             ego_vehicle = self._get_ego_vehicle()
-            pre_context = (pre_step_highway_meta or {}).get('context', {})
-            pre_lane_id = (pre_step_highway_meta or {}).get('lane_id')
-            post_lane_index = getattr(ego_vehicle, 'lane_index', None)
-            post_lane_id = int(post_lane_index[2]) if post_lane_index is not None and len(post_lane_index) >= 3 else pre_lane_id
-            lane_changed = (
-                action_index in self.lane_change_action_ids and
-                pre_lane_id is not None and
-                post_lane_id is not None and
-                int(post_lane_id) != int(pre_lane_id)
-            )
-
-            # ========== 1. 速度奖励 Rv (PDF公式2.13) ==========
             vtolerance = max(vtarget - vmin, vmax - vtarget)
             if v <= vmin or v >= vmax:
                 Rv = -2.0
             else:
                 Rv = 1.0 - abs(v - vtarget) / vtolerance
 
-            # ========== 2. 碰撞奖励 Rc (PDF公式2.14) ==========
             Rc = -5.0 if crashed else 0.0
 
-            # ========== 3. 车道保持奖励 Rl (PDF公式2.15) ==========
             Rl = 0.0
+            lateral_deviation = 0.0
             if ego_vehicle is not None and hasattr(ego_vehicle, 'lane') and ego_vehicle.lane is not None:
                 try:
-                    lane_center_y = ego_vehicle.lane.position(ego_vehicle.position[0], 0)[1]
-                    lateral_deviation = abs(ego_vehicle.position[1] - lane_center_y)
-                    k, d = 0.5, 3.5  # k*d为偏差阈值
-                    Rl = 1.0 if lateral_deviation <= k * d else 0.0
-                except:
+                    lane_obj = ego_vehicle.lane
+                    longitudinal, _ = lane_obj.local_coordinates(ego_vehicle.position)
+                    lane_center_y = lane_obj.position(longitudinal, 0.0)[1]
+                    lateral_deviation = abs(float(ego_vehicle.position[1]) - float(lane_center_y))
+                    lane_half_width = max(1.0, 0.5 * float(getattr(lane_obj, 'width', 4.0)))
+                    normalized_deviation = lateral_deviation / lane_half_width
+                    if normalized_deviation <= 1.0:
+                        Rl = 1.0 - normalized_deviation
+                    else:
+                        Rl = -min(1.0, normalized_deviation - 1.0)
+                except Exception:
                     Rl = 0.0
 
-            # ========== 4. 变道奖励 Rd (PDF公式2.16) ==========
-            # RC: 合理变道 +1.0, UC: 不合理变道 -0.5, NC: 无变道 0.0
-            Rd = 0.0
-            if lane_changed:
-                # 判断合理变道的两个条件 (PDF 2.2.3节)
-                # 1) 当前速度低于目标速度
-                # 2) 相邻车道车辆平均速度至少比自车高10个单位
-                condition1 = v < vtarget
+            Rd = -1.0 if lane_change_action else 0.0
 
-                # 计算相邻车道平均速度
-                current_front_speed = highway_context.get('current_front_speed')
-                pre_front_speed = pre_context.get('current_front_speed')
-                adjacent_lane_avg_speed = None
-                if current_front_speed is not None:
-                    adjacent_lane_avg_speed = float(current_front_speed)
-                elif pre_front_speed is not None:
-                    adjacent_lane_avg_speed = float(pre_front_speed)
+            context = (pre_step_highway_meta or {}).get('context', {})
+            thresholds = self._get_highway_lane_context_thresholds()
+            front_gap = context.get('current_front_gap')
+            front_speed = context.get('current_front_speed')
+            critical_front_gap = float(thresholds.get('critical_front_gap', 16.0))
+            desired_front_gap = max(critical_front_gap * 1.7, 22.0)
+            closing_speed = 0.0
+            if front_speed is not None:
+                closing_speed = max(0.0, v - float(front_speed))
 
-                condition2 = False
-                if adjacent_lane_avg_speed is not None:
-                    condition2 = adjacent_lane_avg_speed >= v + 10.0
+            Rs = 0.35
+            if front_gap is not None:
+                front_gap = float(front_gap)
+                gap_ratio = np.clip(front_gap / desired_front_gap, 0.0, 1.4)
+                Rs = 0.60 * gap_ratio - 0.25
+                if gap_ratio < 1.0:
+                    shortage = 1.0 - gap_ratio
+                    Rs -= 1.40 * shortage
+                    if closing_speed > 0.0:
+                        Rs -= min(1.30, closing_speed / 6.0) * (0.35 + 0.65 * shortage)
+                if front_gap < critical_front_gap:
+                    Rs -= 1.20 + 1.30 * (critical_front_gap - front_gap) / max(1.0, critical_front_gap)
 
-                # 判断是否为合理变道
-                if condition1 and condition2:
-                    Rd = 1.0  # 合理变道
-                else:
-                    Rd = -0.5  # 不合理变道
-            else:
-                Rd = 0.0  # 无变道
-
-            # ========== 5. 动作稳定性奖励 Re (PDF公式2.17) ==========
-            # 当动作变化时给予负奖励，随时间指数衰减
-            lambda_decay = 0.05  # PDF建议的衰减系数
+            lambda_decay = 0.05
             if self.previous_action_index is not None and action_index != self.previous_action_index:
                 Re = -np.exp(-lambda_decay * self.step_num)
             else:
                 Re = 0.0
 
-            # ========== 总奖励计算 (PDF公式2.12) ==========
-            highway_shaped_reward = cv * Rv + cc * Rc + cl * Rl + cd * Rd + ce * Re
+            efficiency_profile = self._get_highway_efficiency_reward_profile()
+            min_success_speed = self._minimum_success_speed()
+            mean_speed_now = self.episode_mean_speed()
+            reached_target_horizon = self.step_num >= self.target_step_num
+            highway_success_ready = self._highway_success_ready(info)
+            progress_bonus = 0.0
+            target_speed_bonus = 0.0
+            under_speed_penalty = 0.0
+            success_bonus = 0.0
+            completion_bonus = 0.0
+            timeout_penalty = 0.0
 
-            # 记录奖励分解信息
+            if self._highway_reward_stage_at_least('b_progress_speed'):
+                progress_ratio = np.clip(v / max(1.0, vtarget), 0.0, 1.15)
+                progress_bonus = float(efficiency_profile.get('progress_scale', 0.0)) * progress_ratio
+                target_speed_ratio = np.clip(
+                    (v - min_success_speed) / max(1.0, vtarget - min_success_speed),
+                    0.0,
+                    1.15,
+                )
+                target_speed_bonus = float(efficiency_profile.get('target_speed_scale', 0.0)) * target_speed_ratio
+
+                if self.step_num >= max(12, self.target_step_num // 8) and v < min_success_speed:
+                    under_speed_penalty = (
+                        float(efficiency_profile.get('under_speed_penalty_scale', 0.0)) *
+                        (min_success_speed - v) / max(1.0, min_success_speed)
+                    )
+
+            if self._highway_reward_stage_at_least('c_success'):
+                if highway_success_ready and not self.target_step_bonus_awarded:
+                    success_bonus = float(efficiency_profile.get('success_bonus', 0.0))
+                    self.target_step_bonus_awarded = True
+                elif reached_target_horizon and not crashed and not self.target_step_bonus_awarded:
+                    speed_completion_ratio = np.clip(mean_speed_now / max(1.0, min_success_speed), 0.0, 1.0)
+                    completion_bonus = (
+                        float(efficiency_profile.get('completion_bonus', 0.0)) *
+                        speed_completion_ratio
+                    )
+                    self.target_step_bonus_awarded = True
+
+            if (
+                self._highway_reward_stage_at_least('a_timeout') and
+                (bool(info.get('truncated', False)) or self.step_num >= self.max_step_num) and
+                not crashed and
+                not highway_success_ready
+            ):
+                timeout_speed_gap = 1.0 - np.clip(mean_speed_now / max(1.0, min_success_speed), 0.0, 1.0)
+                timeout_penalty = (
+                    float(efficiency_profile.get('timeout_penalty', 0.0)) *
+                    (0.80 + 0.20 * timeout_speed_gap)
+                )
+
+            highway_shaped_reward = (
+                cv * Rv
+                + cc * Rc
+                + cl * Rl
+                + cd * Rd
+                + ce * Re
+                + cs * Rs
+                + progress_bonus
+                + target_speed_bonus
+                + success_bonus
+                + completion_bonus
+                - under_speed_penalty
+                - timeout_penalty
+            )
+
             info['reward_breakdown'] = {
                 'speed_reward_Rv': float(cv * Rv),
                 'collision_reward_Rc': float(cc * Rc),
                 'lane_keeping_reward_Rl': float(cl * Rl),
                 'lane_change_reward_Rd': float(cd * Rd),
                 'action_stability_reward_Re': float(ce * Re),
+                'safety_reward_Rs': float(cs * Rs),
+                'progress_bonus': float(progress_bonus),
+                'target_speed_bonus': float(target_speed_bonus),
+                'under_speed_penalty': float(under_speed_penalty),
+                'success_bonus': float(success_bonus),
+                'completion_bonus': float(completion_bonus),
+                'timeout_penalty': float(timeout_penalty),
+                'mean_speed_now': float(mean_speed_now),
+                'min_success_speed': float(min_success_speed),
+                'front_gap': None if front_gap is None else float(front_gap),
+                'front_speed': None if front_speed is None else float(front_speed),
+                'closing_speed': float(closing_speed),
+                'lateral_deviation': float(lateral_deviation),
                 'total': float(highway_shaped_reward),
             }
 
@@ -2464,18 +2509,76 @@ class GymLane:
             return 0.0
         return float(self.episode_speed_sum / self.episode_speed_count)
 
-    def episode_success(self):
+    def episode_success(self, info=None):
         if self.collision_count > 0:
             return 0
         if self.road_scenario in ['merge', 'roundabout']:
             return int(self.scenario_completed and self.episode_mean_speed() >= self._minimum_success_speed())
         if self.road_scenario == 'highway':
-            return int(
-                self.highway_overtake_completion_count > 0 and
-                self.step_num >= self.target_step_num and
-                self.episode_mean_speed() >= self._minimum_success_speed()
-            )
+            success_info = info if info is not None else self.last_step_info
+            return int(self._highway_success_ready(success_info))
         return int(self.step_num >= self.target_step_num and self.episode_mean_speed() >= self._minimum_success_speed())
+
+    def episode_progress(self):
+        if self.road_scenario == 'highway':
+            if self.episode_success() > 0:
+                return 1.0
+            horizon_progress = np.clip(self.step_num / max(1.0, float(self.target_step_num)), 0.0, 1.0)
+            speed_progress = np.clip(
+                self.episode_mean_speed() / max(1.0, self._minimum_success_speed()),
+                0.0,
+                1.0,
+            )
+            return float(np.clip(horizon_progress * speed_progress, 0.0, 0.999))
+        ego_vehicle = self._get_ego_vehicle()
+        lane_index = getattr(ego_vehicle, 'lane_index', None) if ego_vehicle is not None else None
+        if self.road_scenario == 'merge':
+            return float(np.clip(self._merge_route_progress(ego_vehicle, lane_index), 0.0, 1.0))
+        if self.road_scenario == 'roundabout':
+            exit_progress = self._lane_longitudinal(ego_vehicle, lane_index=lane_index)
+            if exit_progress is None:
+                return 0.0
+            return float(np.clip(exit_progress / max(1.0, ROUNDABOUT_EXIT_PROGRESS_THRESHOLD), 0.0, 1.0))
+        return float(np.clip(self.step_num / max(1.0, float(self.max_step_num)), 0.0, 1.0))
+
+    def _resolve_termination_reason(self, info, terminated, truncated, scenario_completed, highway_slow_abort):
+        if self.episode_success(info) > 0:
+            return 'success'
+        if self.collision_count > 0 or bool(info.get('crashed', False)):
+            return 'collision'
+        offroad_flag = bool(info.get('offroad', False))
+        on_road_reward = info.get('rewards', {}).get('on_road_reward')
+        if not offroad_flag and on_road_reward is not None and bool(terminated):
+            offroad_flag = float(on_road_reward) < 0.5
+        if offroad_flag:
+            return 'offroad'
+        if scenario_completed:
+            return 'scenario_complete_low_speed'
+        if highway_slow_abort:
+            return 'low_speed_abort'
+        if bool(truncated) or self.step_num >= self.max_step_num:
+            return 'timeout'
+        if bool(terminated):
+            return 'env_terminal'
+        return 'other'
+
+    def get_episode_summary(self):
+        termination_reason = self.episode_termination_reason
+        final_progress = float(self.episode_progress())
+        return {
+            'success_rate': float(self.episode_success(self.last_step_info)),
+            'collision_rate': float(self.collision_count > 0),
+            'timeout_rate': float(termination_reason == 'timeout'),
+            'offroad_rate': float(termination_reason == 'offroad'),
+            'low_speed_abort_rate': float(termination_reason == 'low_speed_abort'),
+            'scenario_complete_low_speed_rate': float(termination_reason == 'scenario_complete_low_speed'),
+            'other_terminal_rate': float(termination_reason in ['env_terminal', 'other']),
+            'mean_speed': float(self.episode_mean_speed()),
+            'final_progress': final_progress,
+            'route_progress': final_progress,
+            'mean_length': float(self.step_num),
+            'termination_reason': termination_reason,
+        }
 
     def make_action(self, action):
         action_index = int(torch.argmax(action).item())
@@ -2484,8 +2587,16 @@ class GymLane:
         executed_action_index = int(action_index)
         highway_tactical_plan = None
         if self.road_scenario == 'highway':
-            executed_action_index, highway_tactical_plan = self._select_highway_assisted_action(action_index, pre_step_highway_meta)
-            pre_step_highway_meta['tactical_plan'] = highway_tactical_plan
+            executed_action_index, highway_tactical_plan = self._select_highway_assisted_action(
+                requested_action=action_index,
+                pre_step_highway_meta=pre_step_highway_meta,
+            )
+        else:
+            highway_tactical_plan = {
+                'assist_reason': 'policy',
+                'reason': 'policy',
+                'best_lane_gain': 0.0,
+            }
 
         if show_live_progress and self.step_num % 10 == 0:
             print(f"\r🚗 正在马路上飞驰... 当前回合已开 {self.step_num} 步", end='', flush=True)
@@ -2508,6 +2619,8 @@ class GymLane:
         self.episode_raw_return += float(reward_value)
         self.episode_speed_sum += self._current_speed(info)
         self.episode_speed_count += 1
+        info['terminated'] = bool(terminated)
+        info['truncated'] = bool(truncated)
 
         info['policy_action'] = int(action_index)
         info['executed_action'] = int(executed_action_index)
@@ -2561,15 +2674,26 @@ class GymLane:
         if scenario_completed and not bool(info.get('crashed', False)):
             self.scenario_completion_awarded = True
         self.episode_return += shaped_reward
-        self.last_step_info = info
 
         done = done or scenario_completed or highway_slow_abort
         if done or self.step_num >= self.max_step_num:
             self.done_signal = 1
+            self.episode_termination_reason = self._resolve_termination_reason(
+                info=info,
+                terminated=terminated,
+                truncated=truncated,
+                scenario_completed=scenario_completed,
+                highway_slow_abort=highway_slow_abort,
+            )
             if show_live_progress:
                 print(f"\r🚗 💥 回合结束！最终活了: {self.step_num:2d} 步 | 步奖励: {shaped_reward:.2f} | 累计回报: {self.episode_return:.2f} | 原始回报: {self.episode_raw_return:.2f}    ")
         else:
             self.done_signal = 0
+            self.episode_termination_reason = 'incomplete'
+        info['episode_termination_reason'] = self.episode_termination_reason
+        info['episode_progress'] = float(self.episode_progress())
+        info['episode_summary'] = self.get_episode_summary()
+        self.last_step_info = info
 
         reward_tensor = torch.tensor([shaped_reward], dtype=torch.float32, device=self.dev)
         step_record = [

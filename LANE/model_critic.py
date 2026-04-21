@@ -13,7 +13,7 @@ def print_info(input_string=''):
 
 
 class Critic(nn.Module):
-    def __init__(self, input_size, output_size, small=False, dev=torch.device('cpu')):
+    def __init__(self, input_size, output_size, small=False, optimizer_learning_rate=0.001, dev=torch.device('cpu')):
         super(Critic, self).__init__()
         self.dev = dev
         self.small = small
@@ -26,7 +26,8 @@ class Critic(nn.Module):
             self.fc1 = nn.Sequential(nn.Linear(input_size, 1024), nn.ReLU(),)
             self.fc2 = nn.Sequential(nn.Linear(1024, 1024), nn.ReLU(),)
             self.fc3 = nn.Sequential(nn.Linear(1024, output_size),)
-        self.optimizer = torch.optim.Adam(params=self.parameters(), lr=0.001)
+        self.optimizer_learning_rate = optimizer_learning_rate
+        self.optimizer = torch.optim.Adam(params=self.parameters(), lr=optimizer_learning_rate)
         self.to(self.dev)
 
     def forward(self, x):
@@ -35,6 +36,11 @@ class Critic(nn.Module):
 
     def set_grad_clip(self, grad_clip):
         self.grad_clip = grad_clip
+
+    def set_learning_rate(self, learning_rate):
+        self.optimizer_learning_rate = learning_rate
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = learning_rate
 
     def learn(self, value_predict, value_target):
         difference = value_target - value_predict
