@@ -21,10 +21,10 @@ def print_info(input_string):
 SCENARIO_PRESETS = {
     'highway': {
         'env_id': 'highway-v0',
-        'max_step_num': 200,
-        'target_step_num': 200,
+        'max_step_num': 120,
+        'target_step_num': 120,
         'config': {
-            'duration': 200,
+            'duration': 120,
             'lanes_count': 4,
             'vehicles_count': 60,
             'controlled_vehicles': 1,

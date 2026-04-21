@@ -371,6 +371,13 @@ def print_scenario_summary(scenario_runs: List[RunData], output_dir: Path) -> No
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Generate thesis-ready reward figures from the latest training logs.')
     parser.add_argument('--output-dir', type=Path, default=DEFAULT_OUTPUT_DIR, help='Directory to store generated thesis figures.')
+    parser.add_argument(
+        '--scenario',
+        type=str,
+        default=None,
+        choices=['highway_standard', 'highway_dense', 'merge', 'roundabout'],
+        help='Generate figures only for the selected scenario.',
+    )
     return parser.parse_args()
 
 
@@ -386,6 +393,8 @@ def main() -> None:
     for run in runs:
         if run.scenario_dir not in scenario_dirs:
             scenario_dirs.append(run.scenario_dir)
+    if args.scenario is not None:
+        scenario_dirs = [scenario_dir for scenario_dir in scenario_dirs if scenario_dir == args.scenario]
 
     for scenario_dir in scenario_dirs:
         scenario_runs = [run for run in runs if run.scenario_dir == scenario_dir]

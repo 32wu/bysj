@@ -39,8 +39,8 @@ def get_arguments():
 
     parser.add_argument('--cuda', type=int, default=-1)
     parser.add_argument('--thread', type=int, default=-1)
-    parser.add_argument('--train_num', type=int, default=20000)
-    parser.add_argument('--train_envs', type=int, default=1)
+    parser.add_argument('--train_num', type=int, default=500)
+    parser.add_argument('--train_envs', type=int, default=4)
     parser.add_argument('--rep', type=int, default=11)
     parser.add_argument('--seed', type=int, default=-1)
     parser.add_argument('--ignore_checkpoint', default=False, action='store_true')
@@ -63,7 +63,7 @@ def get_arguments():
     parser.add_argument('--adv_norm', type=int, default=1, choices=[0, 1])
     parser.add_argument('--reward_scale', type=float, default=1.0)
     parser.add_argument('--grad_clip', type=float, default=1.0)
-    parser.add_argument('--curriculum_mode', type=str, default='adaptive', choices=['fixed', 'adaptive'])
+    parser.add_argument('--curriculum_mode', type=str, default='fixed', choices=['fixed', 'adaptive'])
     parser.add_argument('--curriculum_clean_ratio', type=float, default=0.7)
     parser.add_argument('--max_noise', type=float, default=0.15)
     parser.add_argument('--entropy_min', type=float, default=0.1)
@@ -567,10 +567,33 @@ def maybe_load_warm_start(args, model, model_c):
     return actor_prefix, critic_prefix
 
 
+HIGHWAY_STANDARD_PROFILE = {
+    'lr': 2e-4,
+    'gamma': 0.995,
+    'entropy': 0.05,
+    'entropy_min': 0.01,
+    'PPO_epochs': 3,
+    'eps_clip': 0.10,
+    'train_envs': 4,
+    'rollout_steps': 2048,
+    'mini_batch_size': 256,
+    'gae_lambda': 0.95,
+    'grad_clip': 0.5,
+    'curriculum_mode': 'fixed',
+    'max_noise': 0.04,
+}
+
+
 def apply_lane_stability_profile(args):
     if args.task != 'gymip' or args.model != 'rwtaspk' or args.lane_profile != 'auto':
         return []
     adjustments = []
+
+    def set_exact(attr_name, target_value):
+        current_value = getattr(args, attr_name)
+        if current_value != target_value:
+            setattr(args, attr_name, target_value)
+            adjustments.append(f'{attr_name}->{target_value}')
 
     def clamp_min(attr_name, target_value):
         current_value = getattr(args, attr_name)
@@ -583,6 +606,24 @@ def apply_lane_stability_profile(args):
         if current_value > target_value:
             setattr(args, attr_name, target_value)
             adjustments.append(f'{attr_name}->{target_value}')
+
+    traffic_level = getattr(args, 'traffic_level', 'standard')
+    if args.road_scenario == 'highway' and traffic_level == 'standard':
+        # Keep the standard-highway profile explicit so it is not re-overridden
+        # by multiple clamp passes below.
+        for attr_name, target_value in HIGHWAY_STANDARD_PROFILE.items():
+            set_exact(attr_name, target_value)
+        clamp_max('train_num', 2000)
+        clamp_max('reward_scale', 0.90)
+        clamp_min('curriculum_clean_ratio', 0.90)
+        clamp_max('curriculum_noise_step', 0.008)
+        if args.curriculum_patience < 3:
+            args.curriculum_patience = 3
+            adjustments.append('curriculum_patience->3')
+        if args.curriculum_entropy_decay < 0.94:
+            args.curriculum_entropy_decay = 0.94
+            adjustments.append('curriculum_entropy_decay->0.94')
+        return adjustments
 
     clamp_max('lr', 0.0005)
     clamp_min('gamma', 0.995)
@@ -598,63 +639,49 @@ def apply_lane_stability_profile(args):
     clamp_max('curriculum_noise_step', 0.02)
 
     if args.road_scenario == 'highway':
-        traffic_level = getattr(args, 'traffic_level', 'standard')
         lr_cap = {
             'light': 0.00045,
-            'standard': 0.00040,
             'dense': 0.00035,
         }
         gamma_floor = {
             'light': 0.996,
-            # 【方案C】standard场景提升gamma下限至0.998，使智能体更重视长期存活奖励
-            'standard': 0.998,
             # 【方案C-dense】dense场景同样提升到0.998，强化高拥堵下的长期存活价值
             'dense': 0.998,
         }
         entropy_floor = {
             'light': 0.22,
-            'standard': 0.28,
             'dense': 0.18,
         }
         entropy_cap = {
             'light': 0.90,
-            'standard': 0.75,
             'dense': 0.30,
         }
         entropy_min_floor = {
             'light': 0.08,
-            'standard': 0.10,
             'dense': 0.05,
         }
         rollout_floor = {
             'light': 640,
-            'standard': 768,
             'dense': 896,
         }
         mini_batch_floor = {
             'light': 160,
-            'standard': 192,
             'dense': 224,
         }
         clean_ratio_floor = {
             'light': 0.86,
-            'standard': 0.90,
             'dense': 0.99,
         }
         max_noise_cap = {
             'light': 0.05,
-            'standard': 0.04,
             'dense': 0.008,
         }
         noise_step_cap = {
             'light': 0.010,
-            'standard': 0.008,
             'dense': 0.001,
         }
         train_num_floor = {
             'light': 2800,
-            'standard': 2000,
-            'dense': 4800,
         }
 
         if traffic_level == 'dense':
@@ -670,9 +697,9 @@ def apply_lane_stability_profile(args):
         clamp_min('rollout_steps', rollout_floor.get(traffic_level, 768))
         clamp_min('mini_batch_size', mini_batch_floor.get(traffic_level, 192))
         if traffic_level == 'dense':
-            clamp_min('gae_lambda', 0.990)  # 【方案C-dense】dense场景同步提升GAE lambda，增强长期优势估计
+            clamp_min('gae_lambda', 0.95)  # 【方案C-dense】dense场景同步提升GAE lambda，增强长期优势估计
         else:
-            clamp_min('gae_lambda', 0.98 if traffic_level != 'standard' else 0.990)  # 【方案C】standard场景GAE lambda提升至0.99
+            clamp_min('gae_lambda', 0.98)
         clamp_max('reward_scale', 0.90)
         clamp_max('grad_clip', 0.40)
         clamp_min('curriculum_clean_ratio', clean_ratio_floor.get(traffic_level, 0.90))
@@ -690,7 +717,9 @@ def apply_lane_stability_profile(args):
         if traffic_level == 'dense' and args.curriculum_entropy_decay < 0.95:
             args.curriculum_entropy_decay = 0.95
             adjustments.append('curriculum_entropy_decay->0.95')
-        if args.train_num < train_num_floor.get(traffic_level, 3600):
+        if traffic_level == 'dense':
+            clamp_max('train_num', 2000)
+        elif args.train_num < train_num_floor.get(traffic_level, 3600):
             args.train_num = train_num_floor.get(traffic_level, 3600)
             adjustments.append(f'train_num->{args.train_num}')
         if args.road_scenario == 'highway' and traffic_level == 'dense' and args.train_envs < 8:
@@ -698,6 +727,7 @@ def apply_lane_stability_profile(args):
             adjustments.append('train_envs->8')
 
     if args.road_scenario == 'merge':
+        clamp_max('train_num', 2000)
         clamp_max('entropy', 0.8)
         clamp_max('entropy_min', 0.05)
         clamp_min('curriculum_clean_ratio', 1.0)
@@ -709,9 +739,11 @@ def apply_lane_stability_profile(args):
         if args.curriculum_entropy_decay > 0.85:
             args.curriculum_entropy_decay = 0.85
             adjustments.append('curriculum_entropy_decay->0.85')
-        if args.train_num < 3000:
-            args.train_num = 3000
-            adjustments.append('train_num->3000')
+        # if args.train_num < 3000:
+        #     args.train_num = 3000
+        #     adjustments.append('train_num->3000')
+    if args.road_scenario == 'roundabout':
+        clamp_max('train_num', 2000)
     return adjustments
 
 
@@ -1352,13 +1384,6 @@ if __name__ == '__main__':
         model_str = 'h%d_-' % args.hidden_num
     else:
         raise ValueError('Error in arguments')
-
-    if args.task in ['gymip']:
-        args.hidden_num, args.hid_group_num, args.hid_group_size = 64, 8, 8
-        if args.alg == 'ppo':
-            args.train_num = 2000 if args.train_num == 20000 else args.train_num
-        else:
-            args.train_num = 5000 if args.train_num == 20000 else args.train_num
 
     lane_profile_adjustments = apply_lane_stability_profile(args)
     if args.task == 'gymip' and args.model == 'rwtaspk' and args.lane_profile == 'auto':

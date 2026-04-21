@@ -182,8 +182,6 @@ def apply_lane_baseline_profile(args):
         }
         train_num_floor = {
             'light': 2400,
-            'standard': 3200,
-            'dense': 4200,
         }
         clamp_max('lr', lr_cap.get(traffic_level, 0.0007))
         clamp_min('gamma', gamma_floor.get(traffic_level, 0.994))
@@ -191,9 +189,13 @@ def apply_lane_baseline_profile(args):
         clamp_min('entropy', entropy_floor.get(traffic_level, 0.30))
         clamp_max('PPO_epochs', 4)
         clamp_max('eps_clip', 0.15)
-        if args.train_num < train_num_floor.get(traffic_level, 3200):
+        if traffic_level in ['standard', 'dense']:
+            clamp_max('train_num', 2000)
+        elif args.train_num < train_num_floor.get(traffic_level, 3200):
             args.train_num = train_num_floor.get(traffic_level, 3200)
             adjustments.append(f'train_num->{args.train_num}')
+    elif args.road_scenario in ['merge', 'roundabout']:
+        clamp_max('train_num', 2000)
     return adjustments
 
 
@@ -998,9 +1000,6 @@ if __name__ == "__main__":
     log_text(File, 'checkpoint_cleanup', checkpoint_utils.summarize_checkpoint_cleanup(cleanup_summary), onscreen=False)
     File.flush()
     File.close()
-
-
-
 
 
 

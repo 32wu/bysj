@@ -1,0 +1,3 @@
+run_kind,scenario_dir,label,log_file,num_val_points,best_return_episode,best_mean_return,best_return_steps,final_episode,final_mean_return,final_mean_steps,smoothed_final_return
+baseline,merge,Baseline,log_ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.001000_0.10_0.97000_5_0.2000_roadmerge_tfstandard_rep11.txt,20,1599,10.1518,16.0000,1999,-22.3176,14.6000,-12.7986
+ours,merge,Ours,log_ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000500_0.10_0.99500_4_0.1500_ro512_mb128_lam0.97_rs1.00_gc0.50_adaptive_roadmerge_tfstandard_seed11.txt,200,79,-46.9865,8.4000,1999,-56.1150,8.0000,-56.1096
