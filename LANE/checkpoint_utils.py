@@ -239,6 +239,11 @@ def resolve_checkpoint_prefix_path(prefix):
         return normalized_prefix
     if os.path.dirname(normalized_prefix):
         return os.path.normpath(normalized_prefix)
+    probe_suffixes = ['_w_1.pt', '_w_2.pt', '_1.pt', '.pt']
+    for suffix in probe_suffixes:
+        existing_file = _find_existing_checkpoint_file(normalized_prefix + suffix)
+        if existing_file is not None and existing_file.endswith(suffix):
+            return existing_file[:-len(suffix)]
     return os.path.join(get_active_model_dir(create=True), normalized_prefix)
 
 

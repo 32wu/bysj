@@ -5,6 +5,7 @@
 - [README_thesis.md](README_thesis.md)：答辩 / 论文展示版，适合给老师、评审或答辩展示时快速讲清项目。
 - [README_dev.md](README_dev.md)：开发维护版，适合后续继续改代码、复现实验、排查问题时查阅。
 - [README_bysj.md](README_bysj.md)：个人实验速查笔记，偏日常命令和操作备忘。
+- [ENV_SETUP.md](ENV_SETUP.md)：环境汇总与一键安装说明，适合新云服务器直接复现。
 
 ## 1. 项目定位
 
@@ -42,7 +43,14 @@
 
 ### 3.1 环境准备
 
-推荐直接使用仓库根目录的环境导出文件：
+推荐直接使用仓库根目录的一键安装脚本：
+
+```bash
+bash setup_bysj_env.sh
+conda activate bysj
+```
+
+如果你只想手动创建环境，也可以直接使用仓库根目录的环境导出文件：
 
 ```bash
 conda env create -f bysj_env.yml

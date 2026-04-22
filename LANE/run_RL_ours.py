@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import argparse
+import csv
 import datetime
 import multiprocessing as mp
 import os
@@ -50,8 +51,11 @@ def get_arguments():
     parser.add_argument('--seed', type=int, default=-1)
     parser.add_argument('--ignore_checkpoint', default=False, action='store_true')
     parser.add_argument('--monitor_time', default=False, action='store_true')
+    parser.add_argument('--allow_long_train', default=False, action='store_true')
     parser.add_argument('--eval_only', default=False, action='store_true')
     parser.add_argument('--eval_checkpoint', type=str, default='best', choices=['best', 'current'])
+    parser.add_argument('--eval_save_details', default=False, action='store_true')
+    parser.add_argument('--eval_artifact_stem', type=str, default='')
 
     parser.add_argument('--task', type=str, default='gymip', choices=['gymip'])
     parser.add_argument('--model', type=str, default='rwtaprob', choices=['mlp3soft', 'mlp3relu', 'rwtaprob', 'rwtaspk', 'snnbptt', 'ann2snn'])
@@ -756,8 +760,14 @@ def apply_lane_stability_profile(args):
         for attr_name, target_value in HIGHWAY_STANDARD_PROFILE.items():
             if attr_name in PROFILE_OPTIONAL_EXPLORATION_KEYS:
                 continue
-            set_exact(attr_name, target_value)
-        clamp_max('train_num', 2000)
+            if attr_name == 'train_envs':
+                # Allow explicit higher env parallelism for faster thesis runs,
+                # while preserving the stabilized minimum profile.
+                clamp_min(attr_name, target_value)
+            else:
+                set_exact(attr_name, target_value)
+        if not getattr(args, 'allow_long_train', False):
+            clamp_max('train_num', 2000)
         clamp_max('reward_scale', 0.90)
         set_exact('curriculum_clean_ratio', 1.0)
         set_exact('curriculum_noise_step', 0.0)
@@ -851,7 +861,7 @@ def apply_lane_stability_profile(args):
         if traffic_level == 'dense' and args.curriculum_entropy_decay < 0.98:
             args.curriculum_entropy_decay = 0.98
             adjustments.append('curriculum_entropy_decay->0.98')
-        if traffic_level == 'dense':
+        if traffic_level == 'dense' and not getattr(args, 'allow_long_train', False):
             clamp_max('train_num', 2000)
         elif args.train_num < train_num_floor.get(traffic_level, 3600):
             args.train_num = train_num_floor.get(traffic_level, 3600)
@@ -861,7 +871,8 @@ def apply_lane_stability_profile(args):
             adjustments.append('train_envs->8')
 
     if args.road_scenario == 'merge':
-        clamp_max('train_num', 2000)
+        if not getattr(args, 'allow_long_train', False):
+            clamp_max('train_num', 2000)
         clamp_max('entropy', 0.05)
         clamp_max('entropy_min', 0.05)
         clamp_min('curriculum_clean_ratio', 1.0)
@@ -1408,7 +1419,206 @@ def compute_gae(rewards, dones, state_values, next_state_values, gamma, gae_lamb
     return advantages.detach(), returns.detach()
 
 
-def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
+def classify_highway_collision_phase(env, episode_summary, last_info):
+    if float(episode_summary.get('collision_rate', 0.0)) <= 0.0:
+        return 'non_collision'
+
+    progress = float(episode_summary.get('final_progress', 0.0))
+    step_num = int(episode_summary.get('mean_length', 0.0))
+    executed_action = last_info.get('executed_action') if isinstance(last_info, dict) else None
+    if executed_action is not None:
+        executed_action = int(executed_action)
+    assist_reason = str(last_info.get('highway_assist_reason', '')) if isinstance(last_info, dict) else ''
+    tactical_reason = str(last_info.get('highway_tactical_reason', '')) if isinstance(last_info, dict) else ''
+    reason_blob = f'{assist_reason}|{tactical_reason}'.lower()
+    overtake_events = int(last_info.get('highway_overtake_events', 0)) if isinstance(last_info, dict) else 0
+
+    if step_num <= 20 or progress < 0.20:
+        return 'startup'
+    if 'overtake' in reason_blob or overtake_events > 0:
+        return 'overtake'
+    if executed_action in getattr(env, 'lane_change_action_ids', []):
+        return 'lane_change'
+    if any(token in reason_blob for token in ['blocked', 'yield', 'escape', 'dense_post_overtake', 'keep_right']):
+        return 'interaction'
+    return 'car_following'
+
+
+def build_eval_episode_record(env, episode_index, episode_summary):
+    last_info = dict(getattr(env, 'last_step_info', {}) or {})
+    record = {
+        'episode_index': int(episode_index),
+        'episode_return': float(env.episode_return),
+        'episode_length': int(env.step_num),
+        'mean_speed': float(episode_summary.get('mean_speed', env.episode_mean_speed())),
+        'final_progress': float(episode_summary.get('final_progress', 0.0)),
+        'success': int(round(float(episode_summary.get('success_rate', 0.0)))),
+        'collision': int(round(float(episode_summary.get('collision_rate', 0.0)))),
+        'timeout': int(round(float(episode_summary.get('timeout_rate', 0.0)))),
+        'offroad': int(round(float(episode_summary.get('offroad_rate', 0.0)))),
+        'low_speed_abort': int(round(float(episode_summary.get('low_speed_abort_rate', 0.0)))),
+        'complete_low_speed': int(round(float(episode_summary.get('scenario_complete_low_speed_rate', 0.0)))),
+        'other_terminal': int(round(float(episode_summary.get('other_terminal_rate', 0.0)))),
+        'lane_change_count': int(env.lane_change_count),
+        'termination_reason': str(episode_summary.get('termination_reason', 'other')),
+        'policy_action': int(last_info.get('policy_action', -1)),
+        'executed_action': int(last_info.get('executed_action', -1)),
+        'assist_overrode_policy': int(last_info.get('assist_overrode_policy', 0)),
+        'highway_assist_reason': str(last_info.get('highway_assist_reason', '')),
+        'highway_tactical_reason': str(last_info.get('highway_tactical_reason', '')),
+        'highway_best_lane_gain': float(last_info.get('highway_best_lane_gain', 0.0)),
+        'highway_overtake_events': int(last_info.get('highway_overtake_events', 0)),
+    }
+    record['collision_phase'] = classify_highway_collision_phase(env, episode_summary, last_info)
+    return record
+
+
+def summarize_collision_records(episode_records):
+    collision_records = [record for record in episode_records if int(record.get('collision', 0)) > 0]
+    phase_names = ['startup', 'car_following', 'lane_change', 'overtake', 'interaction']
+    phase_counts = {phase_name: 0 for phase_name in phase_names}
+    for record in collision_records:
+        phase_name = record.get('collision_phase', 'car_following')
+        if phase_name not in phase_counts:
+            phase_counts[phase_name] = 0
+        phase_counts[phase_name] += 1
+    collision_summary = {
+        'collision_count': int(len(collision_records)),
+        'collision_mean_speed': float(np.mean([record['mean_speed'] for record in collision_records])) if collision_records else 0.0,
+        'collision_mean_progress': float(np.mean([record['final_progress'] for record in collision_records])) if collision_records else 0.0,
+    }
+    for phase_name in phase_counts.keys():
+        collision_summary[f'{phase_name}_count'] = int(phase_counts[phase_name])
+        collision_summary[f'{phase_name}_rate'] = (
+            float(phase_counts[phase_name] / max(1, len(collision_records))) if collision_records else 0.0
+        )
+    return collision_summary
+
+
+def get_eval_report_dir(log_dir):
+    scenario_root = os.path.dirname(os.path.normpath(log_dir))
+    eval_report_dir = os.path.join(scenario_root, 'eval_reports')
+    os.makedirs(eval_report_dir, exist_ok=True)
+    return eval_report_dir
+
+
+def save_eval_artifacts(log_dir, artifact_stem, metrics, args, checkpoint_prefix):
+    if not artifact_stem:
+        artifact_stem = 'eval'
+    episode_records = list(metrics.get('episode_records', []))
+    collision_summary = dict(metrics.get('collision_analysis', {}))
+    eval_report_dir = get_eval_report_dir(log_dir)
+
+    summary_path = os.path.join(eval_report_dir, f'eval_summary_{artifact_stem}.csv')
+    detail_path = os.path.join(eval_report_dir, f'eval_detail_{artifact_stem}.csv')
+    failure_path = os.path.join(eval_report_dir, f'eval_failure_{artifact_stem}.csv')
+
+    summary_fields = [
+        'road_scenario',
+        'traffic_level',
+        'checkpoint_prefix',
+        'eval_episodes',
+        'mean_return',
+        'success_rate',
+        'collision_rate',
+        'timeout_rate',
+        'mean_length',
+        'mean_speed',
+        'mean_progress',
+        'termination_reason_distribution',
+        'collision_count',
+        'collision_mean_speed',
+        'collision_mean_progress',
+        'startup_count',
+        'car_following_count',
+        'lane_change_count',
+        'overtake_count',
+        'interaction_count',
+    ]
+    with open(summary_path, 'w', encoding='utf-8', newline='') as summary_file:
+        writer = csv.DictWriter(summary_file, fieldnames=summary_fields)
+        writer.writeheader()
+        writer.writerow({
+            'road_scenario': args.road_scenario,
+            'traffic_level': args.traffic_level,
+            'checkpoint_prefix': checkpoint_prefix,
+            'eval_episodes': int(len(episode_records)),
+            'mean_return': f'{metrics.get("mean_return", 0.0):.6f}',
+            'success_rate': f'{metrics.get("success_rate", 0.0):.6f}',
+            'collision_rate': f'{metrics.get("collision_rate", 0.0):.6f}',
+            'timeout_rate': f'{metrics.get("timeout_rate", 0.0):.6f}',
+            'mean_length': f'{metrics.get("mean_length", 0.0):.6f}',
+            'mean_speed': f'{metrics.get("mean_speed", 0.0):.6f}',
+            'mean_progress': f'{metrics.get("mean_progress", 0.0):.6f}',
+            'termination_reason_distribution': metrics.get('termination_reason_distribution', ''),
+            'collision_count': int(collision_summary.get('collision_count', 0)),
+            'collision_mean_speed': f'{collision_summary.get("collision_mean_speed", 0.0):.6f}',
+            'collision_mean_progress': f'{collision_summary.get("collision_mean_progress", 0.0):.6f}',
+            'startup_count': int(collision_summary.get('startup_count', 0)),
+            'car_following_count': int(collision_summary.get('car_following_count', 0)),
+            'lane_change_count': int(collision_summary.get('lane_change_count', 0)),
+            'overtake_count': int(collision_summary.get('overtake_count', 0)),
+            'interaction_count': int(collision_summary.get('interaction_count', 0)),
+        })
+
+    detail_fields = [
+        'episode_index',
+        'episode_return',
+        'episode_length',
+        'success',
+        'collision',
+        'timeout',
+        'offroad',
+        'low_speed_abort',
+        'complete_low_speed',
+        'other_terminal',
+        'mean_speed',
+        'final_progress',
+        'lane_change_count',
+        'termination_reason',
+        'collision_phase',
+        'policy_action',
+        'executed_action',
+        'assist_overrode_policy',
+        'highway_assist_reason',
+        'highway_tactical_reason',
+        'highway_best_lane_gain',
+        'highway_overtake_events',
+    ]
+    with open(detail_path, 'w', encoding='utf-8', newline='') as detail_file:
+        writer = csv.DictWriter(detail_file, fieldnames=detail_fields)
+        writer.writeheader()
+        for record in episode_records:
+            writer.writerow(record)
+
+    collision_detail_fields = [
+        'episode_index',
+        'episode_return',
+        'episode_length',
+        'mean_speed',
+        'final_progress',
+        'lane_change_count',
+        'termination_reason',
+        'collision_phase',
+        'policy_action',
+        'executed_action',
+        'assist_overrode_policy',
+        'highway_assist_reason',
+        'highway_tactical_reason',
+        'highway_best_lane_gain',
+        'highway_overtake_events',
+    ]
+    with open(failure_path, 'w', encoding='utf-8', newline='') as failure_file:
+        writer = csv.DictWriter(failure_file, fieldnames=collision_detail_fields)
+        writer.writeheader()
+        for record in episode_records:
+            if int(record.get('collision', 0)) > 0:
+                writer.writerow({field_name: record[field_name] for field_name in collision_detail_fields})
+
+    return summary_path, detail_path, failure_path
+
+
+def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None, collect_episode_details=False):
     metrics = {
         'mean_return': 0.0,
         'mean_length': 0.0,
@@ -1438,8 +1648,9 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
     other_terminals = []
     final_progresses = []
     termination_reason_counter = {}
+    episode_records = []
     with torch.no_grad():
-        for _ in range(episode_num):
+        for episode_index in range(episode_num):
             if mode == 'val':
                 env.init_val(vehicles_count=vehicles_count)
                 observation = env.get_val_observation()
@@ -1469,6 +1680,8 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
             final_progresses.append(float(episode_summary['final_progress']))
             termination_reason = episode_summary['termination_reason']
             termination_reason_counter[termination_reason] = termination_reason_counter.get(termination_reason, 0) + 1
+            if collect_episode_details:
+                episode_records.append(build_eval_episode_record(env, episode_index, episode_summary))
     metrics['mean_return'] = float(np.mean(returns))
     metrics['mean_length'] = float(np.mean(lengths))
     metrics['mean_speed'] = float(np.mean(speeds))
@@ -1486,6 +1699,9 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None):
     for reason_name in sorted(termination_reason_counter.keys()):
         reason_parts.append(f'{reason_name}:{termination_reason_counter[reason_name]}/{episode_num}')
     metrics['termination_reason_distribution'] = '|'.join(reason_parts)
+    if collect_episode_details:
+        metrics['episode_records'] = episode_records
+        metrics['collision_analysis'] = summarize_collision_records(episode_records)
     return metrics
 
 
@@ -1893,7 +2109,7 @@ if __name__ == '__main__':
         actor_eval_prefix = None
         critic_eval_prefix = None
         if args.warm_start_prefix:
-            actor_eval_prefix = checkpoint_utils.normalize_prefix(args.warm_start_prefix)
+            actor_eval_prefix = checkpoint_utils.resolve_checkpoint_prefix_path(args.warm_start_prefix)
             critic_eval_prefix = actor_prefix_to_critic_prefix(actor_eval_prefix)
         elif args.eval_checkpoint == 'best':
             actor_eval_prefix = EXP_NAME + '_best'
@@ -1903,20 +2119,33 @@ if __name__ == '__main__':
             critic_eval_prefix = EXP_NAME + 'critic_current'
         model.load_model(actor_eval_prefix)
         model_c.load_model(critic_eval_prefix)
+        eval_artifact_stem = args.eval_artifact_stem if args.eval_artifact_stem else EXP_NAME
         eval_metrics = evaluate_policy(
             env,
             model,
             max(1, int(args.eval_episodes)),
             mode='val',
             vehicles_count=eval_vehicle_count,
+            collect_episode_details=bool(args.eval_save_details),
         )
-        eval_log_filename = os.path.join(active_log_dir, 'eval_' + EXP_NAME + '.txt')
+        eval_log_filename = os.path.join(active_log_dir, 'eval_' + eval_artifact_stem + '.txt')
         EvalFile = open(eval_log_filename, 'a')
         log_text(EvalFile, 'eval_init', str(datetime.datetime.now()))
         log_text(EvalFile, 'eval_args', str(args), onscreen=False)
         log_text(EvalFile, 'eval_checkpoint', actor_eval_prefix)
         log_text(EvalFile, 'eval', format_validation_metrics(eval_metrics, eval_episode_index))
         log_text(EvalFile, 'eval_t', format_validation_metrics(eval_metrics, eval_episode_index, total_env_steps=0), onscreen=False)
+        if args.eval_save_details:
+            summary_path, detail_path, failure_path = save_eval_artifacts(
+                active_log_dir,
+                eval_artifact_stem,
+                eval_metrics,
+                args,
+                actor_eval_prefix,
+            )
+            log_text(EvalFile, 'eval_summary_file', summary_path, onscreen=False)
+            log_text(EvalFile, 'eval_detail_file', detail_path, onscreen=False)
+            log_text(EvalFile, 'eval_failure_file', failure_path, onscreen=False)
         log_text(EvalFile, 'finish', str(datetime.datetime.now()))
         EvalFile.flush()
         EvalFile.close()

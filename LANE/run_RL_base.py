@@ -28,9 +28,13 @@ def get_arguments():
     parser.add_argument('--cuda', type=int, default=-1)
     parser.add_argument('--thread', type=int, default=-1)
     parser.add_argument('--train_num', type=int, default=20000)
+    parser.add_argument('--seed', type=int, default=-1)
+    parser.add_argument('--val_interval_timesteps', type=int, default=0)
+    parser.add_argument('--val_episodes', type=int, default=20)
     parser.add_argument('--rep', type=int, default=11)
     parser.add_argument('--ignore_checkpoint', default=False, action='store_true')
     parser.add_argument('--monitor_time', default=False, action='store_true')
+    parser.add_argument('--allow_long_train', default=False, action='store_true')
     # Task amd model
     parser.add_argument('--task', type=str, default='gymip',
                         choices=['gymip'])
@@ -84,27 +88,47 @@ def reload_log_file(filename):
     val_best_success = 0.0
     val_best_speed = 0.0
     val_best_lane_change = 0.0
+    total_env_steps = 0
     with open(filename) as file:
         for line in file:
-            str_list = [i for i in re.sub(',', ' ', line).split()]
-            if not str_list:
+            line = line.strip()
+            if not line:
                 continue
-            if str_list[0] == 'train':
-                train_epi_num = int(str_list[1])
-            if str_list[0] == 'val_save':
-                val_best_return = float(str_list[2])
-                if len(str_list) > 3:
-                    val_best_collision = float(str_list[3])
-                if len(str_list) > 4:
-                    val_best_length = float(str_list[4])
-                if len(str_list) > 6:
-                    val_best_success = float(str_list[6])
-                if len(str_list) > 7:
-                    val_best_speed = float(str_list[7])
-                if len(str_list) > 5:
-                    val_best_lane_change = float(str_list[5])
-            elif str_list[0] == 'val' and val_best_return <= -9999.0 and len(str_list) > 2:
-                val_best_return = float(str_list[2])
+            parts = [item.strip() for item in line.split(',')]
+            if not parts:
+                continue
+            tag = parts[0]
+            if tag == 'train' and len(parts) > 1:
+                train_epi_num = max(train_epi_num, int(parts[1]))
+            elif tag == 'train_t' and len(parts) > 2:
+                train_epi_num = max(train_epi_num, int(parts[1]))
+                total_env_steps = max(total_env_steps, int(parts[2]))
+            elif tag == 'summary' and len(parts) > 2 and parts[1] == 'total_env_steps':
+                total_env_steps = max(total_env_steps, int(parts[2]))
+            elif tag in ['val_save', 'val_save_t']:
+                numeric_offset = 2
+                if tag == 'val_save_t' and len(parts) > 3:
+                    total_env_steps = max(total_env_steps, int(parts[2]))
+                    numeric_offset = 3
+                if len(parts) > numeric_offset:
+                    val_best_return = float(parts[numeric_offset])
+                if len(parts) > numeric_offset + 1:
+                    val_best_collision = float(parts[numeric_offset + 1])
+                if len(parts) > numeric_offset + 2:
+                    val_best_length = float(parts[numeric_offset + 2])
+                if len(parts) > numeric_offset + 4:
+                    val_best_success = float(parts[numeric_offset + 4])
+                if len(parts) > numeric_offset + 5:
+                    val_best_speed = float(parts[numeric_offset + 5])
+                if len(parts) > numeric_offset + 3:
+                    val_best_lane_change = float(parts[numeric_offset + 3])
+            elif tag in ['val', 'val_t'] and val_best_return <= -9999.0:
+                numeric_offset = 2
+                if tag == 'val_t' and len(parts) > 3:
+                    total_env_steps = max(total_env_steps, int(parts[2]))
+                    numeric_offset = 3
+                if len(parts) > numeric_offset:
+                    val_best_return = float(parts[numeric_offset])
     return (
         train_epi_num,
         val_best_return,
@@ -113,6 +137,7 @@ def reload_log_file(filename):
         val_best_success,
         val_best_speed,
         val_best_lane_change,
+        total_env_steps,
     )
 
 
@@ -184,7 +209,8 @@ def apply_lane_baseline_profile(args):
                 if attr_name in BASE_PROFILE_OPTIONAL_EXPLORATION_KEYS:
                     continue
                 set_exact(attr_name, target_value)
-            clamp_max('train_num', 2000)
+            if not getattr(args, 'allow_long_train', False):
+                clamp_max('train_num', 2000)
             return adjustments
         lr_cap = {
             'light': 3.0e-4,
@@ -221,13 +247,14 @@ def apply_lane_baseline_profile(args):
         if args.entropy_decay >= 1.0:
             args.entropy_decay = STABLE_HIGHWAY_STANDARD_PPO['entropy_decay']
             adjustments.append(f'entropy_decay->{args.entropy_decay}')
-        if traffic_level in ['standard', 'dense']:
+        if traffic_level in ['standard', 'dense'] and not getattr(args, 'allow_long_train', False):
             clamp_max('train_num', 2000)
         elif args.train_num < train_num_floor.get(traffic_level, 3200):
             args.train_num = train_num_floor.get(traffic_level, 3200)
             adjustments.append(f'train_num->{args.train_num}')
     elif args.road_scenario in ['merge', 'roundabout']:
-        clamp_max('train_num', 2000)
+        if not getattr(args, 'allow_long_train', False):
+            clamp_max('train_num', 2000)
     return adjustments
 
 
@@ -255,6 +282,36 @@ def select_lane_vehicle_count(args, train_epi_i):
     span = curriculum_span.get(traffic_level, 280)
     progress = min(1.0, train_epi_i / max(1, span))
     return int(round(start_vehicle_num + (end_vehicle_num - start_vehicle_num) * progress))
+
+
+def build_lane_episode_seed(base_seed, episode_index, slot_index=0):
+    if int(base_seed) < 0:
+        return None
+    modulus = 2147483647
+    composite = (int(base_seed) + 1) * 1000003 + int(episode_index) * 1009 + int(slot_index) * 97
+    return int(composite % modulus)
+
+
+def set_random_seed(seed, device):
+    if int(seed) < 0:
+        return
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if device.type == 'cuda':
+        torch.cuda.manual_seed_all(seed)
+
+
+def resolve_validation_schedule(args):
+    if int(getattr(args, 'val_interval_timesteps', 0)) > 0:
+        return int(args.val_interval_timesteps), max(1, int(args.val_episodes))
+    if args.road_scenario == 'merge':
+        return 1500, max(1, int(args.val_episodes))
+    if args.road_scenario == 'roundabout':
+        return 2250, max(1, int(args.val_episodes))
+    if args.road_scenario == 'highway' and getattr(args, 'traffic_level', 'standard') == 'dense':
+        return 4500, max(1, int(args.val_episodes))
+    return 3000, max(1, int(args.val_episodes))
 
 
 def evaluate_lane_policy(env, model, episode_num, vehicles_count=None):
@@ -288,8 +345,9 @@ def evaluate_lane_policy(env, model, episode_num, vehicles_count=None):
     final_progresses = []
     termination_reason_counter = {}
     with torch.no_grad():
-        for _ in range(episode_num):
-            env.init_val(vehicles_count=vehicles_count)
+        for episode_index in range(episode_num):
+            episode_seed = build_lane_episode_seed(getattr(env, 'seed_base', -1), episode_index)
+            env.init_val(vehicles_count=vehicles_count, seed=episode_seed)
             observation = env.get_val_observation()
             for _step_i in range(env.max_step_num):
                 model_output, _ = model(observation)
@@ -334,18 +392,32 @@ def evaluate_lane_policy(env, model, episode_num, vehicles_count=None):
     return metrics
 
 
-def format_validation_metrics(metrics, episode_index):
-    base_record = (
-        '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
-            episode_index,
-            metrics['mean_return'],
-            metrics['collision_rate'],
-            metrics['mean_length'],
-            metrics['mean_lane_change'],
-            metrics['success_rate'],
-            metrics['mean_speed'],
+def format_validation_metrics(metrics, episode_index, total_env_steps=None):
+    if total_env_steps is None:
+        base_record = (
+            '%d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                episode_index,
+                metrics['mean_return'],
+                metrics['collision_rate'],
+                metrics['mean_length'],
+                metrics['mean_lane_change'],
+                metrics['success_rate'],
+                metrics['mean_speed'],
+            )
         )
-    )
+    else:
+        base_record = (
+            '%d, %d, %8.6f, %6.4f, %8.4f, %8.4f, %6.4f, %8.4f' % (
+                episode_index,
+                int(total_env_steps),
+                metrics['mean_return'],
+                metrics['collision_rate'],
+                metrics['mean_length'],
+                metrics['mean_lane_change'],
+                metrics['success_rate'],
+                metrics['mean_speed'],
+            )
+        )
     extra_record = (
         ', timeout %6.4f, progress %6.4f, offroad %6.4f, low_speed_abort %6.4f, '
         'complete_low_speed %6.4f, other_terminal %6.4f, term %s'
@@ -361,17 +433,29 @@ def format_validation_metrics(metrics, episode_index):
     return base_record + extra_record
 
 
-def format_train_episode_metrics(train_epi_i, env, episode_vehicle_count, entropy_value):
+def format_train_episode_metrics(train_epi_i, env, episode_vehicle_count, entropy_value, total_env_steps=None):
     episode_summary = env.get_episode_summary()
-    base_record = (
-        '%d, %8.6f, %4d, %3d, %6.4f' % (
-            train_epi_i,
-            env.episode_return,
-            env.step_num,
-            -1 if episode_vehicle_count is None else int(episode_vehicle_count),
-            entropy_value,
+    if total_env_steps is None:
+        base_record = (
+            '%d, %8.6f, %4d, %3d, %6.4f' % (
+                train_epi_i,
+                env.episode_return,
+                env.step_num,
+                -1 if episode_vehicle_count is None else int(episode_vehicle_count),
+                entropy_value,
+            )
         )
-    )
+    else:
+        base_record = (
+            '%d, %d, %8.6f, %4d, %3d, %6.4f' % (
+                train_epi_i,
+                int(total_env_steps),
+                env.episode_return,
+                env.step_num,
+                -1 if episode_vehicle_count is None else int(episode_vehicle_count),
+                entropy_value,
+            )
+        )
     extra_record = (
         ', success %4.2f, collision %4.2f, timeout %4.2f, progress %5.3f, speed %6.3f, term %s'
     ) % (
@@ -527,20 +611,24 @@ if __name__ == "__main__":
     entropy_warmup_suffix = ''
     if args.entropy_warmup_scale > 1.0 + 1e-8 and args.entropy_warmup_episodes > 0:
         entropy_warmup_suffix = '_ew%4.2fe%d' % (args.entropy_warmup_scale, args.entropy_warmup_episodes)
-    EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s%s%s_rep%02d' % (
+    run_id_suffix = '_rep%02d' % args.rep
+    if args.seed >= 0:
+        run_id_suffix = '_seed%02d' % args.seed
+    EXP_NAME = '%s_%s_%s_%s_%s_%8.6f_%4.2f_%6.5f_%d_%5.4f_road%s_tf%s%s%s%s' % (
             args.alg, args.task, args.model, model_str, args.optimizer,
             args.lr, args.entropy, args.gamma,
             args.PPO_epochs, args.eps_clip,
-            args.road_scenario, args.traffic_level, reward_stage_suffix, entropy_warmup_suffix, args.rep)
+            args.road_scenario, args.traffic_level, reward_stage_suffix, entropy_warmup_suffix, run_id_suffix)
     active_model_dir, active_log_dir = checkpoint_utils.activate_scenario_output_dirs(
             run_kind=run_kind, road_scenario=args.road_scenario, traffic_level=args.traffic_level, create=True)
     # Task specified variables
     if args.road_scenario == 'highway' and args.alg == 'ppo':
-        val_freq, val_num, test_num = 25, 3, 10
+        test_num = 10
         train_frequency = 32
     else:
-        val_freq, val_num, test_num = 100, 10, 10
+        test_num = 10
         train_frequency = 10
+    val_interval_timesteps, val_num = resolve_validation_schedule(args)
     # Device
     if args.cuda < 0:
         torch_device = torch.device('cpu')
@@ -551,6 +639,7 @@ if __name__ == "__main__":
     else:
         os.environ['CUDA_VISIBLE_DEVICES'] = '%1d' % args.cuda
         torch_device = torch.device('cuda:0')
+    set_random_seed(args.seed, torch_device)
     # Environment Setup
     import env_lane
     env = env_lane.GymLane(
@@ -559,6 +648,7 @@ if __name__ == "__main__":
         traffic_level=args.traffic_level,
         highway_reward_stage=args.highway_reward_stage,
     )
+    env.seed_base = args.seed
     input_dimension, output_dimension = env.state_dimension, env.action_num
     mem = memory_lib.MemoryBuffer(s_size=input_dimension, a_size=output_dimension, dev=torch_device)
     # Model Setup
@@ -649,6 +739,7 @@ if __name__ == "__main__":
             last_val_best_success,
             last_val_best_speed,
             last_val_best_lane_change,
+            total_env_steps,
         ) = reload_log_file(log_filename)
         File = open(log_filename, 'a')
         log_text(File, 'resume', str(datetime.datetime.now()))
@@ -662,9 +753,11 @@ if __name__ == "__main__":
         last_val_best_success = 0.0
         last_val_best_speed = 0.0
         last_val_best_lane_change = 0.0
+        total_env_steps = 0
         File = open(log_filename, 'w')
         log_text(File, 'init', str(datetime.datetime.now()))
         log_text(File, 'arguments', str(args))
+        log_text(File, 'seed', str(args.seed))
         if baseline_profile_adjustments:
             log_text(File, 'profile', '; '.join(baseline_profile_adjustments))
         log_text(File, 'model_dir', active_model_dir)
@@ -677,13 +770,15 @@ if __name__ == "__main__":
     # >>>>  Main Loop
     mem.reset()         # memory buffer is shared across episodes
     train_step_num_total = 0
+    next_validation_timestep = int(((max(0, total_env_steps) // val_interval_timesteps) + 1) * val_interval_timesteps)
     for train_epi_i in range((last_train_epi_num + 1), args.train_num):
         if args.model == 'ann2snn':
             break
         entropy_value = select_entropy_value(args, train_epi_i)
         maybe_update_entropy(model, entropy_value)
         episode_vehicle_count = select_lane_vehicle_count(args, train_epi_i)
-        env.init_train(vehicles_count=episode_vehicle_count)
+        episode_seed = build_lane_episode_seed(args.seed, train_epi_i)
+        env.init_train(vehicles_count=episode_vehicle_count, seed=episode_seed)
         observation = env.get_train_observation()
         for train_step_i in range(env.max_step_num):
             # Inference
@@ -714,6 +809,7 @@ if __name__ == "__main__":
                 mem.add_transition(s1=observation, model_output=model_output.detach(),
                                    a=action_executed_onehot, a_log=action_logprob.detach(),
                                    r=reward, s2=observation_next, done=env.done_signal)
+            total_env_steps += 1
             # >>>> Train
             train_step_num_total = (train_step_num_total + 1) % train_frequency     # every number of steps
             if train_step_num_total == 0:
@@ -810,8 +906,20 @@ if __name__ == "__main__":
             ),
             onscreen=False,
         )
+        log_text(
+            File,
+            'train_t',
+            format_train_episode_metrics(
+                train_epi_i,
+                env,
+                episode_vehicle_count,
+                entropy_value,
+                total_env_steps=total_env_steps,
+            ),
+            onscreen=False,
+        )
         # Validation
-        if train_epi_i % val_freq == (val_freq - 1):
+        while total_env_steps >= next_validation_timestep:
             val_vehicle_count = None
             if args.road_scenario == 'highway':
                 val_vehicle_count = select_lane_vehicle_count(args, train_epi_i)
@@ -839,10 +947,22 @@ if __name__ == "__main__":
                     'val_save',
                     format_validation_metrics(val_metrics, train_epi_i),
                 )
+                log_text(
+                    File,
+                    'val_save_t',
+                    format_validation_metrics(val_metrics, train_epi_i, total_env_steps=total_env_steps),
+                    onscreen=False,
+                )
             log_text(
                 File,
                 'val',
                 format_validation_metrics(val_metrics, train_epi_i),
+            )
+            log_text(
+                File,
+                'val_t',
+                format_validation_metrics(val_metrics, train_epi_i, total_env_steps=total_env_steps),
+                onscreen=False,
             )
             if (
                 not better_model and
@@ -868,6 +988,7 @@ if __name__ == "__main__":
                             val_metrics['collision_rate'],
                         ),
                     )
+            next_validation_timestep += val_interval_timesteps
 
 
     # ANN2SNN Implementation
@@ -893,6 +1014,16 @@ if __name__ == "__main__":
 
     model.save_model(EXP_NAME + '_current')
     model_c.save_model(EXP_NAME + 'critic' + '_current')
+    log_text(
+        File,
+        'summary',
+        'total_env_steps,%d,val_interval_timesteps,%d,val_episodes,%d' % (
+            int(total_env_steps),
+            int(val_interval_timesteps),
+            int(val_num),
+        ),
+        onscreen=False,
+    )
     if args.skip_post_tests:
         cleanup_summary = checkpoint_utils.cleanup_final_best_checkpoints(
             actor_best_prefix=EXP_NAME + '_best',
