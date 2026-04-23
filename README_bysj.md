@@ -76,14 +76,5 @@ python3 test_video.py --road_scenario highway --traffic_level dense --device cud
 python3 test_video.py --road_scenario highway --traffic_level standard --device cuda --checkpoint_kind ours
 python3 test_video.py --road_scenario roundabout --traffic_level standard --device cuda --checkpoint_kind baseline
 
-监控模式训练
-python3 /root/autodl-tmp/SVPG2023/LANE/monitor_training_eta.py \
-  --log /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/logs/log_ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.001000_0.10_0.97000_5_0.2000_roadhighway_tfstandard_rep11.txt \
-  --poll-seconds 30 --clear
-
-
-  python3 /root/autodl-tmp/SVPG2023/LANE/monitor_training_eta.py \
-  --log /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/logs/log_ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.001000_0.10_0.97000_5_0.2000_roadhighway_tfstandard_rep11.txt \
-  --once
 
 
