@@ -1,0 +1,4 @@
+Method,Domain Randomization / Curriculum,Success Rate ↑,Collision Rate ↓,Avg Reward ↑,Avg Speed ↑,Avg Progress ↑
+Baseline,No / No,0.7867,0.2327,198.8774,26.4963,0.6977
+Ours w/o Domain Randomization / Curriculum,No / No,0.8074,0.1459,226.9724,26.8756,0.8079
+Ours,Yes / Yes,0.8270,0.0635,248.1237,27.2544,0.8811

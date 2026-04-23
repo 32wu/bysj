@@ -1,0 +1,7 @@
+eval_init,2026-04-23 16:21:57.136505
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_dense/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000600_0.35_0.99800_4_0.1500_roadhighway_tfdense_rep42_best
+eval,0, 33.454002, 0.9600,  31.9600,   5.6000, 0.0400,  26.5524, timeout 0.0000, progress 0.2655, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:24/25|success:1/25
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_dense/eval_reports/eval_summary_thesis_final_baseline_dense_chunk50_25ep.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_dense/eval_reports/eval_detail_thesis_final_baseline_dense_chunk50_25ep.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_dense/eval_reports/eval_failure_thesis_final_baseline_dense_chunk50_25ep.csv
+finish,2026-04-23 16:21:57.136554

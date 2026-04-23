@@ -2582,7 +2582,7 @@ class GymLane:
 
     def make_action(self, action):
         action_index = int(torch.argmax(action).item())
-        show_live_progress = (self.mode == 'test')
+        show_live_progress = (self.mode == 'test' and not getattr(self, 'suppress_test_progress', False))
         pre_step_highway_meta = self._capture_highway_step_context() if self.road_scenario == 'highway' else {}
         executed_action_index = int(action_index)
         highway_tactical_plan = None

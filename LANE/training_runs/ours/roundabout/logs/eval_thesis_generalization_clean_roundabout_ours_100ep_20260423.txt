@@ -1,0 +1,7 @@
+eval_init,2026-04-23 23:53:15.283746
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/roundabout/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000500_2.00_0.99500_4_0.1500_ro512_mb128_lam0.97_rs1.00_gc0.50_adaptive_roadroundabout_tfstandard_seed34_best
+eval,0, 3.879772, 0.5200,   8.0700,   3.3300, 0.4800,  12.0828, timeout 0.0000, progress 0.6555, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:52/100|success:48/100
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/roundabout/eval_reports/eval_summary_thesis_generalization_clean_roundabout_ours_100ep_20260423.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/roundabout/eval_reports/eval_detail_thesis_generalization_clean_roundabout_ours_100ep_20260423.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/roundabout/eval_reports/eval_failure_thesis_generalization_clean_roundabout_ours_100ep_20260423.csv
+finish,2026-04-23 23:53:15.283812

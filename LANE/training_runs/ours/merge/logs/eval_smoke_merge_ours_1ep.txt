@@ -1,0 +1,7 @@
+eval_init,2026-04-23 23:50:11.803139
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/merge/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000500_0.10_0.99500_4_0.1500_ro512_mb128_lam0.97_rs1.00_gc0.50_adaptive_roadmerge_tfstandard_seed35_best
+eval,0, 41.666686, 0.0000,  17.0000,   6.0000, 1.0000,  20.0485, timeout 0.0000, progress 1.0000, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term success:1/1
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/merge/eval_reports/eval_summary_smoke_merge_ours_1ep.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/merge/eval_reports/eval_detail_smoke_merge_ours_1ep.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/merge/eval_reports/eval_failure_smoke_merge_ours_1ep.csv
+finish,2026-04-23 23:50:11.803179

@@ -1,0 +1,7 @@
+eval_init,2026-04-23 23:52:37.425538
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/merge/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.001000_0.10_0.97000_5_0.2000_roadmerge_tfstandard_seed42_best
+eval,0, -56.080467, 1.0000,   8.0000,   8.0000, 0.0000,  28.5711, timeout 0.0000, progress 0.5308, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:100/100
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/merge/eval_reports/eval_summary_thesis_generalization_clean_merge_baseline_100ep_20260423.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/merge/eval_reports/eval_detail_thesis_generalization_clean_merge_baseline_100ep_20260423.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/merge/eval_reports/eval_failure_thesis_generalization_clean_merge_baseline_100ep_20260423.csv
+finish,2026-04-23 23:52:37.425580

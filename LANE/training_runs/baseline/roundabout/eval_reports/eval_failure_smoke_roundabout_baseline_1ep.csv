@@ -1,0 +1,2 @@
+episode_index,episode_return,episode_length,mean_speed,final_progress,lane_change_count,termination_reason,collision_phase,policy_action,executed_action,assist_overrode_policy,highway_assist_reason,highway_tactical_reason,highway_best_lane_gain,highway_overtake_events
+0,-44.9940297802133,7,8.0,0.5648131130170575,0,collision,startup,1,1,0,policy,policy,0.0,0

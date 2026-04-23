@@ -310,8 +310,9 @@ class RWTAprob:
             bias_noise = (torch.rand(self.bias.size(), device=self.dev) - 0.5) * 2 * noise_param
         # -----add noise---------
         weight_noise[self.index_2x, self.index_2y] = weight_noise[self.index_1x, self.index_1y]
-        self.weight += weight_noise * self.mask_weight
-        self.bias += bias_noise
+        with torch.no_grad():
+            self.weight += weight_noise * self.mask_weight
+            self.bias += bias_noise
 
     def add_noise_relative(self, noise_type, noise_param):
         if not noise_type in ['gaussian', 'uniform']:
@@ -525,5 +526,4 @@ if __name__ == "__main__":
 
 
 print('\033[91mFINISH: model_rwta\033[0m')
-
 

@@ -11,6 +11,7 @@ import checkpoint_utils
 import env_lane
 import model_mlp
 import model_rwta
+from run_RL_ours import build_lane_episode_seed
 
 
 def parse_args():
@@ -28,6 +29,13 @@ def parse_args():
     parser.add_argument('--input-noise-levels', type=float, nargs='*', default=[0.0, 0.05, 0.10, 0.15, 0.20])
     parser.add_argument('--weight-noise-levels', type=float, nargs='*', default=[0.0, 0.02, 0.05, 0.10])
     parser.add_argument('--output-dir', type=str, default=os.path.join(checkpoint_utils.LANE_DIR, 'comparison_reports'))
+    parser.add_argument('--run-name', type=str, default=None,
+                        help='Optional fixed subdirectory name under output-dir. When omitted, uses robustness_<timestamp>.')
+    parser.add_argument('--model-kinds', type=str, nargs='+', default=['baseline', 'ours'],
+                        choices=['baseline', 'ours'],
+                        help='Select which model groups to evaluate.')
+    parser.add_argument('--skip-clean', action='store_true',
+                        help='Skip the extra clean-evaluation pass and only run perturbation sweeps.')
     return parser.parse_args()
 
 
@@ -51,7 +59,7 @@ def resolve_prefixes(args):
             args.road_scenario,
             args.traffic_level,
         ),
-        'optimized': normalize_prefix(args.ours_prefix) or auto_detect_prefix(
+        'ours': normalize_prefix(args.ours_prefix) or auto_detect_prefix(
             'ours',
             args.road_scenario,
             args.traffic_level,
@@ -163,21 +171,32 @@ def set_all_seeds(seed, device):
 
 
 def collect_episode_metrics(env):
+    episode_summary = env.get_episode_summary()
     return {
         'return': float(env.episode_return),
         'length': float(env.step_num),
         'collision': float(env.collision_count > 0),
         'success': float(env.episode_success()),
+        'timeout': float(episode_summary.get('timeout_rate', 0.0)),
+        'mean_speed': float(episode_summary.get('mean_speed', env.episode_mean_speed())),
+        'final_progress': float(episode_summary.get('final_progress', env.episode_progress())),
         'lane_change': float(env.lane_change_count),
     }
 
 
 def summarize_metrics(metric_list):
     summary = {}
-    for key in ['return', 'length', 'collision', 'success', 'lane_change']:
+    for key in ['return', 'length', 'collision', 'success', 'timeout', 'mean_speed', 'final_progress', 'lane_change']:
         values = np.asarray([item[key] for item in metric_list], dtype=np.float32)
         summary[f'{key}_mean'] = float(np.mean(values))
         summary[f'{key}_std'] = float(np.std(values))
+    summary['average_reward'] = summary['return_mean']
+    summary['average_episode_length'] = summary['length_mean']
+    summary['success_rate'] = summary['success_mean']
+    summary['collision_rate'] = summary['collision_mean']
+    summary['timeout_rate'] = summary['timeout_mean']
+    summary['average_speed'] = summary['mean_speed_mean']
+    summary['average_progress'] = summary['final_progress_mean']
     return summary
 
 
@@ -194,9 +213,10 @@ def evaluate_model(prefix, args, device, failure_rate=0.0, input_noise=0.0, weig
         road_scenario=args.road_scenario,
         traffic_level=args.traffic_level,
     )
+    env.suppress_test_progress = True
     metrics = []
     for episode_idx in range(args.episodes):
-        episode_seed = args.seed + episode_idx
+        episode_seed = build_lane_episode_seed(args.seed, episode_idx)
         model = build_model_from_prefix(prefix, device)
         if weight_noise > 0 and hasattr(model, 'add_noise_abs'):
             model.add_noise_abs('gaussian', weight_noise)
@@ -222,16 +242,22 @@ def evaluate_model(prefix, args, device, failure_rate=0.0, input_noise=0.0, weig
 def print_summary(title, value, summary):
     print(
         f'{title:<14} {value:>6.3f} | '
-        f'return {summary["return_mean"]:>7.3f} +/- {summary["return_std"]:>6.3f} | '
-        f'length {summary["length_mean"]:>7.3f} +/- {summary["length_std"]:>6.3f} | '
-        f'collision {summary["collision_mean"]:>6.3f} | success {summary["success_mean"]:>6.3f}'
+        f'success {summary["success_rate"]:>6.3f} | '
+        f'collision {summary["collision_rate"]:>6.3f} | '
+        f'timeout {summary["timeout_rate"]:>6.3f} | '
+        f'reward {summary["average_reward"]:>7.3f} | '
+        f'len {summary["average_episode_length"]:>7.3f} | '
+        f'speed {summary["average_speed"]:>6.3f} | '
+        f'progress {summary["average_progress"]:>6.3f}'
     )
 
 
-def ensure_output_dir(output_root):
+def ensure_output_dir(output_root, run_name=None):
     os.makedirs(output_root, exist_ok=True)
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    run_dir = os.path.join(output_root, f'robustness_{timestamp}')
+    run_dir = os.path.join(
+        output_root,
+        run_name or f'robustness_{datetime.now().strftime("%Y%m%d_%H%M%S")}',
+    )
     os.makedirs(run_dir, exist_ok=True)
     return run_dir
 
@@ -249,8 +275,14 @@ def write_csv(path, rows):
 def main():
     args = parse_args()
     device = torch.device(args.device)
-    prefixes = resolve_prefixes(args)
-    run_dir = ensure_output_dir(args.output_dir)
+    prefixes = {
+        model_name: prefix
+        for model_name, prefix in resolve_prefixes(args).items()
+        if model_name in set(args.model_kinds)
+    }
+    if not prefixes:
+        raise ValueError('No model prefixes selected for evaluation.')
+    run_dir = ensure_output_dir(args.output_dir, args.run_name)
 
     clean_rows = []
     failure_rows = []
@@ -266,15 +298,18 @@ def main():
         print('\n======================================')
         print('Model:', model_name, prefix)
 
-        clean_summary = evaluate_model(prefix, args, device)
-        clean_rows.append({
-            'model': model_name,
-            'scenario': args.road_scenario,
-            'traffic_level': args.traffic_level,
-            'checkpoint': os.path.basename(prefix),
-            **clean_summary,
-        })
-        print_summary('clean_eval', 0.0, clean_summary)
+        if not args.skip_clean:
+            clean_summary = evaluate_model(prefix, args, device)
+            clean_rows.append({
+                'model': model_name,
+                'scenario': args.road_scenario,
+                'traffic_level': args.traffic_level,
+                'eval_episodes': args.episodes,
+                'checkpoint_prefix': prefix,
+                'checkpoint': os.path.basename(prefix),
+                **clean_summary,
+            })
+            print_summary('clean_eval', 0.0, clean_summary)
 
         print('\n[Action Failure]')
         for failure_rate in args.failure_rates:
@@ -285,7 +320,9 @@ def main():
                 'model': model_name,
                 'scenario': args.road_scenario,
                 'traffic_level': args.traffic_level,
+                'eval_episodes': args.episodes,
                 'failure_rate': failure_rate,
+                'checkpoint_prefix': prefix,
                 'checkpoint': os.path.basename(prefix),
                 **summary,
             })
@@ -299,7 +336,9 @@ def main():
                 'model': model_name,
                 'scenario': args.road_scenario,
                 'traffic_level': args.traffic_level,
+                'eval_episodes': args.episodes,
                 'input_noise': noise_level,
+                'checkpoint_prefix': prefix,
                 'checkpoint': os.path.basename(prefix),
                 **summary,
             })
@@ -313,7 +352,9 @@ def main():
                 'model': model_name,
                 'scenario': args.road_scenario,
                 'traffic_level': args.traffic_level,
+                'eval_episodes': args.episodes,
                 'weight_noise': noise_level,
+                'checkpoint_prefix': prefix,
                 'checkpoint': os.path.basename(prefix),
                 **summary,
             })

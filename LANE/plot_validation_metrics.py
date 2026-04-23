@@ -127,49 +127,77 @@ def parse_labeled_float(parts: List[str], label: str, default: float = 0.0) -> f
     return default
 
 
+def parse_validation_row(parts: List[str], tag: str):
+    if tag in {'val', 'val_save'}:
+        if len(parts) >= 8:
+            episode_index = int(parts[1])
+            return ValRecord(
+                episode=episode_index,
+                timesteps=episode_index,
+                mean_return=float(parts[2]),
+                collision_rate=float(parts[3]),
+                mean_length=float(parts[4]),
+                mean_lane_change=float(parts[5]),
+                success_rate=float(parts[6]),
+                mean_speed=float(parts[7]),
+                mean_progress=parse_labeled_float(parts[8:], 'progress', default=0.0),
+                is_best=(tag == 'val_save'),
+            )
+        if len(parts) >= 7:
+            episode_index = int(parts[1])
+            return ValRecord(
+                episode=episode_index,
+                timesteps=episode_index,
+                mean_return=float(parts[2]),
+                collision_rate=float(parts[3]),
+                mean_length=float(parts[4]),
+                mean_lane_change=float(parts[5]),
+                success_rate=float(parts[6]),
+                mean_speed=float('nan'),
+                mean_progress=float('nan'),
+                is_best=(tag == 'val_save'),
+            )
+    if tag in {'val_t', 'val_save_t'}:
+        if len(parts) >= 9:
+            return ValRecord(
+                episode=int(parts[1]),
+                timesteps=int(parts[2]),
+                mean_return=float(parts[3]),
+                collision_rate=float(parts[4]),
+                mean_length=float(parts[5]),
+                mean_lane_change=float(parts[6]),
+                success_rate=float(parts[7]),
+                mean_speed=float(parts[8]),
+                mean_progress=parse_labeled_float(parts[9:], 'progress', default=0.0),
+                is_best=(tag == 'val_save_t'),
+            )
+        if len(parts) >= 8:
+            return ValRecord(
+                episode=int(parts[1]),
+                timesteps=int(parts[2]),
+                mean_return=float(parts[3]),
+                collision_rate=float(parts[4]),
+                mean_length=float(parts[5]),
+                mean_lane_change=float(parts[6]),
+                success_rate=float(parts[7]),
+                mean_speed=float('nan'),
+                mean_progress=float('nan'),
+                is_best=(tag == 'val_save_t'),
+            )
+    return None
+
+
 def parse_validation_log(log_path: Path) -> List[ValRecord]:
     records: List[ValRecord] = []
-    best_keys = set()
     with log_path.open('r', encoding='utf-8') as file_obj:
         for raw_line in file_obj:
             line = raw_line.strip()
             if not line:
                 continue
             parts = [part.strip() for part in line.split(',')]
-            tag = parts[0]
-            if tag == 'val_save_t' and len(parts) >= 9:
-                best_keys.add((int(parts[1]), int(parts[2])))
-            elif tag == 'val_t' and len(parts) >= 9:
-                records.append(
-                    ValRecord(
-                        episode=int(parts[1]),
-                        timesteps=int(parts[2]),
-                        mean_return=float(parts[3]),
-                        collision_rate=float(parts[4]),
-                        mean_length=float(parts[5]),
-                        mean_lane_change=float(parts[6]),
-                        success_rate=float(parts[7]),
-                        mean_speed=float(parts[8]),
-                        mean_progress=parse_labeled_float(parts[9:], 'progress', default=0.0),
-                    )
-                )
-            elif tag == 'val' and len(parts) >= 8:
-                episode_index = int(parts[1])
-                records.append(
-                    ValRecord(
-                        episode=episode_index,
-                        timesteps=episode_index,
-                        mean_return=float(parts[2]),
-                        collision_rate=float(parts[3]),
-                        mean_length=float(parts[4]),
-                        mean_lane_change=float(parts[5]),
-                        success_rate=float(parts[6]),
-                        mean_speed=float(parts[7]),
-                        mean_progress=parse_labeled_float(parts[8:], 'progress', default=0.0),
-                    )
-                )
-    for record in records:
-        record.is_best = (record.episode, record.timesteps) in best_keys
+            record = parse_validation_row(parts, parts[0])
+            if record is not None:
+                records.append(record)
     if not records:
         raise ValueError(f'No validation records found in: {log_path}')
     return records

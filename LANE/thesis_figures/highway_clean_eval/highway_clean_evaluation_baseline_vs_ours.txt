@@ -1,0 +1,6 @@
+| Scenario | Method | Success Rate | Collision Rate | Timeout Rate | Average Reward | Average Episode Length | Average Speed | Average Progress |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| highway-standard | Baseline | 0.4800 | 0.5200 | 0.0000 | 418.7894 | 89.3100 | 28.8060 | 0.7442 |
+| highway-standard | Ours | 0.8700 | 0.1300 | 0.0000 | 584.1121 | 107.6600 | 29.6687 | 0.8972 |
+| highway-dense | Baseline | 0.0800 | 0.9000 | 0.0200 | 36.3915 | 39.9700 | 26.2186 | 0.3311 |
+| highway-dense | Ours | 0.0400 | 0.2200 | 0.7400 | 299.7331 | 101.4900 | 21.4367 | 0.8030 |

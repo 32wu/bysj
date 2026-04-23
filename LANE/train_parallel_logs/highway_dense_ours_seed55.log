@@ -1,0 +1,174 @@
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[91mFINISH: model_rwta[0m
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[92minit      [0m 2026-04-23 11:48:26.766157
+[92marguments [0m Namespace(lr=0.00032, gamma=0.998, entropy=0.18, PPO_epochs=4, eps_clip=0.12, alg='ppo', cuda=0, thread=2, train_num=4800, train_envs=8, val_interval_timesteps=0, val_episodes=20, eval_episodes=30, final_eval_episodes=30, rep=11, seed=55, ignore_checkpoint=True, monitor_time=False, allow_long_train=True, eval_only=False, eval_checkpoint='best', eval_save_details=False, eval_artifact_stem='', task='gymip', model='rwtaspk', optimizer='rmsprop', gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hidden_num=64, hid_group_num=8, hid_group_size=8, rwta_del_connection='none', response_window=40, snn_num_steps=15, rollout_steps=896, mini_batch_size=224, gae_lambda=0.99, adv_norm=1, reward_scale=0.9, grad_clip=0.4, critic_lr=0.00032, curriculum_mode='adaptive', curriculum_clean_ratio=0.99, max_noise=0.008, entropy_min=0.1, entropy_decay=1.0, entropy_warmup_scale=1.1, entropy_warmup_episodes=50, curriculum_patience=4, curriculum_noise_step=0.001, curriculum_entropy_decay=0.95, lane_profile='legacy', road_scenario='highway', traffic_level='dense', highway_reward_stage='c_success', warm_start_kind='none', warm_start_prefix='')
+[92mseed      [0m 55
+[92mmodel_dir [0m /root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_dense/models
+[92mparallel  [0m train_envs 8
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+/root/miniconda3/envs/bysj/lib/python3.10/site-packages/pygame/pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Process SpawnProcess-8:
+Process SpawnProcess-4:
+Process SpawnProcess-5:
+Process SpawnProcess-6:
+Process SpawnProcess-3:
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 287, in lane_parallel_worker
+    message = connection.recv()
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 287, in lane_parallel_worker
+    message = connection.recv()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+ConnectionResetError: [Errno 104] Connection reset by peer
+ConnectionResetError: [Errno 104] Connection reset by peer
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+Process SpawnProcess-7:
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 287, in lane_parallel_worker
+    message = connection.recv()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 287, in lane_parallel_worker
+    message = connection.recv()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+ConnectionResetError: [Errno 104] Connection reset by peer
+ConnectionResetError: [Errno 104] Connection reset by peer
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 287, in lane_parallel_worker
+    message = connection.recv()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 414, in _recv_bytes
+    buf = self._recv(4)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+ConnectionResetError: [Errno 104] Connection reset by peer
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 313, in lane_parallel_worker
+    connection.send({
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 206, in send
+    self._send_bytes(_ForkingPickler.dumps(obj))
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 411, in _send_bytes
+    self._send(header + buf)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 368, in _send
+    n = write(self._handle, buf)
+BrokenPipeError: [Errno 32] Broken pipe
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 313, in lane_parallel_worker
+    connection.send({
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 206, in send
+    self._send_bytes(_ForkingPickler.dumps(obj))
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 411, in _send_bytes
+    self._send(header + buf)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 368, in _send
+    n = write(self._handle, buf)
+BrokenPipeError: [Errno 32] Broken pipe
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+Process SpawnProcess-2:
+Traceback (most recent call last):
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/root/autodl-tmp/SVPG2023/LANE/run_RL_ours.py", line 313, in lane_parallel_worker
+    connection.send({
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 206, in send
+    self._send_bytes(_ForkingPickler.dumps(obj))
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 411, in _send_bytes
+    self._send(header + buf)
+  File "/root/miniconda3/envs/bysj/lib/python3.10/multiprocessing/connection.py", line 368, in _send
+    n = write(self._handle, buf)
+BrokenPipeError: [Errno 32] Broken pipe
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)

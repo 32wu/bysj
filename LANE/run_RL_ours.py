@@ -56,6 +56,7 @@ def get_arguments():
     parser.add_argument('--eval_checkpoint', type=str, default='best', choices=['best', 'current'])
     parser.add_argument('--eval_save_details', default=False, action='store_true')
     parser.add_argument('--eval_artifact_stem', type=str, default='')
+    parser.add_argument('--eval_episode_offset', type=int, default=0)
 
     parser.add_argument('--task', type=str, default='gymip', choices=['gymip'])
     parser.add_argument('--model', type=str, default='rwtaprob', choices=['mlp3soft', 'mlp3relu', 'rwtaprob', 'rwtaspk', 'snnbptt', 'ann2snn'])
@@ -1618,7 +1619,16 @@ def save_eval_artifacts(log_dir, artifact_stem, metrics, args, checkpoint_prefix
     return summary_path, detail_path, failure_path
 
 
-def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None, collect_episode_details=False):
+def evaluate_policy(
+    env,
+    model,
+    episode_num,
+    mode='val',
+    vehicles_count=None,
+    collect_episode_details=False,
+    episode_seed_base=None,
+    episode_index_offset=0,
+):
     metrics = {
         'mean_return': 0.0,
         'mean_length': 0.0,
@@ -1651,11 +1661,15 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None, co
     episode_records = []
     with torch.no_grad():
         for episode_index in range(episode_num):
+            absolute_episode_index = int(episode_index_offset) + int(episode_index)
+            episode_seed = None
+            if episode_seed_base is not None:
+                episode_seed = build_lane_episode_seed(episode_seed_base, absolute_episode_index)
             if mode == 'val':
-                env.init_val(vehicles_count=vehicles_count)
+                env.init_val(vehicles_count=vehicles_count, seed=episode_seed)
                 observation = env.get_val_observation()
             else:
-                env.init_test(record_video=False, vehicles_count=vehicles_count)
+                env.init_test(record_video=False, vehicles_count=vehicles_count, seed=episode_seed)
                 observation = env.get_test_observation()
             for _step_i in range(env.max_step_num):
                 model_output, _ = model(observation)
@@ -1681,7 +1695,7 @@ def evaluate_policy(env, model, episode_num, mode='val', vehicles_count=None, co
             termination_reason = episode_summary['termination_reason']
             termination_reason_counter[termination_reason] = termination_reason_counter.get(termination_reason, 0) + 1
             if collect_episode_details:
-                episode_records.append(build_eval_episode_record(env, episode_index, episode_summary))
+                episode_records.append(build_eval_episode_record(env, absolute_episode_index, episode_summary))
     metrics['mean_return'] = float(np.mean(returns))
     metrics['mean_length'] = float(np.mean(lengths))
     metrics['mean_speed'] = float(np.mean(speeds))
@@ -2127,6 +2141,8 @@ if __name__ == '__main__':
             mode='val',
             vehicles_count=eval_vehicle_count,
             collect_episode_details=bool(args.eval_save_details),
+            episode_seed_base=seed,
+            episode_index_offset=int(args.eval_episode_offset),
         )
         eval_log_filename = os.path.join(active_log_dir, 'eval_' + eval_artifact_stem + '.txt')
         EvalFile = open(eval_log_filename, 'a')

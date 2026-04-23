@@ -1,0 +1,352 @@
+[91mFINISH: model_mlp[0m
+[91mFINISH: model_rwta[0m
+Robustness evaluation start
+Scenario: highway / standard
+  - baseline: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best
+
+======================================
+Model: baseline /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best
+
+[Action Failure]
+
+[Input Gaussian Noise]
+
+[Weight Gaussian Noise]
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+weight_noise    0.000 | success  0.550 | collision  0.450 | timeout  0.000 | reward 452.380 | len  95.300 | speed 28.867 | progress  0.794
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+weight_noise    0.020 | success  0.550 | collision  0.450 | timeout  0.000 | reward 452.380 | len  95.300 | speed 28.867 | progress  0.794
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+weight_noise    0.050 | success  0.550 | collision  0.450 | timeout  0.000 | reward 452.380 | len  95.300 | speed 28.867 | progress  0.794
+[96mLANE_ENV_INFO|[0m ACTION NUMBER:      5
+[96mLANE_ENV_INFO|[0m STATE DIMENSION:     25
+[96mLANE_ENV_INFO|[0m ROAD SCENARIO: highway (highway-v0)
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+[94mMODEL_RWTA_INFO|[0m RWTA Prob initialize
+[94mMODEL_RWTA_INFO|[0m weight 3837
+[94mMODEL_RWTA_INFO|[0m bias 69
+[94mMODEL_RWTA_INFO|[0m load: /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best.pt
+weight_noise    0.100 | success  0.550 | collision  0.450 | timeout  0.000 | reward 452.380 | len  95.300 | speed 28.867 | progress  0.794
+
+Saved robustness tables to: /root/autodl-tmp/SVPG2023/LANE/thesis_figures/robustness_paper_20260423_jobs/highway_standard_baseline_weight_20ep

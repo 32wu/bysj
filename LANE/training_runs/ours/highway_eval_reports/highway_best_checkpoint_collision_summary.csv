@@ -1,3 +1,0 @@
-traffic_level,collision_count,collision_rate,collision_mean_speed,collision_mean_progress,startup_count,car_following_count,lane_change_count,overtake_count,interaction_count
-standard,11,0.110000,28.772663,0.200000,5,0,0,0,6
-dense,77,0.770000,26.521732,0.184741,53,6,5,3,10

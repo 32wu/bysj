@@ -1,0 +1,7 @@
+eval_init,2026-04-23 18:19:31.639616
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000400_0.10_0.99500_4_0.1200_ro768_mb192_lam0.99_rs0.90_gc0.40_fixed_roadhighway_tfstandard_te4_seed11_best
+eval,0, 451.539657, 0.4000,  90.0000,   9.9600, 0.6000,  29.0964, timeout 0.0000, progress 0.7500, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:10/25|success:15/25
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/eval_reports/eval_summary_thesis_ablation_highway_standard_fixed_chunk75_25ep.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/eval_reports/eval_detail_thesis_ablation_highway_standard_fixed_chunk75_25ep.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/ours/highway_standard/eval_reports/eval_failure_thesis_ablation_highway_standard_fixed_chunk75_25ep.csv
+finish,2026-04-23 18:19:31.639686

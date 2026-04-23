@@ -1,0 +1,7 @@
+eval_init,2026-04-23 16:05:10.679320
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.000700_0.30_0.99800_4_0.1500_roadhighway_tfstandard_rep42_best
+eval,0, 529.026584, 0.0000, 120.0000,  18.0000, 1.0000,  28.2672, timeout 0.0000, progress 1.0000, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term success:2/2
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/eval_reports/eval_summary_thesis_probe_baseline_highway_standard_2ep.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/eval_reports/eval_detail_thesis_probe_baseline_highway_standard_2ep.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/eval_reports/eval_failure_thesis_probe_baseline_highway_standard_2ep.csv
+finish,2026-04-23 16:05:10.679375

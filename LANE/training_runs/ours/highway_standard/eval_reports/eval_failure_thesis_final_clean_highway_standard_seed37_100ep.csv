@@ -1,0 +1,14 @@
+episode_index,episode_return,episode_length,mean_speed,final_progress,lane_change_count,termination_reason,collision_phase,policy_action,executed_action,assist_overrode_policy,highway_assist_reason,highway_tactical_reason,highway_best_lane_gain,highway_overtake_events
+33,78.73755413321041,22,29.392736974039902,0.18333333333333332,1,collision,startup,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+37,55.014390712110384,18,29.171815954895422,0.15,2,collision,startup,0,0,0,blocked_left_overtake,blocked_left_overtake,0.6433645887156498,0
+40,51.826250051535226,18,29.007506124332583,0.15,2,collision,startup,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+49,190.02003290488886,43,29.665017434901984,0.35833333333333334,3,collision,interaction,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+51,31.40221885128522,14,28.723936445567205,0.11666666666666667,1,collision,startup,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+64,161.95796549452007,40,29.360438291847334,0.3333333333333333,3,collision,interaction,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+68,197.63069236257112,44,29.84545332983787,0.36666666666666664,3,collision,interaction,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+70,167.92613573829283,39,29.630660248738085,0.325,3,collision,interaction,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+71,44.745454597122816,18,28.903648081928445,0.15,2,collision,startup,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+72,30.015994198612706,13,29.360711470688845,0.10833333333333334,1,collision,startup,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+84,72.06355266924335,21,29.290127961338932,0.175,1,collision,startup,0,2,1,critical_right_escape,critical_right_escape,0.1398226498731512,0
+86,87.12284921219072,26,29.033345319106882,0.21666666666666667,1,collision,interaction,0,4,1,yield_to_blocker,yield_to_blocker,0.0,0
+94,7.8078896646771625,10,28.20782389184766,0.08333333333333333,2,collision,startup,0,0,0,blocked_left_overtake,blocked_left_overtake,0.6672239438797327,0

@@ -1,0 +1,7 @@
+eval_init,2026-04-23 23:50:10.421882
+eval_checkpoint,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/roundabout/models/ppo_gymip_rwtaspk_h8-8-40_none_rmsprop_0.001000_0.10_0.97000_5_0.2000_roadroundabout_tfstandard_rep11_best
+eval,0, -44.994030, 1.0000,   7.0000,   0.0000, 0.0000,   8.0000, timeout 0.0000, progress 0.5648, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/1
+eval_summary_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/roundabout/eval_reports/eval_summary_smoke_roundabout_baseline_1ep.csv
+eval_detail_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/roundabout/eval_reports/eval_detail_smoke_roundabout_baseline_1ep.csv
+eval_failure_file,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/roundabout/eval_reports/eval_failure_smoke_roundabout_baseline_1ep.csv
+finish,2026-04-23 23:50:10.421927
