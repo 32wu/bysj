@@ -709,3 +709,762 @@ train_t,  336, 37280, 609.699843,  120,  10, 0.0107, success 1.00, collision 0.0
 train,    337, 658.786781,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.571, term success
 train_t,  337, 37400, 658.786781,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.571, term success
 train,    338, 640.312200,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.202, term success
+train_t,  338, 37520, 640.312200,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.202, term success
+val,      338, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    338, 37520, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    339, 654.760955,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.312, term success
+train_t,  339, 37640, 654.760955,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.312, term success
+train,    340, 639.255037,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train_t,  340, 37760, 639.255037,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train,    341, 634.050825,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.315, term success
+train_t,  341, 37880, 634.050825,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.315, term success
+train,    342, 640.282370,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.494, term success
+train_t,  342, 38000, 640.282370,  120,  10, 0.0107, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.494, term success
+train,    343, 56.539822,   20,  10, 0.0106, success 0.00, collision 1.00, timeout 0.00, progress 0.167, speed 28.991, term collision
+train_t,  343, 38020, 56.539822,   20,  10, 0.0106, success 0.00, collision 1.00, timeout 0.00, progress 0.167, speed 28.991, term collision
+train,    344, 637.037477,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.483, term success
+train_t,  344, 38140, 637.037477,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.483, term success
+train,    345, 650.984773,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train_t,  345, 38260, 650.984773,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train,    346, 657.865940,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  346, 38380, 657.865940,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    347, 57.149679,   35,  10, 0.0106, success 0.00, collision 1.00, timeout 0.00, progress 0.292, speed 26.635, term collision
+train_t,  347, 38415, 57.149679,   35,  10, 0.0106, success 0.00, collision 1.00, timeout 0.00, progress 0.292, speed 26.635, term collision
+train,    348, 645.145038,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  348, 38535, 645.145038,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    349, 628.840439,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.396, term success
+train_t,  349, 38655, 628.840439,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.396, term success
+train,    350, 100.531367,   27,  10, 0.0106, success 0.00, collision 1.00, timeout 0.00, progress 0.225, speed 29.438, term collision
+train_t,  350, 38682, 100.531367,   27,  10, 0.0106, success 0.00, collision 1.00, timeout 0.00, progress 0.225, speed 29.438, term collision
+train,    351, 655.266678,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.643, term success
+train_t,  351, 38802, 655.266678,  120,  10, 0.0106, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.643, term success
+train,    352, 625.445729,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.457, term success
+train_t,  352, 38922, 625.445729,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.457, term success
+train,    353, 636.509568,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.404, term success
+train_t,  353, 39042, 636.509568,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.404, term success
+train,    354, 534.220060,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.491, term success
+train_t,  354, 39162, 534.220060,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.491, term success
+train,    355, 649.026263,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.695, term success
+train_t,  355, 39282, 649.026263,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.695, term success
+train,    356, 648.294637,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.399, term success
+train_t,  356, 39402, 648.294637,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.399, term success
+train,    357, 121.054689,   66,  10, 0.0105, success 0.00, collision 1.00, timeout 0.00, progress 0.550, speed 25.428, term collision
+train_t,  357, 39468, 121.054689,   66,  10, 0.0105, success 0.00, collision 1.00, timeout 0.00, progress 0.550, speed 25.428, term collision
+train,    358, 655.191978,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train_t,  358, 39588, 655.191978,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train,    359, 651.691193,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.586, term success
+train_t,  359, 39708, 651.691193,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.586, term success
+train,    360, 641.468970,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  360, 39828, 641.468970,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train,    361, 567.616834,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.111, term success
+train_t,  361, 39948, 567.616834,  120,  10, 0.0105, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.111, term success
+train,    362, 651.700566,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.783, term success
+train_t,  362, 40068, 651.700566,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.783, term success
+val,      362, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    362, 40068, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    363, 105.472618,   34,  10, 0.0104, success 0.00, collision 1.00, timeout 0.00, progress 0.283, speed 28.555, term collision
+train_t,  363, 40102, 105.472618,   34,  10, 0.0104, success 0.00, collision 1.00, timeout 0.00, progress 0.283, speed 28.555, term collision
+train,    364, 634.731052,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train_t,  364, 40222, 634.731052,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train,    365, 641.917537,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.111, term success
+train_t,  365, 40342, 641.917537,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.111, term success
+train,    366, 71.735601,   22,  10, 0.0104, success 0.00, collision 1.00, timeout 0.00, progress 0.183, speed 29.209, term collision
+train_t,  366, 40364, 71.735601,   22,  10, 0.0104, success 0.00, collision 1.00, timeout 0.00, progress 0.183, speed 29.209, term collision
+train,    367, 654.355089,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.701, term success
+train_t,  367, 40484, 654.355089,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.701, term success
+train,    368, 641.328652,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  368, 40604, 641.328652,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    369, 652.490501,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  369, 40724, 652.490501,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    370, 640.279167,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.395, term success
+train_t,  370, 40844, 640.279167,  120,  10, 0.0104, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.395, term success
+train,    371, 653.291655,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.435, term success
+train_t,  371, 40964, 653.291655,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.435, term success
+train,    372, 637.571143,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  372, 41084, 637.571143,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train,    373, 656.698528,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.518, term success
+train_t,  373, 41204, 656.698528,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.518, term success
+train,    374, 632.895772,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train_t,  374, 41324, 632.895772,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train,    375, 631.382319,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.513, term success
+train_t,  375, 41444, 631.382319,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.513, term success
+train,    376, 650.341859,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  376, 41564, 650.341859,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    377, 512.145054,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.124, term success
+train_t,  377, 41684, 512.145054,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.124, term success
+train,    378, 641.075629,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train_t,  378, 41804, 641.075629,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train,    379, 97.374739,   30,  10, 0.0103, success 0.00, collision 1.00, timeout 0.00, progress 0.250, speed 28.126, term collision
+train_t,  379, 41834, 97.374739,   30,  10, 0.0103, success 0.00, collision 1.00, timeout 0.00, progress 0.250, speed 28.126, term collision
+train,    380, 640.007457,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.560, term success
+train_t,  380, 41954, 640.007457,  120,  10, 0.0103, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.560, term success
+train,    381, 178.837915,   49,  10, 0.0102, success 0.00, collision 1.00, timeout 0.00, progress 0.408, speed 26.751, term collision
+train_t,  381, 42003, 178.837915,   49,  10, 0.0102, success 0.00, collision 1.00, timeout 0.00, progress 0.408, speed 26.751, term collision
+train,    382, 618.249267,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.528, term success
+train_t,  382, 42123, 618.249267,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.528, term success
+train,    383, 662.756767,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train_t,  383, 42243, 662.756767,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train,    384, 640.290917,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  384, 42363, 640.290917,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    385, 480.364380,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.075, term success
+train_t,  385, 42483, 480.364380,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.075, term success
+train,    386, 627.565974,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.403, term success
+train_t,  386, 42603, 627.565974,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.403, term success
+val,      386, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    386, 42603, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    387, 33.578890,   17,  10, 0.0102, success 0.00, collision 1.00, timeout 0.00, progress 0.142, speed 28.221, term collision
+train_t,  387, 42620, 33.578890,   17,  10, 0.0102, success 0.00, collision 1.00, timeout 0.00, progress 0.142, speed 28.221, term collision
+train,    388, 558.205627,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.628, term success
+train_t,  388, 42740, 558.205627,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.628, term success
+train,    389, 651.284875,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  389, 42860, 651.284875,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    390, 655.998055,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.658, term success
+train_t,  390, 42980, 655.998055,  120,  10, 0.0102, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.658, term success
+train,    391, 649.273550,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train_t,  391, 43100, 649.273550,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train,    392, 67.899730,   46,  10, 0.0101, success 0.00, collision 1.00, timeout 0.00, progress 0.383, speed 26.397, term collision
+train_t,  392, 43146, 67.899730,   46,  10, 0.0101, success 0.00, collision 1.00, timeout 0.00, progress 0.383, speed 26.397, term collision
+train,    393, 478.959336,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.236, term success
+train_t,  393, 43266, 478.959336,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.236, term success
+train,    394, 644.926802,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.659, term success
+train_t,  394, 43386, 644.926802,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.659, term success
+train,    395, 71.596429,   45,  10, 0.0101, success 0.00, collision 1.00, timeout 0.00, progress 0.375, speed 27.173, term collision
+train_t,  395, 43431, 71.596429,   45,  10, 0.0101, success 0.00, collision 1.00, timeout 0.00, progress 0.375, speed 27.173, term collision
+train,    396, 653.575265,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.565, term success
+train_t,  396, 43551, 653.575265,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.565, term success
+train,    397, 637.305066,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.991, term success
+train_t,  397, 43671, 637.305066,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.991, term success
+train,    398, 634.537885,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train_t,  398, 43791, 634.537885,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train,    399, 142.253938,   39,  10, 0.0101, success 0.00, collision 1.00, timeout 0.00, progress 0.325, speed 28.349, term collision
+train_t,  399, 43830, 142.253938,   39,  10, 0.0101, success 0.00, collision 1.00, timeout 0.00, progress 0.325, speed 28.349, term collision
+train,    400, 648.127593,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.493, term success
+train_t,  400, 43950, 648.127593,  120,  10, 0.0101, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.493, term success
+train,    401, 630.399484,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.825, term success
+train_t,  401, 44070, 630.399484,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.825, term success
+train,    402, -6.895975,    5,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.042, speed 28.107, term collision
+train_t,  402, 44075, -6.895975,    5,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.042, speed 28.107, term collision
+train,    403, 636.591268,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train_t,  403, 44195, 636.591268,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train,    404, 642.520690,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.285, term success
+train_t,  404, 44315, 642.520690,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.285, term success
+train,    405, 640.455541,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.435, term success
+train_t,  405, 44435, 640.455541,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.435, term success
+train,    406, 178.819135,   44,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.367, speed 28.858, term collision
+train_t,  406, 44479, 178.819135,   44,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.367, speed 28.858, term collision
+train,    407, 127.364298,   41,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.342, speed 28.511, term collision
+train_t,  407, 44520, 127.364298,   41,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.342, speed 28.511, term collision
+train,    408, 137.084745,   34,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.283, speed 29.385, term collision
+train_t,  408, 44554, 137.084745,   34,  10, 0.0100, success 0.00, collision 1.00, timeout 0.00, progress 0.283, speed 29.385, term collision
+train,    409, 637.257607,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.700, term success
+train_t,  409, 44674, 637.257607,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.700, term success
+train,    410, 636.854679,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.461, term success
+train_t,  410, 44794, 636.854679,  120,  10, 0.0100, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.461, term success
+train,    411, 645.553849,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train_t,  411, 44914, 645.553849,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train,    412, 646.681402,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.523, term success
+train_t,  412, 45034, 646.681402,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.523, term success
+val,      412, 596.187410, 0.1000, 109.9000,   5.5000, 0.9000,  29.5737, timeout 0.0000, progress 0.9158, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:2/20|success:18/20
+val_t,    412, 45034, 596.187410, 0.1000, 109.9000,   5.5000, 0.9000,  29.5737, timeout 0.0000, progress 0.9158, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:2/20|success:18/20
+train,    413, 534.936753,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.341, term success
+train_t,  413, 45154, 534.936753,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.341, term success
+train,    414, 482.382316,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.118, term success
+train_t,  414, 45274, 482.382316,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.118, term success
+train,    415, 549.882355,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.071, term success
+train_t,  415, 45394, 549.882355,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.071, term success
+train,    416, 623.772504,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  416, 45514, 623.772504,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    417, 637.273626,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train_t,  417, 45634, 637.273626,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train,    418, 652.836917,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.606, term success
+train_t,  418, 45754, 652.836917,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.606, term success
+train,    419, 18.403375,   26,  10, 0.0099, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 25.565, term collision
+train_t,  419, 45780, 18.403375,   26,  10, 0.0099, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 25.565, term collision
+train,    420, 640.503332,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.695, term success
+train_t,  420, 45900, 640.503332,  120,  10, 0.0099, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.695, term success
+train,    421, 640.988700,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.638, term success
+train_t,  421, 46020, 640.988700,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.638, term success
+train,    422, 649.326286,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train_t,  422, 46140, 649.326286,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train,    423, 653.153053,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.523, term success
+train_t,  423, 46260, 653.153053,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.523, term success
+train,    424, 640.430611,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  424, 46380, 640.430611,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    425, 644.493508,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.398, term success
+train_t,  425, 46500, 644.493508,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.398, term success
+train,    426, 638.745154,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train_t,  426, 46620, 638.745154,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train,    427, 547.055414,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.153, term success
+train_t,  427, 46740, 547.055414,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.153, term success
+train,    428, 651.280554,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.374, term success
+train_t,  428, 46860, 651.280554,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.374, term success
+train,    429, 645.435962,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.441, term success
+train_t,  429, 46980, 645.435962,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.441, term success
+train,    430, 645.307306,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.481, term success
+train_t,  430, 47100, 645.307306,  120,  10, 0.0098, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.481, term success
+train,    431, 470.588420,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 26.658, term success
+train_t,  431, 47220, 470.588420,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 26.658, term success
+train,    432, 631.092041,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train_t,  432, 47340, 631.092041,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train,    433, 637.036380,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.805, term success
+train_t,  433, 47460, 637.036380,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.805, term success
+train,    434, 116.154381,   31,  10, 0.0097, success 0.00, collision 1.00, timeout 0.00, progress 0.258, speed 28.871, term collision
+train_t,  434, 47491, 116.154381,   31,  10, 0.0097, success 0.00, collision 1.00, timeout 0.00, progress 0.258, speed 28.871, term collision
+train,    435, 148.286692,   42,  10, 0.0097, success 0.00, collision 1.00, timeout 0.00, progress 0.350, speed 28.291, term collision
+train_t,  435, 47533, 148.286692,   42,  10, 0.0097, success 0.00, collision 1.00, timeout 0.00, progress 0.350, speed 28.291, term collision
+val,      435, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    435, 47533, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    436, 645.906845,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.601, term success
+train_t,  436, 47653, 645.906845,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.601, term success
+train,    437, 647.739545,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.356, term success
+train_t,  437, 47773, 647.739545,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.356, term success
+train,    438, 529.245227,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.489, term success
+train_t,  438, 47893, 529.245227,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.489, term success
+train,    439, 641.996894,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  439, 48013, 641.996894,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    440, 647.405871,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train_t,  440, 48133, 647.405871,  120,  10, 0.0097, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train,    441, 535.942447,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.736, term success
+train_t,  441, 48253, 535.942447,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.736, term success
+train,    442, 641.167202,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.342, term success
+train_t,  442, 48373, 641.167202,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.342, term success
+train,    443, 634.347541,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.305, term success
+train_t,  443, 48493, 634.347541,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.305, term success
+train,    444, 622.919244,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.415, term success
+train_t,  444, 48613, 622.919244,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.415, term success
+train,    445, 535.020006,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.695, term success
+train_t,  445, 48733, 535.020006,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.695, term success
+train,    446, 638.962438,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.501, term success
+train_t,  446, 48853, 638.962438,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.501, term success
+train,    447, 656.028933,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train_t,  447, 48973, 656.028933,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train,    448, 637.030936,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train_t,  448, 49093, 637.030936,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train,    449, 643.450276,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.400, term success
+train_t,  449, 49213, 643.450276,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.400, term success
+train,    450, 656.697202,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.567, term success
+train_t,  450, 49333, 656.697202,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.567, term success
+train,    451, 646.287872,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.653, term success
+train_t,  451, 49453, 646.287872,  120,  10, 0.0096, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.653, term success
+train,    452, 645.255076,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  452, 49573, 645.255076,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    453, 633.098962,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train_t,  453, 49693, 633.098962,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train,    454, 591.109509,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.950, term success
+train_t,  454, 49813, 591.109509,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.950, term success
+train,    455, 82.733597,   24,  10, 0.0095, success 0.00, collision 1.00, timeout 0.00, progress 0.200, speed 29.332, term collision
+train_t,  455, 49837, 82.733597,   24,  10, 0.0095, success 0.00, collision 1.00, timeout 0.00, progress 0.200, speed 29.332, term collision
+train,    456, 489.043409,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.268, term success
+train_t,  456, 49957, 489.043409,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.268, term success
+train,    457, 646.690923,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.633, term success
+train_t,  457, 50077, 646.690923,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.633, term success
+val,      457, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    457, 50077, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    458, 557.960952,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.491, term success
+train_t,  458, 50197, 557.960952,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.491, term success
+train,    459, 512.315390,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.991, term success
+train_t,  459, 50317, 512.315390,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.991, term success
+train,    460, 638.619210,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.363, term success
+train_t,  460, 50437, 638.619210,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.363, term success
+train,    461, 630.131052,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.243, term success
+train_t,  461, 50557, 630.131052,  120,  10, 0.0095, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.243, term success
+train,    462, 647.086389,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.404, term success
+train_t,  462, 50677, 647.086389,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.404, term success
+train,    463, 655.878206,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  463, 50797, 655.878206,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    464, 641.267165,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.410, term success
+train_t,  464, 50917, 641.267165,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.410, term success
+train,    465, 204.556662,   50,  10, 0.0094, success 0.00, collision 1.00, timeout 0.00, progress 0.417, speed 28.607, term collision
+train_t,  465, 50967, 204.556662,   50,  10, 0.0094, success 0.00, collision 1.00, timeout 0.00, progress 0.417, speed 28.607, term collision
+train,    466, 647.484978,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  466, 51087, 647.484978,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    467, 647.132878,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  467, 51207, 647.132878,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    468, 658.768893,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.577, term success
+train_t,  468, 51327, 658.768893,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.577, term success
+train,    469, 644.040693,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train_t,  469, 51447, 644.040693,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train,    470, 51.445927,   20,  10, 0.0094, success 0.00, collision 1.00, timeout 0.00, progress 0.167, speed 28.464, term collision
+train_t,  470, 51467, 51.445927,   20,  10, 0.0094, success 0.00, collision 1.00, timeout 0.00, progress 0.167, speed 28.464, term collision
+train,    471, 645.249973,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train_t,  471, 51587, 645.249973,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train,    472, 655.894112,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.653, term success
+train_t,  472, 51707, 655.894112,  120,  10, 0.0094, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.653, term success
+train,    473, 637.088708,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.241, term success
+train_t,  473, 51827, 637.088708,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.241, term success
+train,    474, 138.853071,   48,  10, 0.0093, success 0.00, collision 1.00, timeout 0.00, progress 0.400, speed 27.273, term collision
+train_t,  474, 51875, 138.853071,   48,  10, 0.0093, success 0.00, collision 1.00, timeout 0.00, progress 0.400, speed 27.273, term collision
+train,    475, 500.200771,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.389, term success
+train_t,  475, 51995, 500.200771,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.389, term success
+train,    476, 642.039245,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.398, term success
+train_t,  476, 52115, 642.039245,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.398, term success
+train,    477, 658.271698,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.576, term success
+train_t,  477, 52235, 658.271698,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.576, term success
+train,    478, 634.595782,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.075, term success
+train_t,  478, 52355, 634.595782,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.075, term success
+train,    479, 640.298757,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train_t,  479, 52475, 640.298757,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train,    480, 633.665609,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.113, term success
+train_t,  480, 52595, 633.665609,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.113, term success
+val,      480, 619.888315, 0.0500, 114.7000,   5.8000, 0.9500,  29.4187, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+val_t,    480, 52595, 619.888315, 0.0500, 114.7000,   5.8000, 0.9500,  29.4187, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+train,    481, 638.369171,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.476, term success
+train_t,  481, 52715, 638.369171,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.476, term success
+train,    482, 634.534301,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.861, term success
+train_t,  482, 52835, 634.534301,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.861, term success
+train,    483, 578.213563,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.726, term success
+train_t,  483, 52955, 578.213563,  120,  10, 0.0093, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.726, term success
+train,    484, 648.917616,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.598, term success
+train_t,  484, 53075, 648.917616,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.598, term success
+train,    485, 652.915856,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  485, 53195, 652.915856,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    486, 654.898138,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.484, term success
+train_t,  486, 53315, 654.898138,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.484, term success
+train,    487, 644.802904,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  487, 53435, 644.802904,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    488, 629.395843,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.065, term success
+train_t,  488, 53555, 629.395843,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.065, term success
+train,    489, 642.440496,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.611, term success
+train_t,  489, 53675, 642.440496,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.611, term success
+train,    490, 636.240866,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  490, 53795, 636.240866,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    491, 610.396346,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train_t,  491, 53915, 610.396346,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train,    492, 645.558202,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.743, term success
+train_t,  492, 54035, 645.558202,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.743, term success
+train,    493, 657.056848,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  493, 54155, 657.056848,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    494, 638.129370,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.415, term success
+train_t,  494, 54275, 638.129370,  120,  10, 0.0092, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.415, term success
+train,    495, 619.691338,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.363, term success
+train_t,  495, 54395, 619.691338,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.363, term success
+train,    496, 632.550981,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.408, term success
+train_t,  496, 54515, 632.550981,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.408, term success
+train,    497, 632.202930,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.513, term success
+train_t,  497, 54635, 632.202930,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.513, term success
+train,    498, 636.254786,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  498, 54755, 636.254786,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train,    499, 649.542514,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  499, 54875, 649.542514,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    500, 634.211315,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.283, term success
+train_t,  500, 54995, 634.211315,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.283, term success
+train,    501, 417.062064,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.325, term success
+train_t,  501, 55115, 417.062064,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.325, term success
+val,      501, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    501, 55115, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    502, 78.925034,   26,  10, 0.0091, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 28.719, term collision
+train_t,  502, 55141, 78.925034,   26,  10, 0.0091, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 28.719, term collision
+train,    503, 644.866385,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.384, term success
+train_t,  503, 55261, 644.866385,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.384, term success
+train,    504, 169.502897,   48,  10, 0.0091, success 0.00, collision 1.00, timeout 0.00, progress 0.400, speed 28.483, term collision
+train_t,  504, 55309, 169.502897,   48,  10, 0.0091, success 0.00, collision 1.00, timeout 0.00, progress 0.400, speed 28.483, term collision
+train,    505, 643.811770,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.440, term success
+train_t,  505, 55429, 643.811770,  120,  10, 0.0091, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.440, term success
+train,    506, 643.517106,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.481, term success
+train_t,  506, 55549, 643.517106,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.481, term success
+train,    507, 652.397559,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  507, 55669, 652.397559,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    508, 34.139833,   47,  10, 0.0090, success 0.00, collision 1.00, timeout 0.00, progress 0.392, speed 24.952, term collision
+train_t,  508, 55716, 34.139833,   47,  10, 0.0090, success 0.00, collision 1.00, timeout 0.00, progress 0.392, speed 24.952, term collision
+train,    509, 635.644053,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.207, term success
+train_t,  509, 55836, 635.644053,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.207, term success
+train,    510, 648.989406,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.398, term success
+train_t,  510, 55956, 648.989406,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.398, term success
+train,    511, 637.802185,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.435, term success
+train_t,  511, 56076, 637.802185,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.435, term success
+train,    512, 648.994022,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.310, term success
+train_t,  512, 56196, 648.994022,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.310, term success
+train,    513, 652.551608,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  513, 56316, 652.551608,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    514, 646.620264,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.403, term success
+train_t,  514, 56436, 646.620264,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.403, term success
+train,    515, 622.659165,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.950, term success
+train_t,  515, 56556, 622.659165,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.950, term success
+train,    516, 414.404656,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 26.633, term success
+train_t,  516, 56676, 414.404656,  120,  10, 0.0090, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 26.633, term success
+train,    517, 635.278655,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.232, term success
+train_t,  517, 56796, 635.278655,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.232, term success
+train,    518, 655.357018,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train_t,  518, 56916, 655.357018,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train,    519, 622.348147,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.268, term success
+train_t,  519, 57036, 622.348147,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.268, term success
+train,    520, 646.872148,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  520, 57156, 646.872148,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    521, 640.350277,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.957, term success
+train_t,  521, 57276, 640.350277,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.957, term success
+train,    522, 654.219764,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train_t,  522, 57396, 654.219764,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train,    523, 644.424262,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  523, 57516, 644.424262,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+val,      523, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    523, 57516, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    524, 37.057541,   18,  10, 0.0089, success 0.00, collision 1.00, timeout 0.00, progress 0.150, speed 27.994, term collision
+train_t,  524, 57534, 37.057541,   18,  10, 0.0089, success 0.00, collision 1.00, timeout 0.00, progress 0.150, speed 27.994, term collision
+train,    525, 642.074764,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train_t,  525, 57654, 642.074764,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train,    526, 610.517322,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.950, term success
+train_t,  526, 57774, 610.517322,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.950, term success
+train,    527, 641.160966,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.492, term success
+train_t,  527, 57894, 641.160966,  120,  10, 0.0089, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.492, term success
+train,    528, 636.807173,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  528, 58014, 636.807173,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    529, 621.864591,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  529, 58134, 621.864591,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    530, 636.250963,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.284, term success
+train_t,  530, 58254, 636.250963,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.284, term success
+train,    531, 620.778104,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.075, term success
+train_t,  531, 58374, 620.778104,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.075, term success
+train,    532, 633.932833,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  532, 58494, 633.932833,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    533, 650.062253,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  533, 58614, 650.062253,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    534, 650.185894,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.241, term success
+train_t,  534, 58734, 650.185894,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.241, term success
+train,    535, 654.616753,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train_t,  535, 58854, 654.616753,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train,    536, 646.413092,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train_t,  536, 58974, 646.413092,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train,    537, 656.968268,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  537, 59094, 656.968268,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    538, 637.413639,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.284, term success
+train_t,  538, 59214, 637.413639,  120,  10, 0.0088, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.284, term success
+train,    539, 640.060057,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.383, term success
+train_t,  539, 59334, 640.060057,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.383, term success
+train,    540, 397.776367,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.116, term success
+train_t,  540, 59454, 397.776367,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.116, term success
+train,    541, 636.826711,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.471, term success
+train_t,  541, 59574, 636.826711,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.471, term success
+train,    542, 654.794814,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  542, 59694, 654.794814,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    543, 644.489603,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  543, 59814, 644.489603,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    544, 665.619707,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.815, term success
+train_t,  544, 59934, 665.619707,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.815, term success
+train,    545, -4.090158,    9,  10, 0.0087, success 0.00, collision 1.00, timeout 0.00, progress 0.075, speed 27.196, term collision
+train_t,  545, 59943, -4.090158,    9,  10, 0.0087, success 0.00, collision 1.00, timeout 0.00, progress 0.075, speed 27.196, term collision
+train,    546, 655.048731,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.741, term success
+train_t,  546, 60063, 655.048731,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.741, term success
+val,      546, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    546, 60063, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    547, 637.452873,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train_t,  547, 60183, 637.452873,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train,    548, 98.394537,   30,  10, 0.0087, success 0.00, collision 1.00, timeout 0.00, progress 0.250, speed 28.739, term collision
+train_t,  548, 60213, 98.394537,   30,  10, 0.0087, success 0.00, collision 1.00, timeout 0.00, progress 0.250, speed 28.739, term collision
+train,    549, 653.083530,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  549, 60333, 653.083530,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    550, 627.602371,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train_t,  550, 60453, 627.602371,  120,  10, 0.0087, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.616, term success
+train,    551, 597.447226,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.143, term success
+train_t,  551, 60573, 597.447226,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.143, term success
+train,    552, 658.626885,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.736, term success
+train_t,  552, 60693, 658.626885,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.736, term success
+train,    553, 656.443807,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train_t,  553, 60813, 656.443807,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.575, term success
+train,    554, 627.144461,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train_t,  554, 60933, 627.144461,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train,    555, 649.961271,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  555, 61053, 649.961271,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    556, 649.293932,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.159, term success
+train_t,  556, 61173, 649.293932,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.159, term success
+train,    557, 485.754319,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.721, term success
+train_t,  557, 61293, 485.754319,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.721, term success
+train,    558, 642.690683,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.346, term success
+train_t,  558, 61413, 642.690683,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.346, term success
+train,    559, 645.804700,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.403, term success
+train_t,  559, 61533, 645.804700,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.403, term success
+train,    560, 646.935046,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.535, term success
+train_t,  560, 61653, 646.935046,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.535, term success
+train,    561, 385.894142,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.408, term success
+train_t,  561, 61773, 385.894142,  120,  10, 0.0086, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.408, term success
+train,    562, 647.520598,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.653, term success
+train_t,  562, 61893, 647.520598,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.653, term success
+train,    563, 654.706771,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.483, term success
+train_t,  563, 62013, 654.706771,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.483, term success
+train,    564, 87.107971,   32,  10, 0.0085, success 0.00, collision 1.00, timeout 0.00, progress 0.267, speed 27.667, term collision
+train_t,  564, 62045, 87.107971,   32,  10, 0.0085, success 0.00, collision 1.00, timeout 0.00, progress 0.267, speed 27.667, term collision
+train,    565, 637.677774,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train_t,  565, 62165, 637.677774,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train,    566, 631.333990,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train_t,  566, 62285, 631.333990,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train,    567, 556.677601,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.518, term success
+train_t,  567, 62405, 556.677601,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.518, term success
+train,    568, 543.901839,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.768, term success
+train_t,  568, 62525, 543.901839,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.768, term success
+val_save, 568, 622.383766, 0.0500, 114.7000,   5.8000, 0.9500,  29.6100, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+val_save_t,568, 62525, 622.383766, 0.0500, 114.7000,   5.8000, 0.9500,  29.6100, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+val,      568, 622.383766, 0.0500, 114.7000,   5.8000, 0.9500,  29.6100, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+val_t,    568, 62525, 622.383766, 0.0500, 114.7000,   5.8000, 0.9500,  29.6100, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+train,    569, 75.967022,   26,  10, 0.0085, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 27.755, term collision
+train_t,  569, 62551, 75.967022,   26,  10, 0.0085, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 27.755, term collision
+train,    570, 654.804348,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.540, term success
+train_t,  570, 62671, 654.804348,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.540, term success
+train,    571, 664.586116,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.742, term success
+train_t,  571, 62791, 664.586116,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.742, term success
+train,    572, 644.806938,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train_t,  572, 62911, 644.806938,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.361, term success
+train,    573, 633.205211,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  573, 63031, 633.205211,  120,  10, 0.0085, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    574, 629.309464,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  574, 63151, 629.309464,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    575, 224.834141,   88,  10, 0.0084, success 0.00, collision 1.00, timeout 0.00, progress 0.733, speed 26.741, term collision
+train_t,  575, 63239, 224.834141,   88,  10, 0.0084, success 0.00, collision 1.00, timeout 0.00, progress 0.733, speed 26.741, term collision
+train,    576, 624.175713,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  576, 63359, 624.175713,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    577, 632.749481,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.348, term success
+train_t,  577, 63479, 632.749481,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.348, term success
+train,    578, 637.983517,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  578, 63599, 637.983517,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train,    579, 641.137655,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.499, term success
+train_t,  579, 63719, 641.137655,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.499, term success
+train,    580, 651.816188,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.388, term success
+train_t,  580, 63839, 651.816188,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.388, term success
+train,    581, 636.112525,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train_t,  581, 63959, 636.112525,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train,    582, 656.743581,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  582, 64079, 656.743581,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    583, 572.482357,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.278, term success
+train_t,  583, 64199, 572.482357,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.278, term success
+train,    584, 53.331108,   19,  10, 0.0084, success 0.00, collision 1.00, timeout 0.00, progress 0.158, speed 28.853, term collision
+train_t,  584, 64218, 53.331108,   19,  10, 0.0084, success 0.00, collision 1.00, timeout 0.00, progress 0.158, speed 28.853, term collision
+train,    585, 646.759450,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  585, 64338, 646.759450,  120,  10, 0.0084, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    586, 653.186292,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train_t,  586, 64458, 653.186292,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train,    587, 636.374888,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.643, term success
+train_t,  587, 64578, 636.374888,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.643, term success
+train,    588, 647.524663,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  588, 64698, 647.524663,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    589, 638.989548,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train_t,  589, 64818, 638.989548,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train,    590, 644.976996,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train_t,  590, 64938, 644.976996,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.486, term success
+train,    591, 558.140755,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.450, term success
+train_t,  591, 65058, 558.140755,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.450, term success
+val,      591, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    591, 65058, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    592, 643.205638,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  592, 65178, 643.205638,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    593, 637.381679,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.118, term success
+train_t,  593, 65298, 637.381679,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.118, term success
+train,    594, 646.572466,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train_t,  594, 65418, 646.572466,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train,    595, 643.000753,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.633, term success
+train_t,  595, 65538, 643.000753,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.633, term success
+train,    596, 531.184830,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.570, term success
+train_t,  596, 65658, 531.184830,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.570, term success
+train,    597, 648.100122,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  597, 65778, 648.100122,  120,  10, 0.0083, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    598, 650.114342,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  598, 65898, 650.114342,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    599, 655.247397,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  599, 66018, 655.247397,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    600, 643.896255,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.492, term success
+train_t,  600, 66138, 643.896255,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.492, term success
+train,    601, 653.159819,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.700, term success
+train_t,  601, 66258, 653.159819,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.700, term success
+train,    602, 71.726230,   23,  10, 0.0082, success 0.00, collision 1.00, timeout 0.00, progress 0.192, speed 28.788, term collision
+train_t,  602, 66281, 71.726230,   23,  10, 0.0082, success 0.00, collision 1.00, timeout 0.00, progress 0.192, speed 28.788, term collision
+train,    603, 643.113917,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.295, term success
+train_t,  603, 66401, 643.113917,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.295, term success
+train,    604, 56.125711,   32,  10, 0.0082, success 0.00, collision 1.00, timeout 0.00, progress 0.267, speed 26.850, term collision
+train_t,  604, 66433, 56.125711,   32,  10, 0.0082, success 0.00, collision 1.00, timeout 0.00, progress 0.267, speed 26.850, term collision
+train,    605, 616.418133,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.481, term success
+train_t,  605, 66553, 616.418133,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.481, term success
+train,    606, 654.714141,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.540, term success
+train_t,  606, 66673, 654.714141,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.540, term success
+train,    607, 643.350908,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train_t,  607, 66793, 643.350908,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train,    608, 653.961124,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  608, 66913, 653.961124,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train,    609, 646.419354,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train_t,  609, 67033, 646.419354,  120,  10, 0.0082, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.320, term success
+train,    610, 530.361893,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 26.971, term success
+train_t,  610, 67153, 530.361893,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 26.971, term success
+train,    611, 648.219707,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  611, 67273, 648.219707,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    612, 651.711173,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train_t,  612, 67393, 651.711173,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.445, term success
+train,    613, 646.024989,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+train_t,  613, 67513, 646.024989,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.491, term success
+val,      613, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    613, 67513, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    614, 634.949763,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  614, 67633, 634.949763,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    615, 647.767196,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  615, 67753, 647.767196,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    616, 655.245979,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train_t,  616, 67873, 655.245979,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.533, term success
+train,    617, 68.976973,   25,  10, 0.0081, success 0.00, collision 1.00, timeout 0.00, progress 0.208, speed 28.404, term collision
+train_t,  617, 67898, 68.976973,   25,  10, 0.0081, success 0.00, collision 1.00, timeout 0.00, progress 0.208, speed 28.404, term collision
+train,    618, 73.595689,   24,  10, 0.0081, success 0.00, collision 1.00, timeout 0.00, progress 0.200, speed 28.883, term collision
+train_t,  618, 67922, 73.595689,   24,  10, 0.0081, success 0.00, collision 1.00, timeout 0.00, progress 0.200, speed 28.883, term collision
+train,    619, 12.789087,   12,  10, 0.0081, success 0.00, collision 1.00, timeout 0.00, progress 0.100, speed 27.711, term collision
+train_t,  619, 67934, 12.789087,   12,  10, 0.0081, success 0.00, collision 1.00, timeout 0.00, progress 0.100, speed 27.711, term collision
+train,    620, 643.166969,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.278, term success
+train_t,  620, 68054, 643.166969,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.278, term success
+train,    621, 646.501004,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  621, 68174, 646.501004,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    622, 628.601068,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train_t,  622, 68294, 628.601068,  120,  10, 0.0081, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train,    623, 635.445517,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.269, term success
+train_t,  623, 68414, 635.445517,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.269, term success
+train,    624, 636.343411,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train_t,  624, 68534, 636.343411,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train,    625, 10.545609,   10,  10, 0.0080, success 0.00, collision 1.00, timeout 0.00, progress 0.083, speed 28.343, term collision
+train_t,  625, 68544, 10.545609,   10,  10, 0.0080, success 0.00, collision 1.00, timeout 0.00, progress 0.083, speed 28.343, term collision
+train,    626, 635.448495,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train_t,  626, 68664, 635.448495,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train,    627, 652.491423,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train_t,  627, 68784, 652.491423,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.450, term success
+train,    628, 564.314463,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.616, term success
+train_t,  628, 68904, 564.314463,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.616, term success
+train,    629, 642.186362,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.290, term success
+train_t,  629, 69024, 642.186362,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.290, term success
+train,    630, 586.066929,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.741, term success
+train_t,  630, 69144, 586.066929,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.741, term success
+train,    631, 620.381412,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.160, term success
+train_t,  631, 69264, 620.381412,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.160, term success
+train,    632, 566.241407,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.361, term success
+train_t,  632, 69384, 566.241407,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.361, term success
+train,    633, 149.321726,   38,  10, 0.0080, success 0.00, collision 1.00, timeout 0.00, progress 0.317, speed 28.931, term collision
+train_t,  633, 69422, 149.321726,   38,  10, 0.0080, success 0.00, collision 1.00, timeout 0.00, progress 0.317, speed 28.931, term collision
+train,    634, 639.722374,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train_t,  634, 69542, 639.722374,  120,  10, 0.0080, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train,    635, 264.426139,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 24.325, term success
+train_t,  635, 69662, 264.426139,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 24.325, term success
+train,    636, 639.206568,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train_t,  636, 69782, 639.206568,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train,    637, 627.347289,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.945, term success
+train_t,  637, 69902, 627.347289,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.945, term success
+train,    638, 641.145316,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train_t,  638, 70022, 641.145316,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+val,      638, 619.888315, 0.0500, 114.7000,   5.8000, 0.9500,  29.4187, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+val_t,    638, 70022, 619.888315, 0.0500, 114.7000,   5.8000, 0.9500,  29.4187, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+train,    639, 639.970180,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.040, term success
+train_t,  639, 70142, 639.970180,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.040, term success
+train,    640, 633.750994,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  640, 70262, 633.750994,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    641, 652.319985,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train_t,  641, 70382, 652.319985,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.570, term success
+train,    642, 636.706912,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.231, term success
+train_t,  642, 70502, 636.706912,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.231, term success
+train,    643, 645.960067,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.383, term success
+train_t,  643, 70622, 645.960067,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.383, term success
+train,    644, 629.670236,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.945, term success
+train_t,  644, 70742, 629.670236,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.945, term success
+train,    645, 101.109037,   34,  10, 0.0079, success 0.00, collision 1.00, timeout 0.00, progress 0.283, speed 25.730, term collision
+train_t,  645, 70776, 101.109037,   34,  10, 0.0079, success 0.00, collision 1.00, timeout 0.00, progress 0.283, speed 25.730, term collision
+train,    646, 614.858391,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.992, term success
+train_t,  646, 70896, 614.858391,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.992, term success
+train,    647, 631.043082,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.103, term success
+train_t,  647, 71016, 631.043082,  120,  10, 0.0079, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.103, term success
+train,    648, 604.201951,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train_t,  648, 71136, 604.201951,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train,    649, 556.227352,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.486, term success
+train_t,  649, 71256, 556.227352,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.486, term success
+train,    650, 646.985008,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.374, term success
+train_t,  650, 71376, 646.985008,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.374, term success
+train,    651, 634.225348,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.216, term success
+train_t,  651, 71496, 634.225348,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.216, term success
+train,    652, 606.203969,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.195, term success
+train_t,  652, 71616, 606.203969,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.195, term success
+train,    653, 624.126796,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.963, term success
+train_t,  653, 71736, 624.126796,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.963, term success
+train,    654, 646.278742,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train_t,  654, 71856, 646.278742,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.408, term success
+train,    655, 643.986470,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train_t,  655, 71976, 643.986470,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train,    656, 639.873964,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.405, term success
+train_t,  656, 72096, 639.873964,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.405, term success
+train,    657, 637.755727,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train_t,  657, 72216, 637.755727,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.236, term success
+train,    658, 636.198514,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train_t,  658, 72336, 636.198514,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.325, term success
+train,    659, 638.286946,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.158, term success
+train_t,  659, 72456, 638.286946,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.158, term success
+train,    660, 639.722925,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  660, 72576, 639.722925,  120,  10, 0.0078, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+val,      660, 619.888315, 0.0500, 114.7000,   5.8000, 0.9500,  29.4187, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+val_t,    660, 72576, 619.888315, 0.0500, 114.7000,   5.8000, 0.9500,  29.4187, timeout 0.0000, progress 0.9558, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:1/20|success:19/20
+train,    661, 630.046354,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.611, term success
+train_t,  661, 72696, 630.046354,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.611, term success
+train,    662, 609.083843,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.356, term success
+train_t,  662, 72816, 609.083843,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.356, term success
+train,    663, 638.225064,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.158, term success
+train_t,  663, 72936, 638.225064,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.158, term success
+train,    664, 553.635019,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.320, term success
+train_t,  664, 73056, 553.635019,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.320, term success
+train,    665, 649.782692,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.351, term success
+train_t,  665, 73176, 649.782692,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.351, term success
+train,    666, -7.890518,   19,  10, 0.0077, success 0.00, collision 1.00, timeout 0.00, progress 0.158, speed 25.824, term collision
+train_t,  666, 73195, -7.890518,   19,  10, 0.0077, success 0.00, collision 1.00, timeout 0.00, progress 0.158, speed 25.824, term collision
+train,    667, 640.549360,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.326, term success
+train_t,  667, 73315, 640.549360,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.326, term success
+train,    668, 551.701750,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.903, term success
+train_t,  668, 73435, 551.701750,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.903, term success
+train,    669, 637.800430,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.825, term success
+train_t,  669, 73555, 637.800430,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.825, term success
+train,    670, 647.911563,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.237, term success
+train_t,  670, 73675, 647.911563,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.237, term success
+train,    671, 641.622680,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train_t,  671, 73795, 641.622680,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.033, term success
+train,    672, 618.338498,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.856, term success
+train_t,  672, 73915, 618.338498,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.856, term success
+train,    673, 637.388000,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train_t,  673, 74035, 637.388000,  120,  10, 0.0077, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.200, term success
+train,    674, 634.181004,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train_t,  674, 74155, 634.181004,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train,    675, 118.996596,   36,  10, 0.0076, success 0.00, collision 1.00, timeout 0.00, progress 0.300, speed 28.233, term collision
+train_t,  675, 74191, 118.996596,   36,  10, 0.0076, success 0.00, collision 1.00, timeout 0.00, progress 0.300, speed 28.233, term collision
+train,    676, 643.672490,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train_t,  676, 74311, 643.672490,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.366, term success
+train,    677, 519.587849,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.486, term success
+train_t,  677, 74431, 519.587849,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 27.486, term success
+train,    678, 641.640316,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.988, term success
+train_t,  678, 74551, 641.640316,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.988, term success
+train,    679, 628.900277,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  679, 74671, 628.900277,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    680, 638.880193,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  680, 74791, 638.880193,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train,    681, 622.204800,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.197, term success
+train_t,  681, 74911, 622.204800,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.197, term success
+train,    682, 627.097501,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.075, term success
+train_t,  682, 75031, 627.097501,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.075, term success
+val,      682, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+val_t,    682, 75031, 579.277081, 0.1500, 106.1000,   5.3000, 0.8500,  29.8622, timeout 0.0000, progress 0.8842, offroad 0.0000, low_speed_abort 0.0000, complete_low_speed 0.0000, other_terminal 0.0000, term collision:3/20|success:17/20
+train,    683, 649.437634,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train_t,  683, 75151, 649.437634,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.116, term success
+train,    684, 43.132542,   64,  10, 0.0076, success 0.00, collision 1.00, timeout 0.00, progress 0.527, speed 23.712, term collision
+train_t,  684, 75215, 43.132542,   64,  10, 0.0076, success 0.00, collision 1.00, timeout 0.00, progress 0.527, speed 23.712, term collision
+train,    685, 76.309364,   26,  10, 0.0076, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 27.046, term collision
+train_t,  685, 75241, 76.309364,   26,  10, 0.0076, success 0.00, collision 1.00, timeout 0.00, progress 0.217, speed 27.046, term collision
+train,    686, 635.922478,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.966, term success
+train_t,  686, 75361, 635.922478,  120,  10, 0.0076, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.966, term success
+train,    687, 637.073848,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.192, term success
+train_t,  687, 75481, 637.073848,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.192, term success
+train,    688, 629.325940,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.103, term success
+train_t,  688, 75601, 629.325940,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.103, term success
+train,    689, 616.773397,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.976, term success
+train_t,  689, 75721, 616.773397,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.976, term success
+train,    690, 629.139037,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.908, term success
+train_t,  690, 75841, 629.139037,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.908, term success
+train,    691, 632.626074,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.977, term success
+train_t,  691, 75961, 632.626074,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.977, term success
+train,    692, 61.067973,   22,  10, 0.0075, success 0.00, collision 1.00, timeout 0.00, progress 0.183, speed 28.049, term collision
+train_t,  692, 75983, 61.067973,   22,  10, 0.0075, success 0.00, collision 1.00, timeout 0.00, progress 0.183, speed 28.049, term collision
+train,    693, 643.355839,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  693, 76103, 643.355839,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    694, 628.460705,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.023, term success
+train_t,  694, 76223, 628.460705,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.023, term success
+train,    695, 503.125617,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.111, term success
+train_t,  695, 76343, 503.125617,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.111, term success
+train,    696, 643.527293,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train_t,  696, 76463, 643.527293,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.283, term success
+train,    697, 633.582626,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.158, term success
+train_t,  697, 76583, 633.582626,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.158, term success
+train,    698, 614.864411,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.707, term success
+train_t,  698, 76703, 614.864411,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.707, term success
+train,    699, 645.634073,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.279, term success
+train_t,  699, 76823, 645.634073,  120,  10, 0.0075, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.279, term success
+train,    700, 647.246237,  120,  10, 0.0074, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.101, term success
+train_t,  700, 76943, 647.246237,  120,  10, 0.0074, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.101, term success

@@ -19,11 +19,10 @@ DEFAULT_LOG_PATH = Path(
 )
 DEFAULT_OUTPUT_DIR = Path('/root/autodl-tmp/SVPG2023/LANE/thesis_figures/highway_standard')
 METRIC_SPECS = [
-    ('mean_return', 'Validation Average Reward', None),
-    ('success_rate', 'Validation Success Rate', (-0.05, 1.05)),
-    ('collision_rate', 'Validation Collision Rate', (-0.05, 1.05)),
-    ('mean_progress', 'Validation Average Progress', (-0.05, 1.05)),
-    ('mean_speed', 'Validation Average Speed', None),
+    ('mean_return', '验证平均回报', None),
+    ('success_rate', '验证成功率', (-0.05, 1.05)),
+    ('collision_rate', '验证碰撞率', (-0.05, 1.05)),
+    ('mean_speed', '验证平均速度', None),
 ]
 
 
@@ -256,7 +255,7 @@ def save_multi_seed_csv(aggregated: Dict[str, np.ndarray], csv_path: Path, smoot
 
 def plot_single_seed(records: List[ValRecord], output_png: Path, output_pdf: Path, smooth_method: str, ema_alpha: float, sma_window: int) -> None:
     configure_plot_style()
-    fig, axes = plt.subplots(3, 2, figsize=(12, 10), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
     axes = list(axes.flatten())
     timesteps = [record.timesteps for record in records]
     for axis, (metric_name, ylabel, ylim) in zip(axes, METRIC_SPECS):
@@ -275,13 +274,12 @@ def plot_single_seed(records: List[ValRecord], output_png: Path, output_pdf: Pat
                 zorder=5,
                 label='Best Checkpoint',
             )
-        axis.set_xlabel('Total Environment Timesteps')
+        axis.set_xlabel('时间步数（timesteps）')
         axis.set_ylabel(ylabel)
         if ylim is not None:
             axis.set_ylim(*ylim)
         axis.legend(loc='best')
-    axes[-1].axis('off')
-    fig.suptitle('Single-Seed Validation Convergence Curves', fontsize=14)
+    fig.suptitle('单种子验证收敛曲线', fontsize=14)
     fig.savefig(output_png, bbox_inches='tight')
     fig.savefig(output_pdf, bbox_inches='tight')
     plt.close(fig)
@@ -289,7 +287,7 @@ def plot_single_seed(records: List[ValRecord], output_png: Path, output_pdf: Pat
 
 def plot_multi_seed(record_groups: List[List[ValRecord]], aggregated: Dict[str, np.ndarray], output_png: Path, output_pdf: Path, smooth_method: str, ema_alpha: float, sma_window: int) -> None:
     configure_plot_style()
-    fig, axes = plt.subplots(3, 2, figsize=(12, 10), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(12, 8), constrained_layout=True)
     axes = list(axes.flatten())
     common_x = aggregated['timesteps']
     for axis, (metric_name, ylabel, ylim) in zip(axes, METRIC_SPECS):
@@ -307,13 +305,12 @@ def plot_multi_seed(record_groups: List[List[ValRecord]], aggregated: Dict[str, 
         axis.plot(common_x, mean_values, color='#4C78A8', linewidth=1.8, label='Mean Raw')
         axis.fill_between(common_x, mean_values - std_values, mean_values + std_values, color='#4C78A8', alpha=0.15, label='Mean ± Std')
         axis.plot(common_x, smooth_curve, color='#E45756', linewidth=2.3, label=f'{smooth_method.upper()} Mean')
-        axis.set_xlabel('Total Environment Timesteps')
+        axis.set_xlabel('训练步数（timesteps）')
         axis.set_ylabel(ylabel)
         if ylim is not None:
             axis.set_ylim(*ylim)
         axis.legend(loc='best')
-    axes[-1].axis('off')
-    fig.suptitle('Multi-Seed Validation Convergence Curves', fontsize=14)
+    fig.suptitle('多种子验证收敛曲线', fontsize=14)
     fig.savefig(output_png, bbox_inches='tight')
     fig.savefig(output_pdf, bbox_inches='tight')
     plt.close(fig)

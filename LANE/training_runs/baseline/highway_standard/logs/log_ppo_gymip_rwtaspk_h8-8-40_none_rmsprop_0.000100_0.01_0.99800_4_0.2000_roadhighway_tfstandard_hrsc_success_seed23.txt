@@ -1,0 +1,15 @@
+init,     2026-04-23 10:39:11.024019
+arguments,Namespace(lr=0.0001, gamma=0.998, entropy=0.015, PPO_epochs=4, eps_clip=0.2, alg='ppo', cuda=0, thread=2, train_num=2000, seed=23, val_interval_timesteps=0, val_episodes=20, rep=11, ignore_checkpoint=True, monitor_time=False, allow_long_train=False, task='gymip', model='rwtaspk', optimizer='rmsprop', gymip_train_xml='inverted_pendulum_ChangeThk_0.050000.xml', hidden_num=64, hid_group_num=8, hid_group_size=8, rwta_del_connection='none', response_window=40, snn_num_steps=15, road_scenario='highway', traffic_level='standard', highway_reward_stage='c_success', gae_lambda=0.95, adv_norm=1, reward_scale=0.8, grad_clip=0.5, critic_lr=0.00015, entropy_min=0.001, entropy_decay=0.999, entropy_warmup_scale=1.0, entropy_warmup_episodes=0, skip_post_tests=True)
+seed,     23
+profile,  lr->0.0001; critic_lr->0.00015; gamma->0.998; entropy->0.015; entropy_decay->0.999; PPO_epochs->4; reward_scale->0.8; grad_clip->0.5
+model_dir,/root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/models
+log_dir,  /root/autodl-tmp/SVPG2023/LANE/training_runs/baseline/highway_standard/logs
+train,    1, 625.166260,  120,  10, 0.0150, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train_t,  1, 120, 625.166260,  120,  10, 0.0150, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.106, term success
+train,    2, 623.325906,  120,  10, 0.0150, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.408, term success
+train_t,  2, 240, 623.325906,  120,  10, 0.0150, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.408, term success
+train,    3, 645.059924,  120,  10, 0.0150, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train_t,  3, 360, 645.059924,  120,  10, 0.0150, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.273, term success
+train,    4, 634.462461,  120,  10, 0.0149, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.930, term success
+train_t,  4, 480, 634.462461,  120,  10, 0.0149, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 28.930, term success
+train,    5, 625.144888,  120,  10, 0.0149, success 1.00, collision 0.00, timeout 0.00, progress 1.000, speed 29.325, term success
